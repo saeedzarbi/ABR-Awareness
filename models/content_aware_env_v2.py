@@ -208,8 +208,8 @@ class ContentAwareEnvV2:
                 self.trace_time += dt
                 
                 # Safety: don't get stuck
-                if download_time > 60:
-                    break
+                if downloaded < chunk_size:
+                    download_time = max_download_time
             
             avg_throughput = chunk_size / download_time * 8 if download_time > 0 else throughput
             
@@ -227,6 +227,8 @@ class ContentAwareEnvV2:
         
         # Buffer dynamics
         rebuffer_time = max(0, download_time - self.buffer)
+        rebuffer_time = min(rebuffer_time, 8.0)
+
         self.buffer = max(0, self.buffer - download_time) + self.chunk_duration
         self.buffer = min(self.buffer, 60.0)
         
