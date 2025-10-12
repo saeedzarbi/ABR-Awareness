@@ -210,8 +210,9 @@ class ContentAwareEnvV2:
             download_time = 0.0
             downloaded_kbit = 0.0
             dt = 0.1
-            max_download_time = 8.0 * self.chunk_duration  # safety cap, e.g., 32s
-            
+            # max_download_time = 8.0 * self.chunk_duration  # safety cap, e.g., 32s
+            max_download_time = 60.0
+
             sample_throughputs = []
             
             while downloaded_kbit < chunk_size_kbit and download_time < max_download_time:
@@ -265,9 +266,10 @@ class ContentAwareEnvV2:
         # Buffer dynamics
         # -----------------------
         # rebuffer_time in seconds
-        rebuffer_time = max(0.0, download_time - self.buffer)
-        # cap rebuffer so that extremely long downloads don't destabilize training
-        rebuffer_time = min(rebuffer_time, 8.0)
+        if download_time > self.buffer_size:
+            rebuffer_time = download_time - self.buffer_size  
+        else:
+            rebuffer_time = 0.0
         
         # update buffer after download
         self.buffer = max(0.0, self.buffer - download_time) + self.chunk_duration
