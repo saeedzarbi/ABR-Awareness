@@ -195,8 +195,9 @@ class ContentAwareEnvV2:
             # Download happens over time, throughput varies
             download_time = 0
             downloaded = 0
-            
-            while downloaded < chunk_size:
+            max_download_time = 8 * self.chunk_duration  # seconds
+
+            while downloaded < chunk_size and download_time < max_download_time:
                 # Get current throughput
                 throughput = self.current_trace.get_throughput(self.trace_time)
                 
