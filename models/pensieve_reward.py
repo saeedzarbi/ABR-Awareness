@@ -60,43 +60,43 @@ class PensieveReward:
         return float(reward)
     
     def compute_reward_vmaf(self, vmaf_score, rebuffer_time, last_bitrate, current_bitrate):
-    """
-    VMAF-based QoE where quality = (current_bitrate_Mbps) * (alpha * vmaf_frac + beta)
-    alpha controls how much VMAF moves quality; beta is baseline weight.
-    """
-    vmaf_frac = float(vmaf_score) / 100.0
-    current_bitrate_mbps = current_bitrate / self.M_IN_K
-
-    # Tunable weights (you can adjust alpha,beta)
-    alpha = 0.8   # how strongly VMAF influences perceived quality
-    beta = 0.2    # baseline quality weight for bitrate
-
-    quality_reward = current_bitrate_mbps * (alpha * vmaf_frac + beta)  # in "Mbps-equivalent"
-
-    rebuffer_penalty_val = self.rebuffer_penalty * float(rebuffer_time)
-
-    if last_bitrate > 0:
-        smoothness_penalty_val = self.smoothness_penalty * abs(current_bitrate - last_bitrate) / self.M_IN_K
-    else:
-        smoothness_penalty_val = 0.0
-
-    reward = quality_reward - rebuffer_penalty_val - smoothness_penalty_val
-
-    # Debug logging for extreme cases
-    if reward < -50.0 or reward > 50.0:
-        import logging
-        logger = logging.getLogger("PensieveReward")
-        if not logger.handlers:
-            ch = logging.StreamHandler()
-            ch.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-            logger.addHandler(ch)
-        logger.setLevel(logging.INFO)
-        logger.info(
-            f"REWARD_DBG vmaf={vmaf_score:.1f} cur_br={current_bitrate} Mbps={current_bitrate_mbps:.3f} "
-            f"q={quality_reward:.3f} rebuffer={rebuffer_penalty_val:.3f} smooth={smoothness_penalty_val:.3f} total={reward:.3f}"
-        )
-
-    return float(reward)
+        """
+        VMAF-based QoE where quality = (current_bitrate_Mbps) * (alpha * vmaf_frac + beta)
+        alpha controls how much VMAF moves quality; beta is baseline weight.
+        """
+        vmaf_frac = float(vmaf_score) / 100.0
+        current_bitrate_mbps = current_bitrate / self.M_IN_K
+    
+        # Tunable weights (you can adjust alpha,beta)
+        alpha = 0.8   # how strongly VMAF influences perceived quality
+        beta = 0.2    # baseline quality weight for bitrate
+    
+        quality_reward = current_bitrate_mbps * (alpha * vmaf_frac + beta)  # in "Mbps-equivalent"
+    
+        rebuffer_penalty_val = self.rebuffer_penalty * float(rebuffer_time)
+    
+        if last_bitrate > 0:
+            smoothness_penalty_val = self.smoothness_penalty * abs(current_bitrate - last_bitrate) / self.M_IN_K
+        else:
+            smoothness_penalty_val = 0.0
+    
+        reward = quality_reward - rebuffer_penalty_val - smoothness_penalty_val
+    
+        # Debug logging for extreme cases
+        if reward < -50.0 or reward > 50.0:
+            import logging
+            logger = logging.getLogger("PensieveReward")
+            if not logger.handlers:
+                ch = logging.StreamHandler()
+                ch.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+                logger.addHandler(ch)
+            logger.setLevel(logging.INFO)
+            logger.info(
+                f"REWARD_DBG vmaf={vmaf_score:.1f} cur_br={current_bitrate} Mbps={current_bitrate_mbps:.3f} "
+                f"q={quality_reward:.3f} rebuffer={rebuffer_penalty_val:.3f} smooth={smoothness_penalty_val:.3f} total={reward:.3f}"
+            )
+    
+        return float(reward)
 
 
 
