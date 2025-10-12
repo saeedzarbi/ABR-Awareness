@@ -61,22 +61,20 @@ class PensieveReward:
     
     def compute_reward_vmaf(self, vmaf_score, rebuffer_time, last_bitrate, current_bitrate):
     """
-    VMAF-based version (safer scaling + debug logging)
-    vmaf_score: 0..100
-    current_bitrate, last_bitrate: kbps
+    VMAF-based QoE where quality = (current_bitrate_Mbps) * (alpha * vmaf_frac + beta)
+    alpha controls how much VMAF moves quality; beta is baseline weight.
     """
-
-    # Map VMAF to a 0..1 quality fraction
     vmaf_frac = float(vmaf_score) / 100.0
+    current_bitrate_mbps = current_bitrate / self.M_IN_K
 
-    # Option A (safer): scale quality by current bitrate (Mbps) * vmaf fraction
-    # so quality_reward has roughly same scale as bitrate-based reward.
-    quality_reward = vmaf_frac * (current_bitrate / self.M_IN_K)  # in "Mbps-equivalent"
+    # Tunable weights (you can adjust alpha,beta)
+    alpha = 0.8   # how strongly VMAF influences perceived quality
+    beta = 0.2    # baseline quality weight for bitrate
 
-    # Rebuffer penalty (seconds * mu)
+    quality_reward = current_bitrate_mbps * (alpha * vmaf_frac + beta)  # in "Mbps-equivalent"
+
     rebuffer_penalty_val = self.rebuffer_penalty * float(rebuffer_time)
 
-    # Smoothness penalty (same as before)
     if last_bitrate > 0:
         smoothness_penalty_val = self.smoothness_penalty * abs(current_bitrate - last_bitrate) / self.M_IN_K
     else:
@@ -84,26 +82,22 @@ class PensieveReward:
 
     reward = quality_reward - rebuffer_penalty_val - smoothness_penalty_val
 
-    # Debug: if reward extremely negative, log components (temporarily)
-    if reward < -50.0:
-        try:
-            import logging
-            logger = logging.getLogger("PensieveReward")
-            if not logger.handlers:
-                ch = logging.StreamHandler()
-                ch.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-                logger.addHandler(ch)
-            logger.setLevel(logging.INFO)
-            logger.info(
-                f"REWARD_DEBUG vmaf={vmaf_score:.1f} vmaf_frac={vmaf_frac:.3f} "
-                f"cur_br={current_bitrate} last_br={last_bitrate} "
-                f"q_reward={quality_reward:.3f} rebuffer_pen={rebuffer_penalty_val:.3f} "
-                f"smooth_pen={smoothness_penalty_val:.3f} total={reward:.3f}"
-            )
-        except Exception:
-            pass
+    # Debug logging for extreme cases
+    if reward < -50.0 or reward > 50.0:
+        import logging
+        logger = logging.getLogger("PensieveReward")
+        if not logger.handlers:
+            ch = logging.StreamHandler()
+            ch.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+            logger.addHandler(ch)
+        logger.setLevel(logging.INFO)
+        logger.info(
+            f"REWARD_DBG vmaf={vmaf_score:.1f} cur_br={current_bitrate} Mbps={current_bitrate_mbps:.3f} "
+            f"q={quality_reward:.3f} rebuffer={rebuffer_penalty_val:.3f} smooth={smoothness_penalty_val:.3f} total={reward:.3f}"
+        )
 
     return float(reward)
+
 
 
 
