@@ -110,7 +110,8 @@ class PPOTrainer:
                 log_prob = dist.log_prob(action)
             
             next_state, reward, done, info = self.env.step(action.item())
-            
+            reward = float(np.clip(reward, -50.0, 50.0))
+
             buffer.add(state, action.item(), reward, value.item(), log_prob.item(), done)
             
             episode_reward += reward
