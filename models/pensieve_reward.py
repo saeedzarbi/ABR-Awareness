@@ -4,7 +4,7 @@ Based on: https://github.com/hongzimao/pensieve
 
 QoE = Σ quality(n) - μ × rebuffer(n) - λ × smoothness(n)
 
-Original Pensieve weights:
+Pensieve standard weights:
 - μ (rebuffering penalty): 4.3
 - λ (smoothness penalty): 1.0
 """
@@ -17,8 +17,8 @@ class PensieveReward:
     
     def __init__(
         self,
-        rebuffer_penalty=1.5,  # Pensieve constant
-        smoothness_penalty=0.5,  # Pensieve constant
+        rebuffer_penalty=4.3,      # Pensieve standard
+        smoothness_penalty=1.0,    # Pensieve standard
         bitrate_levels=[300, 750, 1850, 2850, 4300, 6000]
     ):
         self.rebuffer_penalty = rebuffer_penalty
@@ -26,11 +26,11 @@ class PensieveReward:
         self.bitrate_levels = bitrate_levels
         
         # For normalization
-        self.M_IN_K = 1000.0  # Mbps to Kbps
+        self.M_IN_K = 1000.0  # Kbps to Mbps
     
     def compute_reward(self, bitrate, rebuffer_time, last_bitrate):
         """
-        Compute Pensieve QoE reward
+        Compute Pensieve QoE reward (bitrate-based)
         
         Args:
             bitrate: selected bitrate (kbps)
@@ -41,14 +41,13 @@ class PensieveReward:
             reward: float
         """
         
-        # 1. Quality reward (linear in bitrate, normalized to Mbps)
-        # Pensieve uses bitrate directly (in Mbps)
-        quality_reward = bitrate / self.M_IN_K  # Convert to Mbps
+        # 1. Quality reward (bitrate in Mbps)
+        quality_reward = bitrate / self.M_IN_K
         
         # 2. Rebuffering penalty
         rebuffer_penalty_val = self.rebuffer_penalty * rebuffer_time
         
-        # 3. Smoothness penalty (absolute bitrate change, normalized)
+        # 3. Smoothness penalty (bitrate change in Mbps)
         if last_bitrate > 0:
             smoothness_penalty_val = self.smoothness_penalty * abs(bitrate - last_bitrate) / self.M_IN_K
         else:
@@ -61,44 +60,38 @@ class PensieveReward:
     
     def compute_reward_vmaf(self, vmaf_score, rebuffer_time, last_bitrate, current_bitrate):
         """
-        VMAF-based QoE where quality = (current_bitrate_Mbps) * (alpha * vmaf_frac + beta)
-        alpha controls how much VMAF moves quality; beta is baseline weight.
+        VMAF-based QoE reward
+        
+        Simple approach: Use VMAF as quality metric (scaled to 0-6 range like bitrate)
+        
+        Args:
+            vmaf_score: VMAF score (0-100)
+            rebuffer_time: rebuffering time (seconds)
+            last_bitrate: previous bitrate (kbps)
+            current_bitrate: selected bitrate (kbps)
+        
+        Returns:
+            reward: float
         """
-        vmaf_frac = float(vmaf_score) / 100.0
-        current_bitrate_mbps = current_bitrate / self.M_IN_K
-    
-        # Tunable weights (you can adjust alpha,beta)
-        alpha = 0.8   # how strongly VMAF influences perceived quality
-        beta = 0.2    # baseline quality weight for bitrate
-    
-        quality_reward = current_bitrate_mbps * (alpha * vmaf_frac + beta)  # in "Mbps-equivalent"
-    
-        rebuffer_penalty_val = self.rebuffer_penalty * float(rebuffer_time)
-    
+        
+        # 1. Quality reward based on VMAF
+        # Scale VMAF (0-100) to same range as bitrate (0-6 Mbps)
+        # VMAF 100 = max bitrate quality = 6.0
+        quality_reward = (vmaf_score / 100.0) * 6.0
+        
+        # 2. Rebuffering penalty
+        rebuffer_penalty_val = self.rebuffer_penalty * rebuffer_time
+        
+        # 3. Smoothness penalty (based on bitrate change)
         if last_bitrate > 0:
             smoothness_penalty_val = self.smoothness_penalty * abs(current_bitrate - last_bitrate) / self.M_IN_K
         else:
             smoothness_penalty_val = 0.0
-    
+        
+        # Total QoE
         reward = quality_reward - rebuffer_penalty_val - smoothness_penalty_val
-    
-        # Debug logging for extreme cases
-        if reward < -50.0 or reward > 50.0:
-            import logging
-            logger = logging.getLogger("PensieveReward")
-            if not logger.handlers:
-                ch = logging.StreamHandler()
-                ch.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-                logger.addHandler(ch)
-            logger.setLevel(logging.INFO)
-            logger.info(
-                f"REWARD_DBG vmaf={vmaf_score:.1f} cur_br={current_bitrate} Mbps={current_bitrate_mbps:.3f} "
-                f"q={quality_reward:.3f} rebuffer={rebuffer_penalty_val:.3f} smooth={smoothness_penalty_val:.3f} total={reward:.3f}"
-            )
-    
+        
         return float(reward)
-
-
 
 
 # ============================================
@@ -140,11 +133,11 @@ if __name__ == '__main__':
     
     vmaf_test_cases = [
         # (vmaf, bitrate, rebuffer, last_bitrate, description)
-        (30, 300, 0.0, 0, "Low VMAF, no rebuffer"),
-        (50, 750, 0.0, 300, "Medium VMAF, no rebuffer"),
-        (65, 1850, 1.0, 750, "Good VMAF but rebuffer"),
-        (30, 300, 0.0, 1850, "Low VMAF after drop"),
-        (87, 6000, 5.0, 300, "Highest VMAF with rebuffer"),
+        (30, 300, 0.0, 0, "Low VMAF (30), 300 kbps, no rebuffer"),
+        (50, 750, 0.0, 300, "Medium VMAF (50), 750 kbps"),
+        (65, 1850, 1.0, 750, "Good VMAF (65), 1850 kbps, 1s rebuffer"),
+        (30, 300, 0.0, 1850, "Low VMAF (30), drop to 300"),
+        (87, 6000, 5.0, 300, "High VMAF (87), 6000 kbps, 5s rebuffer"),
     ]
     
     cumulative_reward = 0
@@ -159,9 +152,20 @@ if __name__ == '__main__':
     
     # Comparison
     print("=" * 60)
-    print("Key Insights:")
+    print("Reward Formula:")
     print("=" * 60)
-    print("1. Rebuffering dominates: 1s rebuffer = -4.3 reward")
-    print("2. Smoothness matters: Large bitrate changes penalized")
-    print("3. VMAF-based can give different ordering than bitrate-based")
+    print("Bitrate-based: quality - 4.3×rebuffer - 1.0×smoothness")
+    print("  quality = bitrate_Mbps (0.3 to 6.0)")
+    print()
+    print("VMAF-based: quality - 4.3×rebuffer - 1.0×smoothness")
+    print("  quality = (VMAF/100) × 6.0 (scaled to match bitrate range)")
+    print()
+    print("Example comparisons:")
+    print("  1850 kbps, VMAF 53:")
+    print("    Bitrate-based quality: 1.85")
+    print("    VMAF-based quality:    3.18  (= 53/100 × 6.0)")
+    print()
+    print("  6000 kbps, VMAF 81:")
+    print("    Bitrate-based quality: 6.00")
+    print("    VMAF-based quality:    4.86  (= 81/100 × 6.0)")
     print("=" * 60)
