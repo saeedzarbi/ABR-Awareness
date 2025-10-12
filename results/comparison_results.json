@@ -1,0 +1,68 @@
+[
+  {
+    "policy_name": "Content-Aware (Ours)",
+    "avg_reward": -9948.711646213396,
+    "std_reward": 1.8189894035458565e-12,
+    "avg_bitrate": 2850.0,
+    "avg_vmaf": 50.0,
+    "total_rebuffer": 11967.253975456071,
+    "rebuffer_ratio": 519.4120649069475,
+    "avg_smoothness": 0.0,
+    "num_switches": 0
+  },
+  {
+    "policy_name": "Fixed Low (300 kbps)",
+    "avg_reward": -5.628354937433045,
+    "std_reward": 0.5327501350930277,
+    "avg_bitrate": 300.0,
+    "avg_vmaf": 26.464311334821915,
+    "total_rebuffer": 26.197469250081586,
+    "rebuffer_ratio": 1.1370429362014578,
+    "avg_smoothness": 0.0,
+    "num_switches": 0
+  },
+  {
+    "policy_name": "Fixed Medium (1850 kbps)",
+    "avg_reward": -5765.86545455957,
+    "std_reward": 0.0,
+    "avg_bitrate": 1850.0,
+    "avg_vmaf": 50.0,
+    "total_rebuffer": 6976.638545471484,
+    "rebuffer_ratio": 302.80549242497756,
+    "avg_smoothness": 0.0,
+    "num_switches": 0
+  },
+  {
+    "policy_name": "Fixed High (6000 kbps)",
+    "avg_reward": -23049.07714992293,
+    "std_reward": 0.0,
+    "avg_bitrate": 6000.0,
+    "avg_vmaf": 50.0,
+    "total_rebuffer": 27687.692579907518,
+    "rebuffer_ratio": 1201.7227682251525,
+    "avg_smoothness": 0.0,
+    "num_switches": 0
+  },
+  {
+    "policy_name": "Buffer-Based (BBA-like)",
+    "avg_reward": -171.64791393959254,
+    "std_reward": 0.26525925774770054,
+    "avg_bitrate": 496.875,
+    "avg_vmaf": 36.70751812060674,
+    "total_rebuffer": 253.35602784018195,
+    "rebuffer_ratio": 10.996355375007898,
+    "avg_smoothness": 363.82978723404256,
+    "num_switches": 456
+  },
+  {
+    "policy_name": "Throughput-Based",
+    "avg_reward": -38.183515399939914,
+    "std_reward": 0.5173542277418307,
+    "avg_bitrate": 309.375,
+    "avg_vmaf": 26.980824020173813,
+    "total_rebuffer": 65.49367312520396,
+    "rebuffer_ratio": 2.8426073405036436,
+    "avg_smoothness": 9.574468085106384,
+    "num_switches": 12
+  }
+]
