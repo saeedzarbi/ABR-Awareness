@@ -151,17 +151,21 @@ class ContentAwareEnvV2:
         return np.array([feat['si_mean'], feat['ti_mean']], dtype=np.float32)
     
     def get_vmaf_predictions(self):
-        """Get predicted VMAF for all bitrates (0..100)"""
-        bitrate = self.bitrate_levels[0]
-        key = f"video{self.video_id}/{bitrate}/chunk_{self.chunk_idx:03d}"
-        
-        if key not in self.vmaf_table:
-            return np.array([30, 50, 65, 75, 82, 87], dtype=np.float32)
-        
-        vmaf_dict = self.vmaf_table[key]
+        """Get predicted VMAF for all bitrates by looking up all entries"""
         vmaf_values = []
-        for br in self.bitrate_levels:
-            vmaf_values.append(float(vmaf_dict.get(str(br), 50.0)))
+        
+        for bitrate in self.bitrate_levels:
+            # Look up the specific entry for this bitrate
+            key = f"video{self.video_id}/{bitrate}/chunk_{self.chunk_idx:03d}"
+            
+            if key in self.vmaf_table and str(bitrate) in self.vmaf_table[key]:
+                vmaf = float(self.vmaf_table[key][str(bitrate)])
+            else:
+                # Fallback: estimate based on bitrate
+                # 300->30, 750->50, 1850->65, 2850->75, 4300->82, 6000->87
+                vmaf = 30 + (bitrate - 300) / (6000 - 300) * 57
+            
+            vmaf_values.append(vmaf)
         
         return np.array(vmaf_values, dtype=np.float32)
     
