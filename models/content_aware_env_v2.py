@@ -267,7 +267,7 @@ class ContentAwareEnvV2:
         # -----------------------
         # rebuffer_time in seconds
         if download_time > self.buffer:
-            rebuffer_time = download_time - self.buffer_size  
+            rebuffer_time = download_time - self.buffer  
         else:
             rebuffer_time = 0.0
         
