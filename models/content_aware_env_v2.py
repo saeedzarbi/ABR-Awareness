@@ -1,7 +1,7 @@
 """
 Content-Aware Environment V2
 With Real Network Traces + Pensieve Reward
-FINAL VERSION with all fixes
+FINAL FIXED VERSION
 """
 
 import numpy as np
@@ -27,6 +27,7 @@ if not logger.handlers:
     logger.addHandler(ch)
 logger.setLevel(logging.INFO)
 # --------------------------
+
 
 def get_project_root():
     """Get project root directory"""
@@ -55,8 +56,7 @@ class ContentAwareEnvV2:
         chunk_duration=4.0,
         total_chunks=48,
         use_real_traces=True,
-        buffer_size=60.0  # اضافه شد
-
+        buffer_size=60.0
     ):
         
         # Resolve paths (works from any directory)
@@ -77,14 +77,12 @@ class ContentAwareEnvV2:
         with open(vmaf_file, 'r') as f:
             self.vmaf_table = json.load(f)
         
-        # Pensieve reward function
-        # in ContentAwareEnvV2.__init__
+        # Pensieve reward function (STANDARD SETTINGS)
         self.reward_func = PensieveReward(
-            rebuffer_penalty=1.5,   # tuned down (you can try 4.3 later)
-            smoothness_penalty=0.5,
+            rebuffer_penalty=4.3,      # Pensieve standard
+            smoothness_penalty=1.0,    # Pensieve standard
             bitrate_levels=bitrate_levels
         )
-
         
         # Load network traces
         if use_real_traces:
@@ -171,30 +169,33 @@ class ContentAwareEnvV2:
         """Get network state (Pensieve format)"""
         state = np.zeros((6, 8), dtype=np.float32)
         
+        # Past throughput (normalized by max bitrate)
         for i, t in enumerate(self.past_throughput[-8:]):
-            # past_throughput is in kbps, normalize by max bitrate
             state[0, -(i+1)] = t / 6000.0
         
+        # Past download time (normalized by 10s)
         for i, d in enumerate(self.past_download_time[-8:]):
-            # download_time is in seconds; scale by 10s for network feature
             state[1, -(i+1)] = d / 10.0
         
+        # Current buffer (normalized by max buffer)
         state[2, -1] = min(self.buffer / 60.0, 1.0)
         
+        # Past bitrates (normalized by max bitrate)
         for i, b in enumerate(self.past_bitrates[-5:]):
             state[3, -(i+1)] = b / 6000.0
         
+        # Remaining chunks (normalized)
         remaining = self.total_chunks - self.chunk_idx
         state[4, -1] = remaining / self.total_chunks
         
         return state
     
     def get_state(self):
-        """Get complete state (note: content and vmaf normalized for model input)"""
+        """Get complete state (normalized for model input)"""
         return {
             'network': self.get_network_state(),
-            'content': self.get_content_state() / 100.0,   # SI/TI -> ~[0,1]
-            'vmaf': self.get_vmaf_predictions() / 100.0    # VMAF 0..100 -> 0..1 for model input
+            'content': self.get_content_state() / 100.0,   # SI/TI -> [0,1]
+            'vmaf': self.get_vmaf_predictions() / 100.0    # VMAF -> [0,1]
         }
     
     def step(self, action):
@@ -205,54 +206,49 @@ class ContentAwareEnvV2:
         # Simulate chunk download
         # -----------------------
         if self.use_real_traces:
-            # We'll operate in kilobits (kbit) and kilobits/s (kbps)
-            # chunk_size_kbit = bitrate_kbps * duration_s
-            chunk_size_kbit = float(selected_bitrate) * float(self.chunk_duration)  # kbit
+            # Operate in kilobits (kbit) and kilobits/s (kbps)
+            chunk_size_kbit = float(selected_bitrate) * float(self.chunk_duration)
             
             download_time = 0.0
             downloaded_kbit = 0.0
-            dt = 0.1
-            # max_download_time = 8.0 * self.chunk_duration  # safety cap, e.g., 32s
-            max_download_time = 32.0
-
+            dt = 0.1  # time step for simulation
+            max_download_time = 32.0  # safety cap
+            
             sample_throughputs = []
             
             while downloaded_kbit < chunk_size_kbit and download_time < max_download_time:
                 tp_raw = self.current_trace.get_throughput(self.trace_time)
                 sample_throughputs.append(tp_raw)
                 
-                # Heuristic: assume tp_raw usually in kbps; if very small (<20) maybe it's in Mbps
+                # Heuristic: tp_raw usually in kbps; if very small (<20) maybe Mbps
                 if tp_raw is None:
                     throughput_kbps = 0.0
                 elif tp_raw < 20.0:
-                    # treat as Mbps -> convert to kbps
-                    throughput_kbps = float(tp_raw) * 1000.0
+                    throughput_kbps = float(tp_raw) * 1000.0  # Mbps to kbps
                 else:
                     throughput_kbps = float(tp_raw)
                 
-                # downloaded in this dt (kbit)
+                # Download in this time step
                 downloaded_kbit += throughput_kbps * dt
                 download_time += dt
                 self.trace_time += dt
                 
-                # safety: if trace is giving zeros or nonsense, break to avoid infinite loop
+                # Safety break
                 if download_time >= max_download_time:
                     break
             
-            # if not fully downloaded, set download_time to cap (chunk considered long)
+            # Log if download was incomplete
             if downloaded_kbit < chunk_size_kbit and download_time >= max_download_time:
                 logger.info(f"DOWNLOAD_SAFETY chunk={self.chunk_idx} video={self.video_id} "
                             f"sel_br={selected_bitrate}kbps samples={sample_throughputs[:6]} "
-                            f"downloaded_kbit={downloaded_kbit:.1f} chunk_kbit={chunk_size_kbit:.1f} "
-                            f"max_time={max_download_time}s")
-                # Keep download_time as max_download_time to reflect long download
-                # Note: we do not artificially set download_time huge; we cap it
-                # so rebuffer will be large but bounded.
+                            f"downloaded={downloaded_kbit:.1f}/{chunk_size_kbit:.1f}kbit "
+                            f"time={max_download_time}s")
             
-            # Compute avg throughput in kbps based on what was actually downloaded
-            avg_throughput = (downloaded_kbit / download_time) if download_time > 0 else 0.0  # kbps
+            # Compute average throughput
+            avg_throughput = (downloaded_kbit / download_time) if download_time > 0 else 0.0
+        
         else:
-            # Old simulation path (throughput values in kbps)
+            # Old simulation path (fallback)
             if self.trace_idx < len(self.network_trace):
                 tp = self.network_trace[self.trace_idx]
                 self.trace_idx += 1
@@ -260,20 +256,18 @@ class ContentAwareEnvV2:
                 tp = np.random.uniform(500, 3000)
             
             chunk_size_kbit = float(selected_bitrate) * float(self.chunk_duration)
-            # throughput tp is kbps, so time = chunk_kbit / tp
-            download_time = chunk_size_kbit / float(tp) if tp > 0 else float(self.chunk_duration)
+            download_time = chunk_size_kbit / float(tp) if tp > 0 else self.chunk_duration
             avg_throughput = float(tp)
         
         # -----------------------
         # Buffer dynamics
         # -----------------------
-        # rebuffer_time in seconds
         if download_time > self.buffer:
-            rebuffer_time = download_time - self.buffer  
+            rebuffer_time = download_time - self.buffer
         else:
             rebuffer_time = 0.0
         
-        # update buffer after download
+        # Update buffer
         self.buffer = max(0.0, self.buffer - download_time) + self.chunk_duration
         self.buffer = min(self.buffer, 60.0)
         
@@ -282,17 +276,12 @@ class ContentAwareEnvV2:
         # -----------------------
         reward = self.compute_reward(action, rebuffer_time)
         
-        # temporary clipping to stabilize training (remove after debugging)
-        reward_raw = float(reward)
-        reward = float(np.clip(reward_raw, -200.0, 200.0))
-        if reward != reward_raw:
-            logger.debug(f"REWARD_CLIP chunk={self.chunk_idx} raw={reward_raw:.3f} clipped={reward:.3f}")
-        
-        # occasional debug log
+        # Debug logging (periodic)
         if self.chunk_idx % 12 == 0:
-            logger.info(f"STEP_DEBUG chunk={self.chunk_idx} video={self.video_id} sel_br={selected_bitrate}kbps "
-                        f"download_time={download_time:.2f}s rebuffer={rebuffer_time:.2f}s "
-                        f"avg_tp={avg_throughput:.1f}kbps buffer={self.buffer:.1f}s reward={reward:.3f}")
+            logger.info(f"STEP_DEBUG chunk={self.chunk_idx} video={self.video_id} "
+                        f"bitrate={selected_bitrate}kbps download={download_time:.2f}s "
+                        f"rebuffer={rebuffer_time:.2f}s throughput={avg_throughput:.1f}kbps "
+                        f"buffer={self.buffer:.1f}s reward={reward:.3f}")
         
         # Update history
         self.past_throughput.append(float(avg_throughput))
@@ -306,6 +295,7 @@ class ContentAwareEnvV2:
         # Get next state
         next_state = self.get_state() if not done else None
         
+        # Info dict
         info = {
             'rebuffer_time': float(rebuffer_time),
             'bitrate': float(selected_bitrate),
@@ -329,19 +319,19 @@ class ContentAwareEnvV2:
         current_bitrate = self.bitrate_levels[action]
         last_bitrate = self.past_bitrates[-1] if len(self.past_bitrates) > 0 else 0
         
-        # Use Pensieve reward with VMAF
+        # Compute Pensieve reward with VMAF
         reward = self.reward_func.compute_reward_vmaf(
             vmaf_score=vmaf_score,
             rebuffer_time=rebuffer_time,
             last_bitrate=last_bitrate,
             current_bitrate=current_bitrate
         )
-        reward *= 2.0
-
+        
         # Debug extreme reward cases
         if reward < -100.0:
-            logger.info(f"REWARD_DBG vmaf={vmaf_score:.1f} cur_br={current_bitrate} "
-                        f"rebuffer={rebuffer_time:.2f} last_br={last_bitrate} reward={reward:.2f}")
+            logger.info(f"REWARD_DBG vmaf={vmaf_score:.1f} bitrate={current_bitrate}kbps "
+                        f"rebuffer={rebuffer_time:.2f}s last_br={last_bitrate}kbps "
+                        f"reward={reward:.2f}")
         
         return float(reward)
 
@@ -356,7 +346,6 @@ if __name__ == '__main__':
     
     # Create environment
     env = ContentAwareEnvV2(use_real_traces=True)
-    
     print("\n✓ Environment created")
     
     # Test episode
@@ -374,7 +363,7 @@ if __name__ == '__main__':
         total_reward += reward
         total_rebuffer += info['rebuffer_time']
         
-        print(f"  Step {i+1}: action={action} ({env.bitrate_levels[action]:4d} kbps), "
+        print(f"  Step {i+1}: action={action} ({env.bitrate_levels[action]:4d}kbps), "
               f"reward={reward:+7.3f}, buffer={info['buffer']:5.1f}s, "
               f"rebuffer={info['rebuffer_time']:5.2f}s, "
               f"throughput={info['throughput']:6.0f}kbps")
@@ -385,13 +374,13 @@ if __name__ == '__main__':
     print(f"\n  Total reward: {total_reward:7.2f}")
     print(f"  Total rebuffering: {total_rebuffer:.2f}s")
     
-    # Test with different strategy
+    # Test with aggressive strategy
     print("\n" + "=" * 60)
     print("Testing with aggressive strategy:")
     print("=" * 60)
     
     state = env.reset(video_id=1, split='train')
-    actions = [3, 4, 5, 4, 3]  # Higher bitrates
+    actions = [3, 4, 5, 4, 3]
     
     total_reward = 0
     total_rebuffer = 0
@@ -402,7 +391,7 @@ if __name__ == '__main__':
         total_reward += reward
         total_rebuffer += info['rebuffer_time']
         
-        print(f"  Step {i+1}: action={action} ({env.bitrate_levels[action]:4d} kbps), "
+        print(f"  Step {i+1}: action={action} ({env.bitrate_levels[action]:4d}kbps), "
               f"reward={reward:+7.3f}, buffer={info['buffer']:5.1f}s, "
               f"rebuffer={info['rebuffer_time']:5.2f}s, "
               f"throughput={info['throughput']:6.0f}kbps")
@@ -412,31 +401,6 @@ if __name__ == '__main__':
     
     print(f"\n  Total reward: {total_reward:7.2f}")
     print(f"  Total rebuffering: {total_rebuffer:.2f}s")
-    
-    # Compare with old environment
-    print("\n" + "=" * 60)
-    print("Comparing Real vs Simulated Traces:")
-    print("=" * 60)
-    
-    env_sim = ContentAwareEnvV2(use_real_traces=False)
-    state = env_sim.reset(video_id=1)
-    actions = [0, 1, 2, 1, 0]  # Conservative
-    
-    total_reward_sim = 0
-    total_rebuffer_sim = 0
-    
-    for i, action in enumerate(actions):
-        next_state, reward, done, info = env_sim.step(action)
-        total_reward_sim += reward
-        total_rebuffer_sim += info['rebuffer_time']
-    
-    print(f"\n  Real Traces:")
-    print(f"    Reward:      {total_reward:7.2f}")
-    print(f"    Rebuffering:  {total_rebuffer:6.2f}s")
-    
-    print(f"\n  Simulated Traces:")
-    print(f"    Reward:      {total_reward_sim:7.2f}")
-    print(f"    Rebuffering:  {total_reward_sim:6.2f}s")
     
     print("\n" + "=" * 60)
     print("Reward Formula: Pensieve QoE")
