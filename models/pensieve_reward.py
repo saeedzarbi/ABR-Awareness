@@ -17,8 +17,8 @@ class PensieveReward:
     
     def __init__(
         self,
-        rebuffer_penalty=4.3,  # Pensieve constant
-        smoothness_penalty=1.0,  # Pensieve constant
+        rebuffer_penalty=1.5,  # Pensieve constant
+        smoothness_penalty=0.5,  # Pensieve constant
         bitrate_levels=[300, 750, 1850, 2850, 4300, 6000]
     ):
         self.rebuffer_penalty = rebuffer_penalty
