@@ -54,7 +54,9 @@ class ContentAwareEnvV2:
         bitrate_levels=[300, 750, 1850, 2850, 4300, 6000],
         chunk_duration=4.0,
         total_chunks=48,
-        use_real_traces=True
+        use_real_traces=True,
+        buffer_size=60.0  # اضافه شد
+
     ):
         
         # Resolve paths (works from any directory)
@@ -211,7 +213,7 @@ class ContentAwareEnvV2:
             downloaded_kbit = 0.0
             dt = 0.1
             # max_download_time = 8.0 * self.chunk_duration  # safety cap, e.g., 32s
-            max_download_time = 60.0
+            max_download_time = 32.0
 
             sample_throughputs = []
             
