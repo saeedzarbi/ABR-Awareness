@@ -332,7 +332,8 @@ class ContentAwareEnvV2:
             last_bitrate=last_bitrate,
             current_bitrate=current_bitrate
         )
-        
+        reward *= 2.0
+
         # Debug extreme reward cases
         if reward < -100.0:
             logger.info(f"REWARD_DBG vmaf={vmaf_score:.1f} cur_br={current_bitrate} "
