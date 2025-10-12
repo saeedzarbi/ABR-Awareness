@@ -78,8 +78,8 @@ class ContentAwareEnvV2:
         # Pensieve reward function
         # in ContentAwareEnvV2.__init__
         self.reward_func = PensieveReward(
-            rebuffer_penalty=3.0,   # tuned down (you can try 4.3 later)
-            smoothness_penalty=1.0,
+            rebuffer_penalty=1.5,   # tuned down (you can try 4.3 later)
+            smoothness_penalty=0.5,
             bitrate_levels=bitrate_levels
         )
 
