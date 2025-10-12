@@ -66,11 +66,13 @@ class ContentAwareEnvV2:
             self.vmaf_table = json.load(f)
         
         # Pensieve reward function
+        # in ContentAwareEnvV2.__init__
         self.reward_func = PensieveReward(
-            rebuffer_penalty=4.3,
+            rebuffer_penalty=3.0,   # tuned down
             smoothness_penalty=1.0,
             bitrate_levels=bitrate_levels
         )
+
         
         # Load network traces
         if use_real_traces:
