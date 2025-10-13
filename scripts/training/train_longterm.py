@@ -183,9 +183,11 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--timesteps', type=int, default=1_000_000)
-    parser.add_argument('--run-name', type=str, default=None)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--timesteps', type=int, default=1000000)
+    parser.add_argument('--run-name', type=str, default='longterm_training')
     parser.add_argument('--resume', type=str, default=None)
+    parser.add_argument('--pretrained', type=str, default=None)  # ← اضافه کن
     args = parser.parse_args()
     
     print("\n" + "=" * 70)
