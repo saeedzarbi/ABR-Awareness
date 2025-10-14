@@ -102,3 +102,28 @@ class FCCTraceLoader:
         if trace_name not in self.traces:
             raise ValueError(f"Trace not found: {trace_name}")
         return self.traces[trace_name].copy()
+
+
+if __name__ == '__main__':
+    # تست
+    loader = FCCTraceLoader(
+        fcc_trace_dir='data/fcc_traces',
+        train_file='data/network_traces/fcc/splits/fcc_train.txt',
+        val_file='data/network_traces/fcc/splits/fcc_val.txt',
+        test_file='data/network_traces/fcc/splits/fcc_test.txt'
+    )
+    
+    # تست گرفتن trace
+    print("\n🧪 Testing trace loader...")
+    trace = loader.get_trace('train')
+    print(f"   Train trace shape: {trace.shape}")
+    print(f"   Sample data (first 3 rows):")
+    print(trace[:3])
+    
+    trace = loader.get_trace('val')
+    print(f"\n   Val trace shape: {trace.shape}")
+    
+    trace = loader.get_trace('test')
+    print(f"   Test trace shape: {trace.shape}")
+    
+    print("\n✅ TraceLoader is working!")
