@@ -107,7 +107,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         fcc_directory = sys.argv[1]
     else:
-        fcc_directory = '/data/fcc_traces'
+        fcc_directory = 'abr-content-aware/data/fcc_traces'
     
     print(f"\n📂 FCC Traces Directory: {fcc_directory}\n")
     
