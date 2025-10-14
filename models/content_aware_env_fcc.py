@@ -2,7 +2,6 @@
 
 import numpy as np
 from models.content_aware_env_v2 import ContentAwareEnvV2
-from models.fcc_trace_loader import FCCTraceLoader
 
 class ContentAwareEnvFCC(ContentAwareEnvV2):
     """
@@ -11,7 +10,7 @@ class ContentAwareEnvFCC(ContentAwareEnvV2):
     """
     
     def __init__(self, 
-                 fcc_trace_loader: FCCTraceLoader,
+                 fcc_trace_loader,
                  features_file: str,
                  vmaf_file: str,
                  video_dir: str,
@@ -27,28 +26,53 @@ class ContentAwareEnvFCC(ContentAwareEnvV2):
         """
         # Store FCC loader
         self.fcc_trace_loader = fcc_trace_loader
+        self.mode = mode
         
-        # Call parent constructor
-        # Note: We pass a dummy trace_loader to parent
-        # We'll override the trace loading method
+        # Call parent constructor WITHOUT trace_loader
+        # We'll handle trace loading ourselves
         super().__init__(
-            trace_loader=None,  # We'll handle this ourselves
+            trace_dir='data/network_traces/cooked_traces',  # dummy, won't be used
             features_file=features_file,
             vmaf_file=vmaf_file,
-            video_dir=video_dir,
-            mode=mode,
+            use_real_traces=True,  # Important!
             **kwargs
         )
-    
-    def _load_trace(self):
-        """Override parent's trace loading to use FCC traces"""
-        self.trace = self.fcc_trace_loader.get_trace(mode=self.mode)
-        self.trace_idx = 0
         
-    def reset(self):
+        # Override trace_loader
+        self.use_real_traces = True
+        
+    def reset(self, video_id=1, split=None):
         """Reset environment with new FCC trace"""
-        # Load new trace
-        self._load_trace()
+        # Use self.mode instead of split
+        if split is None:
+            split = self.mode
         
-        # Call parent reset
-        return super().reset()
+        # Load new FCC trace
+        trace_data = self.fcc_trace_loader.get_trace(mode=split)
+        
+        # Create a simple trace object that has get_throughput method
+        from models.trace_loader import NetworkTrace
+        self.current_trace = NetworkTrace(
+            trace_id=f"fcc_{split}",
+            timestamps=trace_data[:, 0],
+            throughputs=trace_data[:, 1],
+            metadata={'source': 'fcc'}
+        )
+        self.trace_time = 0.0
+        
+        # Call parent reset (but skip its trace loading)
+        self.video_id = video_id
+        self.chunk_idx = 0
+        self.buffer = 0.0
+        
+        # Network state history
+        self.past_throughput = []
+        self.past_download_time = []
+        self.past_bitrates = []
+        self.past_errors = []
+        
+        return self.get_state()
+
+
+if __name__ == '__main__':
+    print("ContentAwareEnvFCC module loaded successfully!")
