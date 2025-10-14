@@ -1,5 +1,5 @@
 """
-Test FCC setup - CORRECTED version
+Test FCC setup - FINAL CORRECTED version
 """
 
 import sys
@@ -57,7 +57,7 @@ try:
     next_state, reward, done, info = env.step(2)
     print(f"   ✅ Step OK!")
     print(f"      Reward: {reward:.2f}")
-    print(f"      Bitrate: {info['bitrate']} kbps")
+    print(f"      Bitrate: {int(info['bitrate'])} kbps")
     print(f"      Buffer: {info['buffer']:.2f}s")
     
 except Exception as e:
@@ -108,7 +108,7 @@ try:
         total_reward += reward
         
         print(f"   Step {step+1}: action={action}, reward={reward:+6.2f}, "
-              f"buffer={info['buffer']:5.2f}s, bitrate={info['bitrate']:4d}kbps")
+              f"buffer={info['buffer']:5.2f}s, bitrate={int(info['bitrate'])} kbps")
         
         if done:
             break
@@ -126,5 +126,7 @@ except Exception as e:
 print("\n" + "=" * 70)
 print("✅ ALL TESTS PASSED! System is ready!")
 print("=" * 70)
-print("\n🚀 Next step:")
-print("   python scripts/training/train_fcc_from_scratch.py")
+print("\n🚀 Next steps:")
+print("   1. Quick test (10K steps):  python scripts/training/train_fcc_from_scratch.py")
+print("   2. Full training (1M steps): Will take ~10-12 hours")
+print("\n💡 Tip: Use 'screen' or 'tmux' for long training sessions!")
