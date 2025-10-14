@@ -7,11 +7,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from models.content_aware_model import ContentAwareActorCritic
+from models.content_aware_model import ContentAwareActor
 from models.content_aware_env_fcc import ContentAwareEnvFCC
 from models.fcc_trace_loader import FCCTraceLoader
 from models.ppo_trainer import PPOTrainer
-from models.logger import Logger
+from models.logger import TrainingLogger
 
 def train_on_fcc():
     """Train model from scratch on FCC traces"""
@@ -23,7 +23,7 @@ def train_on_fcc():
     # Configuration
     CONFIG = {
         # FCC Traces
-        'fcc_trace_dir': 'data/network_traces/fcc',
+        'fcc_trace_dir': 'data/fcc_traces',
         'train_split': 'data/network_traces/fcc/splits/fcc_train.txt',
         'val_split': 'data/network_traces/fcc/splits/fcc_val.txt',
         'test_split': 'data/network_traces/fcc/splits/fcc_test.txt',
@@ -41,13 +41,13 @@ def train_on_fcc():
         'gamma': 0.99,
         'gae_lambda': 0.95,
         'clip_epsilon': 0.2,
-        'entropy_coef': 0.10,  # High exploration
+        'entropy_coef': 0.10,
         'value_coef': 0.5,
         'max_grad_norm': 0.5,
         
         # Evaluation
-        'eval_interval': 50,  # Every 50 updates
-        'save_interval': 100,  # Every 100 updates
+        'eval_interval': 50,
+        'save_interval': 100,
         
         # Output
         'output_dir': 'results/fcc_training',
@@ -90,14 +90,12 @@ def train_on_fcc():
     
     # Create model
     print("\n🧠 Creating model...")
-    model = ContentAwareActorCritic(
-        network_input_shape=(6, 8),
-        content_feature_dim=2,
-        vmaf_feature_dim=6,
-        action_dim=6
+    model = ContentAwareActor(
+        state_dim=(6, 8),
+        action_dim=6,
+        content_dim=2
     ).to(device)
     
-    # Count parameters
     total_params = sum(p.numel() for p in model.parameters())
     print(f"   Total parameters: {total_params:,}")
     
@@ -105,26 +103,29 @@ def train_on_fcc():
     optimizer = torch.optim.Adam(model.parameters(), lr=CONFIG['lr'])
     
     # Create logger
-    logger = Logger(CONFIG['log_file'])
+    logger = TrainingLogger(
+        log_dir='results/logs',
+        run_name='fcc_training'
+    )
     
     # Create trainer
     print("\n🎓 Creating PPO trainer...")
     trainer = PPOTrainer(
         model=model,
-        optimizer=optimizer,
         env=train_env,
-        val_env=val_env,
-        device=device,
-        logger=logger,
-        batch_size=CONFIG['batch_size'],
-        n_epochs=CONFIG['n_epochs'],
+        lr=CONFIG['lr'],
         gamma=CONFIG['gamma'],
         gae_lambda=CONFIG['gae_lambda'],
         clip_epsilon=CONFIG['clip_epsilon'],
-        entropy_coef=CONFIG['entropy_coef'],
         value_coef=CONFIG['value_coef'],
-        max_grad_norm=CONFIG['max_grad_norm']
+        entropy_coef=CONFIG['entropy_coef'],
+        max_grad_norm=CONFIG['max_grad_norm'],
+        n_epochs=CONFIG['n_epochs'],
+        batch_size=CONFIG['batch_size']
     )
+    
+    # Set external logger
+    trainer.external_logger = logger
     
     # Training loop
     print("\n" + "="*60)
@@ -142,47 +143,24 @@ def train_on_fcc():
     while timestep < CONFIG['total_timesteps']:
         # Collect rollouts
         rollout = trainer.collect_rollout(n_steps=2048)
-        timestep += len(rollout['rewards'])
+        timestep += len(rollout)
         
         # Train
-        train_info = trainer.train_step(rollout)
+        train_info = trainer.update_policy(rollout)
         update_count += 1
         
         # Log
         log_data = {
-            'update': update_count,
-            'timestep': timestep,
-            'train_reward': train_info['episode_reward'],
             'policy_loss': train_info['policy_loss'],
             'value_loss': train_info['value_loss'],
             'entropy': train_info['entropy']
         }
-        logger.log(log_data)
+        log_entry = logger.log_update(update_count, timestep, log_data)
         
-        print(f"Update {update_count:4d} | Timestep {timestep:7d} | "
-              f"Reward: {train_info['episode_reward']:7.2f} | "
-              f"Entropy: {train_info['entropy']:.3f}")
+        if update_count % 10 == 0:
+            logger.print_update(log_entry)
         
-        # Evaluation
-        if update_count % CONFIG['eval_interval'] == 0:
-            print(f"\n📊 Evaluation at update {update_count}...")
-            val_reward = trainer.evaluate(n_episodes=20)
-            print(f"   Validation Reward: {val_reward:.2f}")
-            
-            # Save best model
-            if val_reward > best_reward:
-                best_reward = val_reward
-                best_path = os.path.join(CONFIG['output_dir'], 'best_model.pth')
-                torch.save({
-                    'update': update_count,
-                    'timestep': timestep,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'best_reward': best_reward
-                }, best_path)
-                print(f"   ✅ New best model saved! Reward: {best_reward:.2f}\n")
-        
-        # Regular checkpoint
+        # Save checkpoint
         if update_count % CONFIG['save_interval'] == 0:
             ckpt_path = os.path.join(CONFIG['output_dir'], 
                                     f'checkpoint_{update_count}.pth')
@@ -198,7 +176,6 @@ def train_on_fcc():
     print("\n" + "="*60)
     print("✅ Training Complete!")
     print("="*60)
-    print(f"Best validation reward: {best_reward:.2f}")
     print(f"Total updates: {update_count}")
     print(f"Total timesteps: {timestep:,}")
     print(f"Models saved in: {CONFIG['output_dir']}")
