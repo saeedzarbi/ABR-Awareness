@@ -38,8 +38,8 @@ try:
     
     env = ContentAwareEnvFCC(
         fcc_trace_loader=loader,
-        features_file='data/features/video_features.json',
-        vmaf_file='data/vmaf/vmaf_scores.json',
+        features_file='data/features/si_ti_features.json',  # ✅ اسم صحیح
+        vmaf_file='data/vmaf/vmaf_table.json',              # ✅ اسم صحیح
         video_dir='data/videos',
         mode='train'
     )
