@@ -29,8 +29,8 @@ def train_on_fcc():
         'test_split': 'data/network_traces/fcc/splits/fcc_test.txt',
         
         # Video data
-        'features_file': 'data/features/video_features.json',
-        'vmaf_file': 'data/vmaf/vmaf_scores.json',
+        'features_file': 'data/features/si_ti_features.json',  # ✅ تغییر
+        'vmaf_file': 'data/vmaf/vmaf_table.json',              # ✅ تغییر
         'video_dir': 'data/videos',
         
         # Training
