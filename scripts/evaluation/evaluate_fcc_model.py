@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
+# اضافه کردن root پروژه به path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import torch
 import numpy as np
