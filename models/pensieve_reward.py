@@ -58,38 +58,28 @@ class PensieveReward:
         
         return float(reward)
     
-    def compute_reward_vmaf(self, vmaf_score, rebuffer_time, last_bitrate, current_bitrate):
+    def compute_reward(self, action, rebuffer_time, vmaf_score):
         """
-        VMAF-based QoE reward
-        
-        Simple approach: Use VMAF as quality metric (scaled to 0-6 range like bitrate)
-        
-        Args:
-            vmaf_score: VMAF score (0-100)
-            rebuffer_time: rebuffering time (seconds)
-            last_bitrate: previous bitrate (kbps)
-            current_bitrate: selected bitrate (kbps)
-        
-        Returns:
-            reward: float
+        Compute reward using Pensieve QoE model with VMAF.
+        This version receives vmaf_score as an argument.
         """
+        # Get bitrates (kbps)
+        current_bitrate = self.bitrate_levels[action]
+        last_bitrate = self.past_bitrates[-1] if len(self.past_bitrates) > 0 else 0
         
-        # 1. Quality reward based on VMAF
-        # Scale VMAF (0-100) to same range as bitrate (0-6 Mbps)
-        # VMAF 100 = max bitrate quality = 6.0
-        quality_reward = (vmaf_score / 100.0) * 6.0
+        # Compute Pensieve reward with VMAF
+        reward = self.reward_func.compute_reward_vmaf(
+            vmaf_score=vmaf_score,
+            rebuffer_time=rebuffer_time,
+            last_bitrate=last_bitrate,
+            current_bitrate=current_bitrate
+        )
         
-        # 2. Rebuffering penalty
-        rebuffer_penalty_val = self.rebuffer_penalty * rebuffer_time
-        
-        # 3. Smoothness penalty (based on bitrate change)
-        if last_bitrate > 0:
-            smoothness_penalty_val = self.smoothness_penalty * abs(current_bitrate - last_bitrate) / self.M_IN_K
-        else:
-            smoothness_penalty_val = 0.0
-        
-        # Total QoE
-        reward = quality_reward - rebuffer_penalty_val - smoothness_penalty_val
+        # Debug extreme reward cases
+        if reward < -100.0:
+            logger.info(f"REWARD_DBG vmaf={vmaf_score:.1f} bitrate={current_bitrate}kbps "
+                        f"rebuffer={rebuffer_time:.2f}s last_br={last_bitrate}kbps "
+                        f"reward={reward:.2f}")
         
         return float(reward)
 
