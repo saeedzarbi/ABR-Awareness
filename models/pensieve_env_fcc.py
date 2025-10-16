@@ -39,17 +39,20 @@ class PensieveEnvFCC(ContentAwareEnvFCC):
         متد 'step' والد (که ما به آن دست نزدیم) این متد را فراخوانی خواهد کرد.
         """
         
-        current_bitrate = self.bitrate_levels[action]
         last_bitrate = self.past_bitrates[-1] if len(self.past_bitrates) > 0 else 0
         
         # =======================================================
         # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
         # !!           تغییر اصلی و رفع خطا اینجاست           !!
         #
-        # به جای ارسال پارامترها با نام، آنها را به ترتیب ارسال می‌کنیم
-        # تا از خطای TypeError جلوگیری شود.
+        # بر اساس خطای شما، تابع پاداش انتظار 'action' را دارد نه 'bitrate'.
+        # پس ما 'action' را مستقیماً پاس می‌دهیم.
+        #
+        # توجه: این کد فرض می‌کند که فایل pensieve_reward.py شما
+        # متد compute_reward(self, action, rebuffer_time, last_bitrate) را دارد.
+        
         reward = self.reward_function.compute_reward(
-            current_bitrate,
+            action,          # <--- پاس دادن اندیس (0-5)
             rebuffer_time,
             last_bitrate
         )
