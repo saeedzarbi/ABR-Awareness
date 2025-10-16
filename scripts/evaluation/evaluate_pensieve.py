@@ -114,4 +114,6 @@ print()
 print(f"Bitrate:")
 print(f"  Mean:  {np.mean(episode_bitrates):7.0f} kbps")
 print()
-print(f"V
+print(f"VMAF (for reference):")
+print(f"  Mean:  {np.mean(episode_vmafs):7.1f}")
+print("=" * 70)
