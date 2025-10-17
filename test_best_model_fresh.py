@@ -286,10 +286,6 @@ for low, high in bins:
 
 print()
 
-# ═══════════════════════════════════════════════════════════
-# 7. ذخیره نتایج
-# ═══════════════════════════════════════════════════════════
-
 results_summary = {
     'timestamp': datetime.now().isoformat(),
     'model': 'checkpoint_400.pth + Safety Wrapper',
