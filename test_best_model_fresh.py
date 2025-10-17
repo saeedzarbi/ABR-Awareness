@@ -121,7 +121,8 @@ env = ContentAwareEnvFCC(
 
 print(f"✅ Test set loaded:")
 print(f"   Number of traces: {len(loader.test_traces)}")
-print(f"   Bitrate levels: {env.bitrates} kbps")
+bitrates = [300, 750, 1850, 2850, 4300, 6000]
+print(f"   Bitrate levels: {bitrates} kbps")
 print()
 
 # ═══════════════════════════════════════════════════════════
@@ -142,7 +143,6 @@ for ep in range(n_episodes):
         'reward': 0,
         'rebuffer_time': 0,
         'bitrates': [],
-        'vmaf_scores': [],
         'buffer_history': [],
         'safety_interventions': 0
     }
@@ -286,6 +286,10 @@ for low, high in bins:
 
 print()
 
+# ═══════════════════════════════════════════════════════════
+# 7. ذخیره نتایج
+# ═══════════════════════════════════════════════════════════
+
 results_summary = {
     'timestamp': datetime.now().isoformat(),
     'model': 'checkpoint_400.pth + Safety Wrapper',
@@ -316,8 +320,7 @@ results_summary = {
     'comparison': {
         'baseline_bba': baseline_bba,
         'improvement_percent': float(improvement)
-    },
-    'episodes': episode_results
+    }
 }
 
 output_file = f'results/test_best_model_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
