@@ -28,12 +28,12 @@ print()
 # Setup
 # ═══════════════════════════════════════════════════════════
 
-checkpoint_dir = 'results/fcc_training_low_lr'
+checkpoint_dir = 'results/fcc_training_long'
 log_file = os.path.join(checkpoint_dir, 'training_log.json')
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 config = {
-    'learning_rate': 1e-4,
+    'learning_rate': 4e-4,
     'gamma': 0.99,
     'gae_lambda': 0.95,
     'clip_epsilon': 0.2,
