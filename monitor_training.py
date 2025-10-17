@@ -5,7 +5,7 @@ import json
 import time
 import os
 
-log_file = 'results/fcc_training_low_entropy/training_log.json'
+log_file = 'results/fcc_training_low_lr/training_log.json'
 
 print("=" * 80)
 print("📊 Real-time Training Monitor")
