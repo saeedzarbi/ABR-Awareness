@@ -1,6 +1,5 @@
 # create_plots.py
 import matplotlib.pyplot as plt
-import numpy as np
 
 # Set style
 plt.style.use('seaborn-v0_8-darkgrid')

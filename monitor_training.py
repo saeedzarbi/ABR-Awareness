@@ -4,7 +4,6 @@ Real-time monitoring
 import json
 import time
 import os
-from datetime import datetime
 
 log_file = 'results/fcc_training_long/training_log.json'
 
