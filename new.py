@@ -1,5 +1,5 @@
 """
-Training طولانی با monitoring کامل
+Training بهبود یافته با Early Stopping و Monitoring
 """
 import sys
 from pathlib import Path
@@ -19,7 +19,7 @@ from models.content_aware_env_fcc import ContentAwareEnvFCC
 from models.fcc_trace_loader import FCCTraceLoader
 
 print("=" * 80)
-print("🚀 LONG TRAINING with Full Monitoring")
+print("🚀 IMPROVED TRAINING with Early Stopping")
 print("=" * 80)
 print(f"⏰ Start: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print()
@@ -28,12 +28,13 @@ print()
 # Setup
 # ═══════════════════════════════════════════════════════════
 
-checkpoint_dir = 'results/fcc_training_long'
+checkpoint_dir = 'results/fcc_training_improved'
 log_file = os.path.join(checkpoint_dir, 'training_log.json')
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 config = {
-    'learning_rate': 4e-4,
+    # ✅ اصلاح شده
+    'learning_rate': 3e-4,              # برگشت به 3e-4
     'gamma': 0.99,
     'gae_lambda': 0.95,
     'clip_epsilon': 0.2,
@@ -43,10 +44,12 @@ config = {
     'batch_size': 64,
     'ppo_epochs': 4,
     'rollout_steps': 2048,
-    'n_updates': 500,  # 500 updates = 1M+ steps
-    'eval_interval': 25,  # هر 25 update ارزیابی
-    'checkpoint_interval': 50,  # هر 50 update ذخیره
-    'log_interval': 5  # هر 5 update لاگ
+    'n_updates': 300,                   # کمتر شد
+    'eval_interval': 10,                # زودتر ارزیابی
+    'checkpoint_interval': 25,          # بیشتر ذخیره
+    'log_interval': 5,
+    'early_stopping_patience': 5,       # جدید!
+    'early_stopping_min_delta': 0.5     # حداقل بهبود
 }
 
 print("⚙️  Configuration:")
@@ -243,15 +246,16 @@ def evaluate(env, model, n_episodes=10):
     return np.mean(rewards), np.std(rewards)
 
 # ═══════════════════════════════════════════════════════════
-# Training Loop with Monitoring
+# Training Loop with Early Stopping
 # ═══════════════════════════════════════════════════════════
 
-print("🎯 Starting Training...")
+print("🎯 Starting Training with Early Stopping...")
 print("=" * 80)
 print()
 
 training_log = []
 best_val_reward = -float('inf')
+no_improvement_count = 0
 start_time = time.time()
 
 for update in range(1, config['n_updates'] + 1):
@@ -286,8 +290,12 @@ for update in range(1, config['n_updates'] + 1):
         log_entry['val_reward_mean'] = float(val_mean)
         log_entry['val_reward_std'] = float(val_std)
         
-        if val_mean > best_val_reward:
+        # ✅ Early Stopping Logic
+        improvement = val_mean - best_val_reward
+        
+        if improvement > config['early_stopping_min_delta']:
             best_val_reward = val_mean
+            no_improvement_count = 0
             log_entry['new_best'] = True
             
             # Save best model
@@ -299,6 +307,20 @@ for update in range(1, config['n_updates'] + 1):
                 'config': config,
                 'val_reward': val_mean
             }, best_path)
+        else:
+            no_improvement_count += 1
+            
+        # Check early stopping
+        if no_improvement_count >= config['early_stopping_patience']:
+            print()
+            print("=" * 80)
+            print("⏸️  EARLY STOPPING TRIGGERED")
+            print("=" * 80)
+            print(f"No improvement for {no_improvement_count} evaluations")
+            print(f"Best val reward: {best_val_reward:+.2f}")
+            print(f"Stopping at update {update}")
+            print()
+            break
     
     training_log.append(log_entry)
     
@@ -316,7 +338,8 @@ for update in range(1, config['n_updates'] + 1):
         
         if 'val_reward_mean' in log_entry:
             best_marker = "🏆" if log_entry.get('new_best') else "  "
-            print(f"         {best_marker}  Val Reward: {log_entry['val_reward_mean']:+.2f} ± {log_entry['val_reward_std']:.2f}")
+            no_improve_marker = f"[{no_improvement_count}/{config['early_stopping_patience']}]"
+            print(f"         {best_marker}  Val: {log_entry['val_reward_mean']:+.2f} ± {log_entry['val_reward_std']:.2f} {no_improve_marker}")
     
     # Save checkpoint
     if update % config['checkpoint_interval'] == 0:
@@ -349,3 +372,75 @@ with open(log_file, 'w') as f:
     json.dump(training_log, f, indent=2)
 
 print("📝 Training log saved!")
+print()
+
+# ═══════════════════════════════════════════════════════════
+# تست سریع بهترین checkpoint
+# ═══════════════════════════════════════════════════════════
+
+print("=" * 80)
+print("🧪 Quick Test on Best Checkpoint")
+print("=" * 80)
+print()
+
+# بارگذاری best model
+try:
+    checkpoint = torch.load(os.path.join(checkpoint_dir, 'checkpoint_best.pth'))
+    model.load_state_dict(checkpoint['model_state_dict'])
+    print(f"✅ Loaded best checkpoint (update {checkpoint['update']})")
+except:
+    print("⚠️  No best checkpoint found")
+
+# تست سریع
+print("Running 5 test episodes...")
+test_rewards = []
+
+env_test = ContentAwareEnvFCC(
+    fcc_trace_loader=loader,
+    features_file='data/features/si_ti_features.json',
+    vmaf_file='data/vmaf/vmaf_table.json',
+    video_dir='data/videos',
+    mode='test' if len(loader.test_traces) >= 5 else 'val'
+)
+
+for i in range(5):
+    state = env_test.reset()
+    ep_reward = 0
+    done = False
+    
+    while not done:
+        net = torch.FloatTensor(state['network']).unsqueeze(0)
+        cont = torch.FloatTensor(state['content']).unsqueeze(0)
+        vmaf = torch.FloatTensor(state['vmaf']).unsqueeze(0)
+        
+        with torch.no_grad():
+            probs, _ = model(net, cont, vmaf)
+        
+        # با safety wrapper
+        action = probs.argmax(dim=1).item()
+        buffer = env_test.buffer
+        
+        if buffer < 5.0:
+            action = min(action, 1)
+        elif buffer < 10.0:
+            action = min(action, 2)
+        elif buffer < 20.0:
+            action = min(action, 3)
+        
+        state, reward, done, info = env_test.step(action)
+        ep_reward += reward
+    
+    test_rewards.append(ep_reward)
+    print(f"  Episode {i+1}: {ep_reward:+.2f}")
+
+print()
+print(f"Quick Test Result: {np.mean(test_rewards):+.2f} ± {np.std(test_rewards):.2f}")
+print()
+
+baseline = 102.16
+if np.mean(test_rewards) > baseline * 0.9:
+    print(f"✅ Promising! Close to or better than baseline ({baseline:+.2f})")
+else:
+    print(f"⚠️  Below baseline, but may improve with more testing")
+
+print("=" * 80)
