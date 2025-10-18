@@ -7,9 +7,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import torch
 import numpy as np
-from models.content_aware_model import ContentAwareActor
-from models.content_aware_env_fcc import ContentAwareEnvFCC
-from models.fcc_trace_loader import FCCTraceLoader
+from .content_aware_model import ContentAwareActor
+from .content_aware_env_fcc import ContentAwareEnvFCC
+from .fcc_trace_loader import FCCTraceLoader
 
 print("=" * 80)
 print("🎯 FINAL: checkpoint_300 (Pure Model)")
