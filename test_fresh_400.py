@@ -62,7 +62,7 @@ env = ContentAwareEnvFCC(
 )
 
 # تست تمام checkpoint ها
-checkpoint_dir = 'results/fcc_training_long'
+checkpoint_dir = 'results/fcc_training'
 checkpoints = sorted([f for f in os.listdir(checkpoint_dir) if f.startswith('checkpoint_') and f.endswith('.pth')])
 
 print(f"Found {len(checkpoints)} checkpoints")
