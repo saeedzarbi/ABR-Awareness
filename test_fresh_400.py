@@ -40,7 +40,7 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ContentAwareActor(state_dim = (6, 8), action_dim = 6, content_dim = 2).to(DEVICE)
 
 # ✅ 2. بارگذاری بهترین مدل از آموزش 'low_lr'
-CHECKPOINT_PATH = 'results/fcc_training/checkpoint_best.pth'
+CHECKPOINT_PATH = 'results/fcc_training_long/checkpoint_best.pth'
 
 try:
     checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE)
