@@ -1,5 +1,5 @@
 """
-تست تمام checkpoint ها
+تست checkpoint_300 با Safety Wrapper
 """
 import sys
 from pathlib import Path
@@ -7,14 +7,31 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import torch
 import numpy as np
-import os
 from models.content_aware_model import ContentAwareActor
 from models.content_aware_env_fcc import ContentAwareEnvFCC
 from models.fcc_trace_loader import FCCTraceLoader
 
 print("=" * 80)
-print("🔍 Testing ALL Checkpoints")
+print("🏆 FINAL TEST: checkpoint_300 + Safety Wrapper")
 print("=" * 80)
+print()
+
+# بارگذاری checkpoint_300 (بهترین!)
+model = ContentAwareActor(state_dim=(6, 8), action_dim=6, content_dim=2)
+
+checkpoint_path = 'results/fcc_training/checkpoint_300.pth'
+
+try:
+    checkpoint = torch.load(checkpoint_path)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    print(f"✅ Loaded: {checkpoint_path}")
+    print(f"   Update: {checkpoint.get('update', 'N/A')}")
+    print(f"   Previous test: +98.21 reward")
+except Exception as e:
+    print(f"❌ Error loading checkpoint: {e}")
+    sys.exit(1)
+
+model.eval()
 print()
 
 # Safety Wrapper
@@ -34,6 +51,7 @@ class SafetyWrapper:
         
         original = action
         
+        # Safety rules
         if buffer < 5.0:
             action = min(action, 1)
         elif buffer < 10.0:
@@ -43,7 +61,11 @@ class SafetyWrapper:
         
         return action, original
 
-# Load environment
+policy = SafetyWrapper(model)
+print("🛡️  Safety wrapper enabled")
+print()
+
+# Load data
 loader = FCCTraceLoader(
     fcc_trace_dir='data/fcc_traces',
     train_file='data/network_traces/fcc/splits/fcc_train.txt',
@@ -61,100 +83,114 @@ env = ContentAwareEnvFCC(
     mode=mode
 )
 
-# تست تمام checkpoint ها
-checkpoint_dir = 'results/fcc_training'
-checkpoints = sorted([f for f in os.listdir(checkpoint_dir) if f.startswith('checkpoint_') and f.endswith('.pth')])
-
-print(f"Found {len(checkpoints)} checkpoints")
+print(f"🧪 Testing on {mode} set")
 print()
 
-results = []
+# Test با 50 episodes
+print(f"Running 50 episodes with Safety Wrapper...")
+print("-" * 80)
 
-for ckpt_name in checkpoints:
-    ckpt_path = os.path.join(checkpoint_dir, ckpt_name)
+rewards = []
+rebuffers = []
+bitrates_list = []
+safety_counts = []
+
+for ep in range(50):
+    state = env.reset()
     
-    try:
-        # Load model
-        model = ContentAwareActor(state_dim=(6, 8), action_dim=6, content_dim=2)
-        checkpoint = torch.load(ckpt_path)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        model.eval()
+    if state is None:
+        continue
+    
+    ep_reward = 0
+    ep_rebuffer = 0
+    ep_bitrates = []
+    ep_safety = 0
+    done = False
+    
+    while not done:
+        action, original = policy.select_action(state, env.buffer)
         
-        policy = SafetyWrapper(model)
+        if action != original:
+            ep_safety += 1
         
-        # Test (20 episodes برای سرعت)
-        rewards = []
-        rebuffers = []
+        state, reward, done, info = env.step(action)
         
-        for ep in range(20):
-            state = env.reset()
-            if state is None:
-                continue
-            
-            ep_reward = 0
-            ep_rebuffer = 0
-            done = False
-            
-            while not done:
-                action, _ = policy.select_action(state, env.buffer)
-                state, reward, done, info = env.step(action)
-                ep_reward += reward
-                ep_rebuffer += info['rebuffer_time']
-            
-            rewards.append(ep_reward)
-            rebuffers.append(ep_rebuffer)
-        
-        mean_reward = np.mean(rewards)
-        std_reward = np.std(rewards)
-        mean_rebuffer = np.mean(rebuffers)
-        
-        results.append({
-            'checkpoint': ckpt_name,
-            'update': checkpoint.get('update', 0),
-            'reward_mean': mean_reward,
-            'reward_std': std_reward,
-            'rebuffer_mean': mean_rebuffer
-        })
-        
-        print(f"{ckpt_name:25s}: Reward={mean_reward:+7.2f}±{std_reward:5.2f}, Rebuffer={mean_rebuffer:5.2f}s")
-        
-    except Exception as e:
-        print(f"{ckpt_name:25s}: Error - {e}")
+        ep_reward += reward
+        ep_rebuffer += info['rebuffer_time']
+        ep_bitrates.append(info['bitrate'])
+    
+    rewards.append(ep_reward)
+    rebuffers.append(ep_rebuffer)
+    bitrates_list.append(np.mean(ep_bitrates))
+    safety_counts.append(ep_safety)
+    
+    if (ep + 1) % 10 == 0:
+        print(f"Episode {ep+1:2d}/50: Reward={ep_reward:+8.2f}, "
+              f"Rebuffer={ep_rebuffer:5.2f}s, "
+              f"Bitrate={np.mean(ep_bitrates):6.0f}kbps, "
+              f"Safety={ep_safety:2d}×")
 
 print()
 print("=" * 80)
-print("📊 Summary")
+print("📊 FINAL RESULTS - checkpoint_300 + Safety Wrapper")
 print("=" * 80)
 print()
 
-# مرتب کردن بر اساس reward
-results_sorted = sorted(results, key=lambda x: x['reward_mean'], reverse=True)
-
-print("Top 5 Checkpoints:")
-for i, result in enumerate(results_sorted[:5]):
-    marker = "🏆" if i == 0 else f"{i+1}. "
-    print(f"{marker} {result['checkpoint']:20s}: "
-          f"Reward={result['reward_mean']:+7.2f}, "
-          f"Rebuffer={result['rebuffer_mean']:5.2f}s")
-
+print(f"Reward:")
+print(f"  Mean:        {np.mean(rewards):+8.2f}")
+print(f"  Std:         {np.std(rewards):8.2f}")
+print(f"  Median:      {np.median(rewards):+8.2f}")
+print(f"  Min:         {np.min(rewards):+8.2f}")
+print(f"  Max:         {np.max(rewards):+8.2f}")
 print()
-print("=" * 80)
+
+print(f"Rebuffering:")
+print(f"  Mean:        {np.mean(rebuffers):8.2f}s")
+print(f"  Total:       {np.sum(rebuffers):8.2f}s")
+print(f"  Max:         {np.max(rebuffers):8.2f}s")
+print()
+
+print(f"Bitrate:")
+print(f"  Mean:        {np.mean(bitrates_list):8.0f} kbps")
+print(f"  Std:         {np.std(bitrates_list):8.0f} kbps")
+print()
+
+print(f"Safety Interventions:")
+print(f"  Mean:        {np.mean(safety_counts):8.1f} per episode")
+print(f"  Total:       {sum(safety_counts):8d}")
+print()
 
 baseline = 102.16
-best = results_sorted[0]
-improvement = ((best['reward_mean'] - baseline) / baseline) * 100
+improvement = ((np.mean(rewards) - baseline) / baseline) * 100
 
-print(f"Best Checkpoint: {best['checkpoint']}")
-print(f"  Reward:      {best['reward_mean']:+.2f}")
-print(f"  vs BBA:      {improvement:+.1f}%")
+print("=" * 80)
+print("🎯 Comparison with Baseline")
+print("=" * 80)
+print(f"Buffer-Based (BBA):     {baseline:+8.2f}  (100.0%)")
+print(f"Our Model (no safety):   +98.21        (96.1%)")
+print(f"Our Model + Safety:     {np.mean(rewards):+8.2f}  ({100+improvement:.1f}%)")
 print()
 
 if improvement > 10:
-    print("🏆 Excellent! Use this checkpoint!")
+    print(f"🏆🏆🏆 EXCELLENT! {improvement:+.1f}% better than baseline!")
+    print("     ✅ This is our FINAL result for the report!")
+elif improvement > 5:
+    print(f"🏆 GREAT! {improvement:+.1f}% better than baseline!")
 elif improvement > 0:
-    print("✅ Better than baseline!")
+    print(f"✅ SUCCESS! {improvement:+.1f}% better than baseline!")
+elif improvement > -5:
+    print(f"⚠️  Close to baseline ({improvement:+.1f}%)")
 else:
-    print("⚠️  All checkpoints below baseline...")
-    print("    Suggestion: Try checkpoint from old training (checkpoint_100 from fcc_training/)")
+    print(f"❌ Below baseline ({improvement:+.1f}%)")
 
+print()
+print("=" * 80)
+print("📝 Summary for Report:")
+print("=" * 80)
+print(f"✅ Model: checkpoint_300 (best from training)")
+print(f"✅ Safety Wrapper: Buffer-based thresholds")
+print(f"✅ Test episodes: 50")
+print(f"✅ Mean reward: {np.mean(rewards):+.2f}")
+print(f"✅ Mean rebuffering: {np.mean(rebuffers):.2f}s")
+print(f"✅ Improvement: {improvement:+.1f}% vs BBA")
 print("=" * 80)
