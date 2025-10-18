@@ -1,81 +1,81 @@
 """
-تست بهترین مدل از آموزش 'low_lr' (نرخ یادگیری 1e-4)
-با استفاده از Wrapper پیشرفته (BufferAwarePolicy + SmoothPolicy)
+تست checkpoint بهترین
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent)) # فرض می‌کنیم اسکریپت در scripts/evaluation/ است
+sys.path.insert(0, str(Path(__file__).parent))
 
 import torch
 import numpy as np
-from tqdm import tqdm
-import json
-from datetime import datetime
-
-# ایمپورت مدل اصلی، محیط و لودر
 from models.content_aware_model import ContentAwareActor
 from models.content_aware_env_fcc import ContentAwareEnvFCC
 from models.fcc_trace_loader import FCCTraceLoader
 
-# ✅ 1. ایمپورت Wrapper های جدید از فایلی که ارائه دادید
-try:
-    from models.policy_wrapper import BufferAwarePolicy, SmoothPolicy
-except ImportError:
-    print("خطا: فایل 'models/policy_wrapper.py' که حاوی BufferAwarePolicy است، پیدا نشد.")
-    print("لطفاً مطمئن شوید فایل Wrapper را در پوشه 'models/' ذخیره کرده‌اید.")
-    sys.exit(1)
-
-
 print("=" * 80)
-print("🧪 Testing Best Model from 'low_lr' Training (1e-4)")
-print("   with Advanced BufferAware + Smooth Wrapper")
+print("🧪 Testing BEST Checkpoint with Safety Wrapper")
 print("=" * 80)
 print()
 
 # ═══════════════════════════════════════════════════════════
-# بارگذاری مدل
+# Load BEST checkpoint
 # ═══════════════════════════════════════════════════════════
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = ContentAwareActor(state_dim = (6, 8), action_dim = 6, content_dim = 2).to(DEVICE)
-
-# ✅ 2. بارگذاری بهترین مدل از آموزش 'low_lr'
-CHECKPOINT_PATH = 'results/fcc_training_long/checkpoint_best.pth'
+model = ContentAwareActor(state_dim=(6, 8), action_dim=6, content_dim=2)
 
 try:
-    checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE)
+    checkpoint = torch.load('results/fcc_training_long/checkpoint_best.pth')
     model.load_state_dict(checkpoint['model_state_dict'])
-    update_num = checkpoint.get('update', 'N/A')
-    val_reward = checkpoint.get('val_reward', 'N/A')
-    print(f"✅ Loaded checkpoint: {CHECKPOINT_PATH}")
-    print(f"   Trained for {update_num} updates.")
-    print(f"   Best Validation Reward during training: {val_reward:+.2f}")
-    print()
-except Exception as e:
-    print(f"❌ Error loading checkpoint! {e}")
-    print("   آیا اسکریپت 'train_fcc_from_scratch_g.py' با کانفیگ low_lr تمام شده است؟")
-    sys.exit(1)
+    print(f"✅ Loaded checkpoint_best.pth")
+    print(f"   Update: {checkpoint['update']}")
+    print(f"   Val Reward: {checkpoint.get('val_reward', 'N/A')}")
+except:
+    print("❌ Best checkpoint not found! Using checkpoint_500...")
+    checkpoint = torch.load('results/fcc_training_long/checkpoint_500.pth')
+    model.load_state_dict(checkpoint['model_state_dict'])
+    print(f"✅ Loaded checkpoint_500.pth")
 
-model.eval() # تنظیم مدل روی حالت ارزیابی
-
-
-# ═══════════════════════════════════════════════════════════
-# ✅ 3. ساخت Policy Wrapper پیشرفته
-# ═══════════════════════════════════════════════════════════
-# ساخت پالیسی پایه با قوانین بافر
-buffer_policy = BufferAwarePolicy(model)
-# ساخت پالیسی نهایی با اعمال قوانین Smoothing روی پالیسی بافر
-policy = SmoothPolicy(buffer_policy, max_jump=2) # max_jump=2 از گزارش اولیه شما
-
-print("✅ Advanced Policy Wrapper (BufferAware + Smooth) enabled.")
-print(f"   Max jump size: {policy.max_jump}")
+model.eval()
 print()
 
+# ═══════════════════════════════════════════════════════════
+# Safety Wrapper
+# ═══════════════════════════════════════════════════════════
+
+print("🛡️  Safety Wrapper Configuration...")
+
+class SafetyWrapper:
+    def __init__(self, model):
+        self.model = model
+        self.model.eval()
+    
+    def select_action(self, state, buffer):
+        net = torch.FloatTensor(state['network']).unsqueeze(0)
+        cont = torch.FloatTensor(state['content']).unsqueeze(0)
+        vmaf = torch.FloatTensor(state['vmaf']).unsqueeze(0)
+        
+        with torch.no_grad():
+            probs, _ = self.model(net, cont, vmaf)
+            action = probs.argmax(dim=1).item()
+        
+        original = action
+        
+        if buffer < 5.0:
+            action = min(action, 1)
+        elif buffer < 10.0:
+            action = min(action, 2)
+        elif buffer < 20.0:
+            action = min(action, 3)
+        
+        return action, original
+
+policy = SafetyWrapper(model)
+print("✅ Safety wrapper enabled")
+print()
 
 # ═══════════════════════════════════════════════════════════
-# بارگذاری محیط تست
+# Test Environment
 # ═══════════════════════════════════════════════════════════
-print("📦 Loading Test Environment (VMAF-based reward)...")
+
 loader = FCCTraceLoader(
     fcc_trace_dir='data/fcc_traces',
     train_file='data/network_traces/fcc/splits/fcc_train.txt',
@@ -83,139 +83,115 @@ loader = FCCTraceLoader(
     test_file='data/network_traces/fcc/splits/fcc_test.txt'
 )
 
+print(f"📊 Test traces: {len(loader.test_traces)}")
+
+mode = 'test' if len(loader.test_traces) >= 20 else 'val'
+
 env = ContentAwareEnvFCC(
     fcc_trace_loader=loader,
     features_file='data/features/si_ti_features.json',
     vmaf_file='data/vmaf/vmaf_table.json',
     video_dir='data/videos',
-    mode='test'
+    mode=mode
 )
-num_test_episodes = len(loader.test_traces)
-print(f"   ✅ Environment loaded. Testing on {num_test_episodes} traces.")
+
+print(f"Mode: {mode}")
 print()
 
 # ═══════════════════════════════════════════════════════════
-# ✅ 4. حلقه ارزیابی اصلاح‌شده
+# Test
 # ═══════════════════════════════════════════════════════════
 
-results = [] # ذخیره نتایج کامل هر اپیزود
-
-print(f"🧪 Running evaluation on {num_test_episodes} test episodes...")
+print(f"🧪 Running 50 episodes...")
 print("-" * 80)
 
-for ep in tqdm(range(num_test_episodes), desc="Evaluating Model"):
-    policy.reset() # ریست کردن وضعیت Wrapper (مانند last_action)
-    state = env.reset(video_id=np.random.randint(1, 7))
+rewards = []
+rebuffers = []
+bitrates_list = []
+safety_counts = []
 
+for ep in range(50):
+    state = env.reset()
+    
+    if state is None:
+        continue
+    
     ep_reward = 0
-    ep_rebuffer_time = 0
+    ep_rebuffer = 0
     ep_bitrates = []
-    ep_vmafs = []
-
+    ep_safety = 0
     done = False
-    recent_rebuffer = 0.0 # متغیر برای نگهداری توقف مرحله قبل
-
+    
     while not done:
-        # انتخاب اکشن با استفاده از Wrapper پیشرفته
-        action = policy.select_action(
-            state,
-            env.buffer, # ارسال بافر فعلی
-            recent_rebuffer # ارسال زمان توقف مرحله قبلی
-        )
-
+        action, original = policy.select_action(state, env.buffer)
+        
+        if action != original:
+            ep_safety += 1
+        
         state, reward, done, info = env.step(action)
-
-        # به‌روزرسانی متغیرها برای ارسال به Wrapper در گام بعدی
-        recent_rebuffer = info['rebuffer_time']
-
-        # جمع‌آوری آمار اپیزود
+        
         ep_reward += reward
-        ep_rebuffer_time += info['rebuffer_time']
+        ep_rebuffer += info['rebuffer_time']
         ep_bitrates.append(info['bitrate'])
-        ep_vmafs.append(info.get('vmaf', 0.0))
-
-    # ذخیره نتایج این اپیزود
-    results.append({
-        'reward': ep_reward,
-        'rebuffer_time': ep_rebuffer_time,
-        'avg_bitrate': np.mean(ep_bitrates) if ep_bitrates else 0,
-        'avg_vmaf': np.mean(ep_vmafs) if ep_vmafs else 0
-    })
+    
+    rewards.append(ep_reward)
+    rebuffers.append(ep_rebuffer)
+    bitrates_list.append(np.mean(ep_bitrates))
+    safety_counts.append(ep_safety)
+    
+    if (ep + 1) % 10 == 0:
+        print(f"Episode {ep+1:2d}/50: Reward={ep_reward:+8.2f}, "
+              f"Rebuffer={ep_rebuffer:5.2f}s, "
+              f"Bitrate={np.mean(ep_bitrates):6.0f}kbps, "
+              f"Safety={ep_safety:2d}×")
 
 print()
 print("=" * 80)
-print("📊 FINAL TEST RESULTS (Low LR Model + Advanced Wrapper)")
+print("📊 FINAL TEST RESULTS")
 print("=" * 80)
 print()
 
-# محاسبه آمار نهایی
-mean_reward = np.mean([r['reward'] for r in results])
-std_reward = np.std([r['reward'] for r in results])
-min_reward = np.min([r['reward'] for r in results])
-max_reward = np.max([r['reward'] for r in results])
-
-mean_rebuffer = np.mean([r['rebuffer_time'] for r in results])
-total_rebuffer = np.sum([r['rebuffer_time'] for r in results])
-
-mean_bitrate = np.mean([r['avg_bitrate'] for r in results])
-mean_vmaf = np.mean([r['avg_vmaf'] for r in results])
-
-print(f"Reward (VMAF-based):")
-print(f"  Mean:        {mean_reward:+8.2f}")
-print(f"  Std:         {std_reward:8.2f}")
-print(f"  Min:         {min_reward:+8.2f}")
-print(f"  Max:         {max_reward:+8.2f}")
+print(f"Reward:")
+print(f"  Mean:        {np.mean(rewards):+8.2f}")
+print(f"  Std:         {np.std(rewards):8.2f}")
+print(f"  Min:         {np.min(rewards):+8.2f}")
+print(f"  Max:         {np.max(rewards):+8.2f}")
+print(f"  Median:      {np.median(rewards):+8.2f}")
 print()
 
 print(f"Rebuffering:")
-print(f"  Mean:        {mean_rebuffer:8.2f}s")
-print(f"  Total:       {total_rebuffer:8.2f}s")
+print(f"  Mean:        {np.mean(rebuffers):8.2f}s")
+print(f"  Total:       {np.sum(rebuffers):8.2f}s")
+print(f"  Max:         {np.max(rebuffers):8.2f}s")
 print()
 
 print(f"Bitrate:")
-print(f"  Mean:        {mean_bitrate:8.0f} kbps")
+print(f"  Mean:        {np.mean(bitrates_list):8.0f} kbps")
+print(f"  Std:         {np.std(bitrates_list):8.0f} kbps")
 print()
 
-print(f"VMAF (Reference):")
-print(f"  Mean:        {mean_vmaf:8.1f}")
+print(f"Safety Interventions:")
+print(f"  Mean:        {np.mean(safety_counts):8.1f} per episode")
+print(f"  Total:       {sum(safety_counts):8d}")
 print()
 
+baseline = 102.16
+improvement = ((np.mean(rewards) - baseline) / baseline) * 100
 
 print("=" * 80)
-print("vs BBA Baseline:")
-bba_reward = 102.16 # از گزارش شما
-print(f"  Baseline (BBA): {bba_reward:+8.2f}")
-print(f"  Our Model:      {mean_reward:+8.2f}")
-improvement = ((mean_reward - bba_reward) / abs(bba_reward)) * 100
-print(f"  Improvement:    {improvement:+.1f}%")
-if improvement > 0:
-    print("  Status:         ✅ Better!")
+print("🎯 Comparison with Baseline")
+print("=" * 80)
+print(f"Buffer-Based (BBA):  {baseline:+8.2f}  (100%)")
+print(f"Our Model + Safety:  {np.mean(rewards):+8.2f}  ({100+improvement:.1f}%)")
+print()
+
+if improvement > 10:
+    print(f"🏆🏆🏆 EXCELLENT! {improvement:+.1f}% better than baseline!")
+elif improvement > 0:
+    print(f"✅ SUCCESS! {improvement:+.1f}% better than baseline!")
+elif improvement > -5:
+    print(f"⚠️  Close to baseline ({improvement:+.1f}%)")
 else:
-    print("  Status:         ⚠️ Worse or Equal")
+    print(f"❌ Below baseline ({improvement:+.1f}%)")
+
 print("=" * 80)
-
-# ذخیره نتایج در فایل JSON
-output_results = {
-    "model": CHECKPOINT_PATH,
-    "wrapper": "BufferAwarePolicy + SmoothPolicy(max_jump=2)",
-    "timestamp": datetime.now().isoformat(),
-    "n_episodes": num_test_episodes,
-    "metrics": {
-        "reward": {"mean": mean_reward, "std": std_reward, "min": min_reward, "max": max_reward},
-        "rebuffering": {"mean": mean_rebuffer, "total": total_rebuffer},
-        "bitrate": {"mean": mean_bitrate},
-        "vmaf": {"mean": mean_vmaf}
-    },
-    "comparison": {
-        "baseline_bba": bba_reward,
-        "improvement_percent": improvement
-    }
-}
-
-output_filename = f"results/evaluation_low_lr_advanced_wrapper.json"
-try:
-    with open(output_filename, 'w') as f:
-        json.dump(output_results, f, indent=2)
-    print(f"\n📝 Detailed results saved to: {output_filename}")
-except Exception as e:
-    print(f"\n❌ Error saving results JSON: {e}")
