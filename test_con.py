@@ -42,7 +42,7 @@ loader = FCCTraceLoader(
     test_file='data/network_traces/fcc/splits/fcc_test.txt'
 )
 
-mode = 'val'
+mode = 'test'
 
 env = ContentAwareEnvFCC(
     fcc_trace_loader=loader,
