@@ -4,13 +4,12 @@
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent)) # فرض می‌کنیم در scripts/evaluation/ است
+sys.path.insert(0, str(Path(__file__).parent.parent)) 
 
 import torch
 import numpy as np
 from tqdm import tqdm
 
-# مدل Pensieve (سازگار) را ایمپورت می‌کنیم
 from models.pensieve_actor_compatible import PensieveActorCompatible 
 from models.content_aware_env_fcc import ContentAwareEnvFCC
 from models.fcc_trace_loader import FCCTraceLoader
@@ -24,14 +23,16 @@ print()
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = PensieveActorCompatible(state_dim=(6, 8), action_dim=6, content_dim=2).to(DEVICE)
 
-# فرض می‌کنیم بهترین مدل Pensieve در این مسیر ذخیره شده است
-checkpoint_path = 'results/pensieve_fcc_training/checkpoint_best.pth' # یا checkpoint_400.pth
+# ✅✅✅ تغییر اصلی اینجاست ✅✅✅
+# به جای 'checkpoint_best.pth'، آخرین مدل ذخیره شده را می‌خوانیم
+checkpoint_path = 'results/pensieve_fcc_training/checkpoint_400.pth' 
 
 try:
+    # هشدار FutureWarning طبیعی است و می‌توان آن را نادیده گرفت
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
     model.load_state_dict(checkpoint['model_state_dict'])
     print(f"✅ Loaded: {checkpoint_path}")
-    print(f"   Update: {checkpoint.get('update', 'N/A')}")
+    print(f"   Update: {checkpoint.get('update', '400')}")
 except Exception as e:
     print(f"❌ Error loading checkpoint: {e}")
     print("   آیا 'train_pensieve.py' اجرا و تمام شده است؟")
@@ -48,10 +49,7 @@ loader = FCCTraceLoader(
     test_file='data/network_traces/fcc/splits/fcc_test.txt'
 )
 
-# ✅ ارزیابی روی مجموعه اعتبارسنجی
 mode = 'val'
-
-# از محیط اصلی (با پاداش VMAF) برای مقایسه عادلانه پاداش استفاده می‌کنیم
 env = ContentAwareEnvFCC(
     fcc_trace_loader=loader,
     features_file='data/features/si_ti_features.json',
@@ -60,7 +58,7 @@ env = ContentAwareEnvFCC(
     mode=mode
 )
 
-num_test_episodes = len(loader.val_traces) # اجرای کامل روی همه داده‌های اعتبارسنجی
+num_test_episodes = len(loader.val_traces) 
 print(f"🧪 Testing on: {mode} set ({num_test_episodes} episodes)...")
 print("-" * 80)
 
@@ -85,7 +83,6 @@ for ep in tqdm(range(num_test_episodes), desc="Evaluating Pensieve (Val)"):
         vmaf = torch.FloatTensor(state['vmaf']).unsqueeze(0).to(DEVICE)
         
         with torch.no_grad():
-            # مدل Pensieve هر سه ورودی را می‌پذیرد اما از دو تای آخر استفاده نمی‌کند
             probs, _ = model(net, cont, vmaf)
             action = probs.argmax(dim=1).item()
         
@@ -117,8 +114,7 @@ print("=" * 80)
 print("🎯 COMPARISON (on Validation Set)")
 print("=" * 80)
 
-# مقایسه با بیس‌لاین‌های مجموعه اعتبارسنجی
-bba = 68.24
+bba = 68.24 # بیس‌لاین Validation set
 print(f"{'Method':<30} {'Reward':>12}")
 print("-" * 80)
 print(f"{'BBA Baseline (Val)':<30} {bba:>+12.2f}")
