@@ -1,205 +1,95 @@
 """
-Network Trace Loader
-Loads and manages real network traces for training and evaluation.
-(✅ Clean version — no circular imports)
+تست بهترین مدل شما (low_lr) روی مجموعه داده Cooked (TEST SET)
+همراه با Wrapper پیشرفته
 """
-
-import numpy as np
-import random
+import sys
 from pathlib import Path
-import json
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+import torch
+import numpy as np
+from tqdm import tqdm
 
-class NetworkTrace:
-    """Represents a single network throughput trace."""
+from models.content_aware_model import ContentAwareActor
+from models.content_aware_env_v2 import ContentAwareEnvV2
+from models.trace_loader import TraceLoader
+from models.policy_wrapper import BufferAwarePolicy, SmoothPolicy
 
-    def __init__(self, trace_id, timestamps, throughputs, metadata=None):
-        self.trace_id = trace_id
-        self.timestamps = np.array(timestamps, dtype=np.float32)
-        self.throughputs = np.array(throughputs, dtype=np.float32)
-        self.metadata = metadata or {}
+print("=" * 80)
+print("🏆 FINAL TEST on COOKED_TRACES SET (Your Model + Advanced Wrapper) 🏆")
+print("   (Model: 'fcc_training_low_lr/checkpoint_best.pth')")
+print("=" * 80)
 
-        self.duration = (
-            self.timestamps[-1] - self.timestamps[0] if len(self.timestamps) > 0 else 0
-        )
+# --- بارگذاری مدل ---
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = ContentAwareActor(state_dim=(6, 8), action_dim=6, content_dim=2).to(DEVICE)
+checkpoint_path = 'results/fcc_training_low_lr/checkpoint_best.pth'
 
-        # Precompute simple statistics
-        self.mean = np.mean(self.throughputs)
-        self.std = np.std(self.throughputs)
-        self.min = np.min(self.throughputs)
-        self.max = np.max(self.throughputs)
+try:
+    checkpoint = torch.load(checkpoint_path, map_location=DEVICE, weights_only=False)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    print(f"✅ Loaded: {checkpoint_path}")
+except Exception as e:
+    print(f"❌ Error loading checkpoint: {e}")
+    sys.exit(1)
+model.eval()
 
-    def get_throughput(self, timestamp):
-        """
-        Returns the throughput (kbps) at a specific timestamp using linear interpolation.
-        """
-        if len(self.timestamps) == 0:
-            return 0.0
+# --- ساخت Wrapper ---
+buffer_policy = BufferAwarePolicy(model)
+policy = SmoothPolicy(buffer_policy, max_jump=2)
+print("✅ Advanced Policy Wrapper (BufferAware + Smooth) enabled.")
 
-        if timestamp <= self.timestamps[0]:
-            return self.throughputs[0]
-        if timestamp >= self.timestamps[-1]:
-            return self.throughputs[-1]
+# --- بارگذاری محیط و داده‌ها ---
+trace_dir = 'data/network_traces/cooked_traces'
+loader = TraceLoader(trace_dir=trace_dir)
 
-        idx = np.searchsorted(self.timestamps, timestamp)
-        t0, t1 = self.timestamps[idx - 1], self.timestamps[idx]
-        tp0, tp1 = self.throughputs[idx - 1], self.throughputs[idx]
-        alpha = (timestamp - t0) / (t1 - t0)
-        return tp0 + alpha * (tp1 - tp0)
+mode = 'test'
 
-    def __repr__(self):
-        return f"NetworkTrace({self.trace_id}, duration={self.duration:.0f}s, mean={self.mean:.0f}kbps)"
+env = ContentAwareEnvV2(
+    trace_dir=trace_dir,
+    features_file='data/features/si_ti_features.json',
+    vmaf_file='data/vmaf/vmaf_table.json'
+)
 
+# ✅ اصلاح شده: استفاده از test_traces به جای trace_files
+num_test_episodes = len(loader.test_traces)
+print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
+print("-" * 80)
 
-class TraceLoader:
-    """
-    Loads and manages Pensieve-style network traces from disk.
-    Handles train/val/test splitting and provides sampling utilities.
-    """
+# --- حلقه تست ---
+rewards, rebuffers, bitrates_list = [], [], []
 
-    def __init__(self, trace_dir="data/network_traces/cooked_traces", train_ratio=0.7, val_ratio=0.15):
-        self.trace_dir = Path(trace_dir)
-        self.traces = []
+for ep in tqdm(range(num_test_episodes), desc="Eval (Your Model Cooked)"):
+    policy.reset()
+    state = env.reset(split=mode)  # محیط خودش trace مناسب انتخاب می‌کند
+    if state is None:
+        continue
 
-        # Load all traces
-        self._load_traces()
+    ep_reward, ep_rebuffer, ep_bitrates = 0, 0, []
+    done = False
+    recent_rebuffer = 0.0
 
-        # Split train/val/test
-        self._split_traces(train_ratio, val_ratio)
+    while not done:
+        action = policy.select_action(state, env.buffer, recent_rebuffer)
+        state, reward, done, info = env.step(action)
 
-        print(f"✓ Loaded {len(self.traces)} traces")
-        print(f"  Train: {len(self.train_traces)}")
-        print(f"  Val:   {len(self.val_traces)}")
-        print(f"  Test:  {len(self.test_traces)}")
+        recent_rebuffer = info['rebuffer_time']
+        ep_reward += reward
+        ep_rebuffer += info['rebuffer_time']
+        ep_bitrates.append(info['bitrate'])
 
-    # ---------------------------------------------------------------------
-    # Internal functions
-    # ---------------------------------------------------------------------
+    rewards.append(ep_reward)
+    rebuffers.append(ep_rebuffer)
+    bitrates_list.append(np.mean(ep_bitrates) if ep_bitrates else 0)
 
-    def _load_traces(self):
-        """Load all trace files from directory."""
-        trace_files = list(self.trace_dir.glob("*"))
-
-        for trace_file in trace_files:
-            try:
-                trace = self._parse_pensieve_trace(trace_file)
-                if trace is not None:
-                    self.traces.append(trace)
-            except Exception as e:
-                print(f"⚠️ Warning: Could not load {trace_file.name}: {e}")
-
-        if not self.traces:
-            raise ValueError(f"No valid traces found in {self.trace_dir}")
-
-    def _parse_pensieve_trace(self, trace_file):
-        """
-        Parse a trace in Pensieve format:
-        timestamp(s)  throughput(Mbps)
-        and convert throughput to kbps.
-        """
-        timestamps = []
-        throughputs = []
-
-        with open(trace_file, "r") as f:
-            for line in f:
-                parts = line.strip().split()
-                if len(parts) >= 2:
-                    try:
-                        t = float(parts[0])
-                        tp_mbps = float(parts[1])
-                        throughputs.append(tp_mbps * 1000.0)  # Mbps → kbps
-                        timestamps.append(t)
-                    except ValueError:
-                        continue
-
-        if len(timestamps) < 10:
-            # Skip too short traces
-            return None
-
-        return NetworkTrace(
-            trace_id=trace_file.stem,
-            timestamps=timestamps,
-            throughputs=throughputs,
-            metadata={"source": "pensieve", "unit": "kbps"},
-        )
-
-    def _split_traces(self, train_ratio, val_ratio):
-        """Randomly split traces into train/val/test."""
-        random.seed(42)
-        random.shuffle(self.traces)
-
-        n = len(self.traces)
-        n_train = int(n * train_ratio)
-        n_val = int(n * val_ratio)
-
-        self.train_traces = self.traces[:n_train]
-        self.val_traces = self.traces[n_train:n_train + n_val]
-        self.test_traces = self.traces[n_train + n_val:]
-
-    # ---------------------------------------------------------------------
-    # Public API
-    # ---------------------------------------------------------------------
-
-    def sample_trace(self, split="train"):
-        """Sample a random trace from the specified split."""
-        if split == "train":
-            return random.choice(self.train_traces)
-        elif split == "val":
-            return random.choice(self.val_traces)
-        elif split == "test":
-            return random.choice(self.test_traces)
-        else:
-            raise ValueError(f"Unknown split: {split}")
-
-    def get_trace_by_id(self, trace_id):
-        """Find a specific trace by its ID."""
-        for trace in self.traces:
-            if trace.trace_id == trace_id:
-                return trace
-        return None
-
-    def get_statistics(self, split="train"):
-        """Compute mean/std statistics for a given split."""
-        if split == "train":
-            traces = self.train_traces
-        elif split == "val":
-            traces = self.val_traces
-        else:
-            traces = self.test_traces
-
-        means = [t.mean for t in traces]
-        stds = [t.std for t in traces]
-
-        return {
-            "count": len(traces),
-            "mean_throughput": np.mean(means),
-            "std_throughput": np.std(means),
-            "mean_variability": np.mean(stds),
-        }
-
-
-# ---------------------------------------------------------------------
-# Test module standalone
-# ---------------------------------------------------------------------
-if __name__ == "__main__":
-    print("=" * 60)
-    print("Testing TraceLoader")
-    print("=" * 60)
-
-    loader = TraceLoader(trace_dir="data/network_traces/cooked_traces")
-
-    print("\nSampling traces:")
-    for i in range(3):
-        trace = loader.sample_trace("train")
-        print(f"  {i+1}. {trace}")
-
-    print("\nStatistics:")
-    for split in ["train", "val", "test"]:
-        stats = loader.get_statistics(split)
-        print(f"  {split.capitalize()}:")
-        print(f"    Count: {stats['count']}")
-        print(f"    Mean throughput: {stats['mean_throughput']:.0f} kbps")
-        print(f"    Mean variability: {stats['mean_variability']:.0f} kbps")
-
-    print("\n✓ All tests passed!")
-    print("=" * 60)
+# --- نتایج نهایی ---
+print("\n" + "=" * 80)
+print("📊 FINAL RESULTS (Your Model + Wrapper on COOKED_TRACES Set)")
+print("=" * 80)
+mean_reward = np.mean(rewards)
+mean_rebuffer = np.mean(rebuffers)
+mean_bitrate = np.mean(bitrates_list)
+print(f"  Mean Reward:        {mean_reward:+8.2f}")
+print(f"  Mean Rebuffering:   {mean_rebuffer:8.2f}s")
+print(f"  Mean Bitrate:       {mean_bitrate:8.0f} kbps")
+print("=" * 80)
