@@ -11,9 +11,7 @@ import numpy as np
 from tqdm import tqdm
 
 from models.content_aware_model import ContentAwareActor
-# ✅ ایمپورت کلاس پایه محیط
 from models.content_aware_env_v2 import ContentAwareEnvV2 
-# ✅ ایمپورت لودر پایه
 from models.trace_loader import TraceLoader 
 from models.policy_wrapper import BufferAwarePolicy, SmoothPolicy
 
@@ -42,19 +40,18 @@ policy = SmoothPolicy(buffer_policy, max_jump=2)
 print("✅ Advanced Policy Wrapper (BufferAware + Smooth) enabled.")
 
 # --- بارگذاری محیط ---
-# ✅ استفاده از TraceLoader پایه و مسیر داده‌های cooked
 trace_dir = 'data/network_traces/cooked_traces'
 loader = TraceLoader(trace_dir=trace_dir)
 
 mode = 'test'
-# ✅ استفاده از ContentAwareEnvV2 (که پاداش VMAF دارد)
+# ✅✅✅ اصلاح شد: 'reward_mode' حذف شد
 env = ContentAwareEnvV2(
     trace_dir=trace_dir,
     features_file='data/features/si_ti_features.json',
     vmaf_file='data/vmaf/vmaf_table.json'
-    # ❌ پارامتر 'reward_mode' که باعث خطا میشد حذف شد
 )
-num_test_episodes = len(loader.get_trace_files(split=mode))
+# ✅✅✅ اصلاح شد: استفاده از loader.trace_files[mode]
+num_test_episodes = len(loader.trace_files[mode])
 print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
 print("-" * 80)
 
@@ -62,7 +59,7 @@ print("-" * 80)
 rewards, rebuffers, bitrates_list = [], [], []
 for ep in tqdm(range(num_test_episodes), desc="Eval (Your Model Cooked)"):
     policy.reset()
-    state = env.reset(split=mode) # ✅ ارسال 'test' به ریست
+    state = env.reset(split=mode) 
     if state is None: continue
     ep_reward, ep_rebuffer, ep_bitrates = 0, 0, []
     done = False
