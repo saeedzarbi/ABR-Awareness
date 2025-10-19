@@ -23,7 +23,7 @@ print("=" * 80)
 # --- بارگذاری مدل ---
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ContentAwareActor(state_dim=(6, 8), action_dim=6, content_dim=2).to(DEVICE)
-checkpoint_path = 'results/fcc_training/checkpoint_400.pth'
+checkpoint_path = 'results/fcc_training_low_lr/checkpoint_best.pth'
 
 try:
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE, weights_only=False)
@@ -45,14 +45,13 @@ loader = TraceLoader(trace_dir=trace_dir)
 
 mode = 'test'
 # ✅✅✅ اصلاح شد: 'reward_mode' حذف شد. 
-# ContentAwareEnvV2 به طور پیش‌فرض از پاداش VMAF استفاده می‌کند.
 env = ContentAwareEnvV2(
     trace_dir=trace_dir,
     features_file='data/features/si_ti_features.json',
     vmaf_file='data/vmaf/vmaf_table.json'
 )
-# ✅✅✅ اصلاح شد: استفاده از متد صحیح get_trace_files
-num_test_episodes = len(loader.get_trace_files(split=mode))
+# ✅✅✅ اصلاح شد: استفاده از loader.trace_files[mode]
+num_test_episodes = len(loader.trace_files[mode])
 print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
 print("-" * 80)
 
