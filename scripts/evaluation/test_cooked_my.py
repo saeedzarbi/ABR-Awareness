@@ -1,6 +1,6 @@
 """
 تست بهترین مدل شما (low_lr) روی مجموعه داده Cooked (TEST SET)
-همراه با Wrapper پیشرفته (BufferAware + Smooth)
+همراه با Wrapper پیشرفته
 """
 import sys, os
 from pathlib import Path
@@ -42,18 +42,17 @@ policy = SmoothPolicy(buffer_policy, max_jump=2)
 print("✅ Advanced Policy Wrapper (BufferAware + Smooth) enabled.")
 
 # --- بارگذاری محیط ---
-# ✅ استفاده از TraceLoader پایه
+# ✅ استفاده از TraceLoader پایه و مسیر داده‌های cooked
 trace_dir = 'data/network_traces/cooked_traces'
 loader = TraceLoader(trace_dir=trace_dir)
 
-# ✅ ارزیابی روی مجموعه تست
 mode = 'test'
-# ✅ استفاده از ContentAwareEnvV2
+# ✅ استفاده از ContentAwareEnvV2 (که پاداش VMAF دارد)
 env = ContentAwareEnvV2(
     trace_dir=trace_dir,
     features_file='data/features/si_ti_features.json',
-    vmaf_file='data/vmaf/vmaf_table.json',
-    reward_mode='vmaf_aware' # استفاده از پاداش VMAF
+    vmaf_file='data/vmaf/vmaf_table.json'
+    # ❌ پارامتر 'reward_mode' که باعث خطا میشد حذف شد
 )
 num_test_episodes = len(loader.get_trace_files(split=mode))
 print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
