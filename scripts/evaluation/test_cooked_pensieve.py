@@ -32,18 +32,18 @@ except Exception as e:
 model.eval()
 
 # --- بارگذاری محیط ---
+# --- بارگذاری محیط ---
 trace_dir = 'data/network_traces/cooked_traces'
 loader = TraceLoader(trace_dir=trace_dir)
 
 mode = 'test'
-# ✅ استفاده از ContentAwareEnvV2 (با پاداش VMAF برای مقایسه عادلانه)
 env = ContentAwareEnvV2(
     trace_dir=trace_dir,
     features_file='data/features/si_ti_features.json',
-    vmaf_file='data/vmaf/vmaf_table.json',
-    reward_mode='vmaf_aware' # ارزیابی با معیار VMAF
+    vmaf_file='data/vmaf/vmaf_table.json'
 )
-num_test_episodes = len(loader.get_trace_files(split=mode))
+
+num_test_episodes = len(loader.test_traces)
 print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
 print("-" * 80)
 
