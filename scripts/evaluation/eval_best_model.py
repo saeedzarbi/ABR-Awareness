@@ -19,7 +19,7 @@ def main():
     
     # Load best model
     model = create_content_aware_model()
-    checkpoint = torch.load('results/fcc_training/checkpoint_best.pth', weights_only=False)
+    checkpoint = torch.load('results/fcc_training/checkpoint_400.pth', weights_only=False)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     
