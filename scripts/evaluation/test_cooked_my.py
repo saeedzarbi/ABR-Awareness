@@ -23,7 +23,7 @@ print("=" * 80)
 # --- بارگذاری مدل ---
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ContentAwareActor(state_dim=(6, 8), action_dim=6, content_dim=2).to(DEVICE)
-checkpoint_path = 'results/fcc_training_low_lr/checkpoint_best.pth'
+checkpoint_path = 'results/fcc_training/checkpoint_400.pth'
 
 try:
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE, weights_only=False)
