@@ -2,7 +2,7 @@
 تست بهترین مدل شما (low_lr) روی مجموعه داده Cooked (TEST SET)
 همراه با Wrapper پیشرفته
 """
-import sys, os
+import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -11,8 +11,8 @@ import numpy as np
 from tqdm import tqdm
 
 from models.content_aware_model import ContentAwareActor
-from models.content_aware_env_v2 import ContentAwareEnvV2 
-from models.trace_loader import TraceLoader 
+from models.content_aware_env_v2 import ContentAwareEnvV2
+from models.trace_loader import TraceLoader
 from models.policy_wrapper import BufferAwarePolicy, SmoothPolicy
 
 print("=" * 80)
@@ -20,9 +20,9 @@ print("🏆 FINAL TEST on COOKED_TRACES SET (Your Model + Advanced Wrapper) 🏆
 print("   (Model: 'fcc_training_low_lr/checkpoint_best.pth')")
 print("=" * 80)
 
-# --- بارگذاری مدل ---
+# --- Load model ---
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = ContentAwareActor(state_dim=(6, 8), action_dim=6, content_dim=2).to(DEVICE)
+model = ContentAwareActor(state_dim=(6,8), action_dim=6, content_dim=2).to(DEVICE)
 checkpoint_path = 'results/fcc_training_low_lr/checkpoint_best.pth'
 
 try:
@@ -34,54 +34,58 @@ except Exception as e:
     sys.exit(1)
 model.eval()
 
-# --- ساخت Wrapper ---
+# --- Policy wrapper ---
 buffer_policy = BufferAwarePolicy(model)
-policy = SmoothPolicy(buffer_policy, max_jump=2) 
+policy = SmoothPolicy(buffer_policy, max_jump=2)
 print("✅ Advanced Policy Wrapper (BufferAware + Smooth) enabled.")
 
-# --- بارگذاری محیط ---
+# --- Load environment and traces ---
 trace_dir = 'data/network_traces/cooked_traces'
 loader = TraceLoader(trace_dir=trace_dir)
 
 mode = 'test'
-# ✅✅✅ اصلاح شد: 'reward_mode' حذف شد. 
 env = ContentAwareEnvV2(
     trace_dir=trace_dir,
     features_file='data/features/si_ti_features.json',
     vmaf_file='data/vmaf/vmaf_table.json'
 )
-# ✅✅✅ اصلاح شد: استفاده از loader.trace_files[mode]
-num_test_episodes = len(loader.trace_files[mode])
-print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
-print("-" * 80)
 
-# --- حلقه تست ---
+# ✅ Correct: use test_traces
+num_test_episodes = len(loader.test_traces)
+print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
+print("-"*80)
+
+# --- Test loop ---
 rewards, rebuffers, bitrates_list = [], [], []
+
 for ep in tqdm(range(num_test_episodes), desc="Eval (Your Model Cooked)"):
     policy.reset()
-    state = env.reset(split=mode) 
-    if state is None: continue
+    state = env.reset(split=mode)
+    if state is None:
+        continue
+
     ep_reward, ep_rebuffer, ep_bitrates = 0, 0, []
     done = False
     recent_rebuffer = 0.0
+
     while not done:
         action = policy.select_action(state, env.buffer, recent_rebuffer)
         state, reward, done, info = env.step(action)
+
         recent_rebuffer = info['rebuffer_time']
         ep_reward += reward
         ep_rebuffer += info['rebuffer_time']
         ep_bitrates.append(info['bitrate'])
+
     rewards.append(ep_reward)
     rebuffers.append(ep_rebuffer)
     bitrates_list.append(np.mean(ep_bitrates) if ep_bitrates else 0)
 
-print("\n" + "=" * 80)
+# --- Final results ---
+print("\n" + "="*80)
 print("📊 FINAL RESULTS (Your Model + Wrapper on COOKED_TRACES Set)")
-print("=" * 80)
-mean_reward = np.mean(rewards)
-mean_rebuffer = np.mean(rebuffers)
-mean_bitrate = np.mean(bitrates_list)
-print(f"  Mean Reward:        {mean_reward:+8.2f}")
-print(f"  Mean Rebuffering:   {mean_rebuffer:8.2f}s")
-print(f"  Mean Bitrate:       {mean_bitrate:8.0f} kbps")
-print("=" * 80)
+print("="*80)
+print(f"  Mean Reward:        {np.mean(rewards):+8.2f}")
+print(f"  Mean Rebuffering:   {np.mean(rebuffers):8.2f}s")
+print(f"  Mean Bitrate:       {np.mean(bitrates_list):8.0f} kbps")
+print("="*80)
