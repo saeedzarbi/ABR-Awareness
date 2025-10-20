@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import numpy as np
 from tqdm import tqdm
 
-from models.mpc_model import MPC #
+from models.mpc_model import MPC
 from models.content_aware_env_v2 import ContentAwareEnvV2
 from models.trace_loader import TraceLoader
 
@@ -17,6 +17,7 @@ print("🧪 FINAL TEST on COOKED_TRACES SET (MPC Model) 🧪")
 print("=" * 80)
 
 # --- ساخت ایجنت MPC ---
+# [cite: saeedzarbi/abr-awareness/ABR-Awareness-e42a2c12e31cb9ea2285ed838026d8243ee66c27/models/mpc_model.py]
 mpc_agent = MPC(future_chunks=5)
 print("✅ MPC Agent created.")
 
@@ -25,12 +26,15 @@ trace_dir = 'data/network_traces/cooked_traces'
 loader = TraceLoader(trace_dir=trace_dir)
 
 mode = 'test'
-# ✅ استفاده از ContentAwareEnvV2 (با پاداش VMAF برای مقایسه عادلانه)
+
+# ✅ اصلاح شد: پارامتر 'reward_mode' حذف شد.
+# کلاس ContentAwareEnvV2 به‌روزرسانی شده و دیگر این پارامتر را نمی‌پذیرد.
+# این کلاس اکنون به طور پیش‌فرض از پاداش مبتنی بر VMAF استفاده می‌کند که برای مقایسه عادلانه مناسب است.
+# [cite: saeedzarbi/abr-awareness/ABR-Awareness-e42a2c12e31cb9ea2285ed838026d8243ee66c27/models/content_aware_env_v2.py]
 env = ContentAwareEnvV2(
     trace_dir=trace_dir,
     features_file='data/features/si_ti_features.json',
-    vmaf_file='data/vmaf/vmaf_table.json',
-    # reward_mode='vmaf_aware' # ارزیابی با معیار VMAF
+    vmaf_file='data/vmaf/vmaf_table.json'
 )
 num_test_episodes = len(loader.get_trace_files(split=mode))
 print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
@@ -44,6 +48,7 @@ for ep in tqdm(range(num_test_episodes), desc="Eval (MPC Cooked)"):
     ep_reward, ep_rebuffer, ep_bitrates = 0, 0, []
     done = False
     while not done:
+        # متد select_action در MPC فقط به state نیاز دارد
         action = mpc_agent.select_action(state)
         state, reward, done, info = env.step(action)
         ep_reward += reward
