@@ -30,7 +30,7 @@ env = ContentAwareEnvV2(
     trace_dir=trace_dir,
     features_file='data/features/si_ti_features.json',
     vmaf_file='data/vmaf/vmaf_table.json',
-    reward_mode='vmaf_aware' # ارزیابی با معیار VMAF
+    # reward_mode='vmaf_aware' # ارزیابی با معیار VMAF
 )
 num_test_episodes = len(loader.get_trace_files(split=mode))
 print(f"🧪 Testing on: {mode} set ({num_test_episodes} traces)...")
