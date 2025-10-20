@@ -233,6 +233,17 @@ class TraceLoader:
         else:
             raise ValueError(f"Unknown split: {split}")
 
+    def get_trace_files(self, split="train"):
+        """Returns the list of traces for the given split."""
+        if split == "train":
+            return self.train_traces
+        elif split == "val":
+            return self.val_traces
+        elif split == "test":
+            return self.test_traces
+        else:
+            raise ValueError(f"Unknown split: {split}")
+
     def get_trace_by_id(self, trace_id):
         for trace in self.traces:
             if trace.trace_id == trace_id:
@@ -254,4 +265,3 @@ class TraceLoader:
             "std_throughput": np.std(means),
             "mean_variability": np.mean(stds)
         }
-
