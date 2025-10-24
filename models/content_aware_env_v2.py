@@ -430,10 +430,10 @@ import logging
 
 # Fix import path
 try:
-    from models.trace_loader import TraceLoader, NetworkTrace
+    from models.trace_loader_seeded import TraceLoader, NetworkTrace
     from models.pensieve_reward import PensieveReward
 except ModuleNotFoundError:
-    from trace_loader import TraceLoader, NetworkTrace
+    from trace_loader_seeded import TraceLoader, NetworkTrace
     from pensieve_reward import PensieveReward
 
 
