@@ -47,17 +47,17 @@ log_file = os.path.join(checkpoint_dir, 'training_log.json')
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 config = {
-    # Model Architecture - کمترین regularization
+    # Model Architecture - بدون regularization
     'hidden_dim': 128,
-    'dropout_rate': 0.05,             # ✅ خیلی کم
-    'use_batchnorm': False,           # ✅ بدون BatchNorm
+    'dropout_rate': 0.0,              # ✅ بدون dropout
+    'use_batchnorm': False,
     
     # Training Hyperparameters
     'learning_rate': 3e-4,
     'gamma': 0.99,
     'gae_lambda': 0.95,
     'clip_epsilon': 0.2,
-    'entropy_coef': 0.01,             # ✅ کم (مثل Pensieve)
+    'entropy_coef': 0.01,
     'value_coef': 0.5,
     'max_grad_norm': 0.5,
     'batch_size': 64,
@@ -65,27 +65,28 @@ config = {
     'rollout_steps': 2048,
     
     # Training Schedule
-    'n_updates': 300,                 # بیشتر
+    'n_updates': 300,
     'eval_interval': 10,
     'checkpoint_interval': 25,
     'log_interval': 5,
     
-    # Early Stopping - خیلی صبور
+    # Early Stopping
     'early_stopping_patience': 10,
-    'early_stopping_min_delta': 0.5,
+    'early_stopping_min_delta': 1.0,  # فقط اگه 1+ بهتر شد
     
-    # LR Scheduler - خیلی کند
-    'lr_scheduler_step': 100,
-    'lr_scheduler_gamma': 0.8,
+    # LR Scheduler - بدون scheduler
+    'lr_scheduler_step': 1000,        # عملاً غیرفعال
+    'lr_scheduler_gamma': 1.0,        # LR ثابت
     
-    # Data Augmentation - خاموش
-    'use_augmentation': False,        # ✅ بدون augmentation
+    # Data Augmentation
+    'use_augmentation': False,
     'augmentation_prob': 0.0,
     
     # Evaluation
     'n_val_episodes': 20,
     'n_test_episodes': 30,
 }
+
 
 print("⚙️  Configuration:")
 print("=" * 80)
