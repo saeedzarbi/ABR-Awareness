@@ -47,17 +47,17 @@ log_file = os.path.join(checkpoint_dir, 'training_log.json')
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 config = {
-    # Model Architecture - ✅ کاهش regularization
+    # Model Architecture - کمترین regularization
     'hidden_dim': 128,
-    'dropout_rate': 0.1,              # ✅ کاهش (از 0.2 به 0.1)
-    'use_batchnorm': True,
+    'dropout_rate': 0.05,             # ✅ خیلی کم
+    'use_batchnorm': False,           # ✅ بدون BatchNorm
     
     # Training Hyperparameters
     'learning_rate': 3e-4,
     'gamma': 0.99,
     'gae_lambda': 0.95,
     'clip_epsilon': 0.2,
-    'entropy_coef': 0.05,             # ✅ کاهش (از 0.10 به 0.05)
+    'entropy_coef': 0.01,             # ✅ کم (مثل Pensieve)
     'value_coef': 0.5,
     'max_grad_norm': 0.5,
     'batch_size': 64,
@@ -65,28 +65,27 @@ config = {
     'rollout_steps': 2048,
     
     # Training Schedule
-    'n_updates': 250,                 # ✅ افزایش (از 200)
+    'n_updates': 300,                 # بیشتر
     'eval_interval': 10,
     'checkpoint_interval': 25,
     'log_interval': 5,
     
-    # Early Stopping - ✅ صبورتر
-    'early_stopping_patience': 8,     # ✅ افزایش (از 5 به 8)
+    # Early Stopping - خیلی صبور
+    'early_stopping_patience': 10,
     'early_stopping_min_delta': 0.5,
     
-    # LR Scheduler - ✅ کندتر
-    'lr_scheduler_step': 75,          # ✅ افزایش (از 50 به 75)
-    'lr_scheduler_gamma': 0.7,        # ✅ کاهش (از 0.5 به 0.7)
+    # LR Scheduler - خیلی کند
+    'lr_scheduler_step': 100,
+    'lr_scheduler_gamma': 0.8,
     
-    # Data Augmentation - ✅ کمتر
-    'use_augmentation': True,
-    'augmentation_prob': 0.2,         # ✅ کاهش (از 0.3 به 0.2)
+    # Data Augmentation - خاموش
+    'use_augmentation': False,        # ✅ بدون augmentation
+    'augmentation_prob': 0.0,
     
     # Evaluation
     'n_val_episodes': 20,
     'n_test_episodes': 30,
 }
-
 
 print("⚙️  Configuration:")
 print("=" * 80)
