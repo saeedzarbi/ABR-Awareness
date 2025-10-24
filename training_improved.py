@@ -633,7 +633,6 @@ if __name__ == '__main__':
     # test_training_components()
     
     # برای training واقعی، این خطوط را uncomment کنید:
-    """
     # Load data
     from models.fcc_trace_loader import FCCTraceLoader
     from models.content_aware_env_fcc import ContentAwareEnvFCC
@@ -663,4 +662,3 @@ if __name__ == '__main__':
     
     # Train
     model, training_log = train_with_environment(env_train, env_val)
-    """
