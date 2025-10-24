@@ -47,45 +47,46 @@ log_file = os.path.join(checkpoint_dir, 'training_log.json')
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 config = {
-    # Model Architecture
-    'hidden_dim': 128,                  # یا 64 برای مدل کوچکتر
-    'dropout_rate': 0.2,                # ✅ Dropout
-    'use_batchnorm': True,              # ✅ BatchNorm
+    # Model Architecture - ✅ کاهش regularization
+    'hidden_dim': 128,
+    'dropout_rate': 0.1,              # ✅ کاهش (از 0.2 به 0.1)
+    'use_batchnorm': True,
     
     # Training Hyperparameters
-    'learning_rate': 3e-4,              
+    'learning_rate': 3e-4,
     'gamma': 0.99,
     'gae_lambda': 0.95,
     'clip_epsilon': 0.2,
-    'entropy_coef': 0.10,               # ✅ افزایش یافته (از 0.01)
+    'entropy_coef': 0.05,             # ✅ کاهش (از 0.10 به 0.05)
     'value_coef': 0.5,
-    'max_grad_norm': 0.5,               # ✅ Gradient clipping
+    'max_grad_norm': 0.5,
     'batch_size': 64,
     'ppo_epochs': 4,
     'rollout_steps': 2048,
     
     # Training Schedule
-    'n_updates': 200,                   # ✅ کمتر (از 300)
-    'eval_interval': 10,                
-    'checkpoint_interval': 25,          
+    'n_updates': 250,                 # ✅ افزایش (از 200)
+    'eval_interval': 10,
+    'checkpoint_interval': 25,
     'log_interval': 5,
     
-    # ✅ Early Stopping
-    'early_stopping_patience': 5,       
-    'early_stopping_min_delta': 0.5,    
+    # Early Stopping - ✅ صبورتر
+    'early_stopping_patience': 8,     # ✅ افزایش (از 5 به 8)
+    'early_stopping_min_delta': 0.5,
     
-    # ✅ Learning Rate Scheduler
-    'lr_scheduler_step': 50,            # هر 50 update
-    'lr_scheduler_gamma': 0.5,          # LR = LR * 0.5
+    # LR Scheduler - ✅ کندتر
+    'lr_scheduler_step': 75,          # ✅ افزایش (از 50 به 75)
+    'lr_scheduler_gamma': 0.7,        # ✅ کاهش (از 0.5 به 0.7)
     
-    # ✅ Data Augmentation
+    # Data Augmentation - ✅ کمتر
     'use_augmentation': True,
-    'augmentation_prob': 0.3,           # 30% chance
+    'augmentation_prob': 0.2,         # ✅ کاهش (از 0.3 به 0.2)
     
     # Evaluation
-    'n_val_episodes': 20,               # ✅ افزایش یافته (از 10)
+    'n_val_episodes': 20,
     'n_test_episodes': 30,
 }
+
 
 print("⚙️  Configuration:")
 print("=" * 80)
