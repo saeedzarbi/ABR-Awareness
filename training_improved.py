@@ -630,7 +630,7 @@ def train_with_environment(env_train, env_val):
 
 if __name__ == '__main__':
     # برای تست بدون environment
-    test_training_components()
+    # test_training_components()
     
     # برای training واقعی، این خطوط را uncomment کنید:
     """
