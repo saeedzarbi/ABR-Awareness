@@ -26,7 +26,7 @@ from datetime import datetime
 import time
 
 # Import improved model
-from content_aware_model_improved import ContentAwareActorImproved, create_improved_model
+from models.content_aware_model_improved import ContentAwareActorImproved, create_improved_model
 
 # این دو فایل باید در کنار این فایل باشند
 # from models.content_aware_env_fcc import ContentAwareEnvFCC
