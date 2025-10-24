@@ -630,35 +630,35 @@ def train_with_environment(env_train, env_val):
 
 if __name__ == '__main__':
     # برای تست بدون environment
-    # test_training_components()
+    test_training_components()
     
     # برای training واقعی، این خطوط را uncomment کنید:
     # Load data
-    from models.fcc_trace_loader import FCCTraceLoader
-    from models.content_aware_env_fcc import ContentAwareEnvFCC
+    # from models.fcc_trace_loader import FCCTraceLoader
+    # from models.content_aware_env_fcc import ContentAwareEnvFCC
     
-    loader = FCCTraceLoader(
-        fcc_trace_dir='data/fcc_traces',
-        train_file='data/network_traces/fcc/splits/fcc_train.txt',
-        val_file='data/network_traces/fcc/splits/fcc_val.txt',
-        test_file='data/network_traces/fcc/splits/fcc_test.txt'
-    )
+    # loader = FCCTraceLoader(
+    #     fcc_trace_dir='data/fcc_traces',
+    #     train_file='data/network_traces/fcc/splits/fcc_train.txt',
+    #     val_file='data/network_traces/fcc/splits/fcc_val.txt',
+    #     test_file='data/network_traces/fcc/splits/fcc_test.txt'
+    # )
     
-    env_train = ContentAwareEnvFCC(
-        fcc_trace_loader=loader,
-        features_file='data/features/si_ti_features.json',
-        vmaf_file='data/vmaf/vmaf_table.json',
-        video_dir='data/videos',
-        mode='train'
-    )
+    # env_train = ContentAwareEnvFCC(
+    #     fcc_trace_loader=loader,
+    #     features_file='data/features/si_ti_features.json',
+    #     vmaf_file='data/vmaf/vmaf_table.json',
+    #     video_dir='data/videos',
+    #     mode='train'
+    # )
     
-    env_val = ContentAwareEnvFCC(
-        fcc_trace_loader=loader,
-        features_file='data/features/si_ti_features.json',
-        vmaf_file='data/vmaf/vmaf_table.json',
-        video_dir='data/videos',
-        mode='val'
-    )
+    # env_val = ContentAwareEnvFCC(
+    #     fcc_trace_loader=loader,
+    #     features_file='data/features/si_ti_features.json',
+    #     vmaf_file='data/vmaf/vmaf_table.json',
+    #     video_dir='data/videos',
+    #     mode='val'
+    # )
     
-    # Train
-    model, training_log = train_with_environment(env_train, env_val)
+    # # Train
+    # model, training_log = train_with_environment(env_train, env_val)
