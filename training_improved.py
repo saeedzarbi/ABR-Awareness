@@ -31,7 +31,7 @@ print()
 # Setup
 # ═══════════════════════════════════════════════════════════
 
-checkpoint_dir = 'results/fcc_training_improved'
+checkpoint_dir = 'results/fcc_training_improved_c'
 log_file = os.path.join(checkpoint_dir, 'training_log.json')
 os.makedirs(checkpoint_dir, exist_ok=True)
 
