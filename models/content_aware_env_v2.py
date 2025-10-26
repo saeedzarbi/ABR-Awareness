@@ -691,12 +691,12 @@ class ContentAwareEnvV2:
                 if download_time >= max_download_time:
                     break
             
-            # Log if download was incomplete
-            if downloaded_kbit < chunk_size_kbit and download_time >= max_download_time:
-                logger.info(f"DOWNLOAD_SAFETY chunk={self.chunk_idx} video={self.video_id} "
-                            f"sel_br={selected_bitrate}kbps samples={sample_throughputs[:6]} "
-                            f"downloaded={downloaded_kbit:.1f}/{chunk_size_kbit:.1f}kbit "
-                            f"time={max_download_time}s")
+            # Log if download was incomplete - DISABLED for cleaner output
+            # if downloaded_kbit < chunk_size_kbit and download_time >= max_download_time:
+            #     logger.info(f"DOWNLOAD_SAFETY chunk={self.chunk_idx} video={self.video_id} "
+            #                 f"sel_br={selected_bitrate}kbps samples={sample_throughputs[:6]} "
+            #                 f"downloaded={downloaded_kbit:.1f}/{chunk_size_kbit:.1f}kbit "
+            #                 f"time={max_download_time}s")
             
             # Compute average throughput
             avg_throughput = (downloaded_kbit / download_time) if download_time > 0 else 0.0
@@ -730,12 +730,12 @@ class ContentAwareEnvV2:
         # -----------------------
         reward = self.compute_reward(action, rebuffer_time)
         
-        # Debug logging (periodic)
-        if self.chunk_idx % 12 == 0:
-            logger.info(f"STEP_DEBUG chunk={self.chunk_idx} video={self.video_id} "
-                        f"bitrate={selected_bitrate}kbps download={download_time:.2f}s "
-                        f"rebuffer={rebuffer_time:.2f}s throughput={avg_throughput:.1f}kbps "
-                        f"buffer={self.buffer:.1f}s reward={reward:.3f}")
+        # Debug logging (periodic) - DISABLED for cleaner output
+        # if self.chunk_idx % 12 == 0:
+        #     logger.info(f"STEP_DEBUG chunk={self.chunk_idx} video={self.video_id} "
+        #                 f"bitrate={selected_bitrate}kbps download={download_time:.2f}s "
+        #                 f"rebuffer={rebuffer_time:.2f}s throughput={avg_throughput:.1f}kbps "
+        #                 f"buffer={self.buffer:.1f}s reward={reward:.3f}")
         
         # Update history
         self.past_throughput.append(float(avg_throughput))
@@ -783,11 +783,11 @@ class ContentAwareEnvV2:
             current_bitrate=current_bitrate
         )
         
-        # Debug extreme reward cases
-        if reward < -100.0:
-            logger.info(f"REWARD_DBG vmaf={vmaf_score:.1f} bitrate={current_bitrate}kbps "
-                        f"rebuffer={rebuffer_time:.2f}s last_br={last_bitrate}kbps "
-                        f"reward={reward:.2f}")
+        # Debug extreme reward cases - DISABLED for cleaner output
+        # if reward < -100.0:
+        #     logger.info(f"REWARD_DBG vmaf={vmaf_score:.1f} bitrate={current_bitrate}kbps "
+        #                 f"rebuffer={rebuffer_time:.2f}s last_br={last_bitrate}kbps "
+        #                 f"reward={reward:.2f}")
         
         return float(reward)
 
