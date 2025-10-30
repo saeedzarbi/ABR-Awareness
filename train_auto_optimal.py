@@ -196,13 +196,12 @@ def main(dataset):
     )
 
         env_val = ContentAwareEnvV2(
-            trace_loader=loader,
-            features_file='data/features/si_ti_features.json',
-            vmaf_file='data/vmaf/vmaf_table.json',
-            video_dir='data/videos',
-            mode='val'
-        )
-
+        trace_dir='data/network_traces/cooked_traces',
+        features_file='data/features/si_ti_features.json',
+        vmaf_file='data/vmaf/vmaf_table.json',
+        video_dir='data/videos',
+        mode='val'
+    )
     else:
         raise ValueError("Dataset must be 'fcc' or 'cooked'")
 
