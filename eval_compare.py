@@ -60,8 +60,11 @@ class PensieveTrainedPolicy:
     def select_action(self, s):
         net = torch.FloatTensor(s['network']).unsqueeze(0).to(self.device)
         with torch.no_grad():
-            probs, _ = self.model(net)
+            dummy_cont = torch.zeros((1, 2), dtype=torch.float32).to(self.device)
+            dummy_vmaf = torch.zeros((1, 6), dtype=torch.float32).to(self.device)
+            probs, _ = self.model(net, dummy_cont, dummy_vmaf)
         return int(probs.argmax(dim=1).item())
+
 
 
 class MPCPolicy:
