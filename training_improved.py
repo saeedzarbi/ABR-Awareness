@@ -56,9 +56,9 @@ config = {
 }
 
 loader = FCCTraceLoader(
-    fcc_trace_dir='data/fcc_traces',
-    train_file='data/network_traces/fcc/splits/fcc_train.txt',
-    val_file='data/network_traces/fcc/splits/fcc_val.txt',
+    fcc_trace_dir='data/network_traces/fcc'
+    train_file='data/network_traces/fcc/splits/fcc_train.txt'
+    val_file='data/network_traces/fcc/splits/fcc_val.txt'
     test_file='data/network_traces/fcc/splits/fcc_test.txt'
 )
 
