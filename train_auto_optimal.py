@@ -186,8 +186,22 @@ def main(dataset):
         env_val = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='val')
     elif dataset == 'cooked':
         loader = TraceLoader(trace_dir='data/network_traces/cooked_traces')
-        env_train = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='train')
-        env_val = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='val')
+        from models.content_aware_env_v2 import ContentAwareEnvV2
+        env_train = ContentAwareEnvV2(
+            trace_loader=loader,
+            features_file='data/features/si_ti_features.json',
+            vmaf_file='data/vmaf/vmaf_table.json',
+            video_dir='data/videos',
+            mode='train'
+        )
+        env_val = ContentAwareEnvV2(
+            trace_loader=loader,
+            features_file='data/features/si_ti_features.json',
+            vmaf_file='data/vmaf/vmaf_table.json',
+            video_dir='data/videos',
+            mode='val'
+        )
+
     else:
         raise ValueError("Dataset must be 'fcc' or 'cooked'")
 
