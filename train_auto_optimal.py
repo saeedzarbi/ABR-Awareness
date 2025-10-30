@@ -188,7 +188,7 @@ def main(dataset):
         loader = TraceLoader(trace_dir='data/network_traces/cooked_traces')
         from models.content_aware_env_v2 import ContentAwareEnvV2
         env_train = ContentAwareEnvV2(
-            trace_loader=loader,
+            trace_dir='data/network_traces/cooked_traces',
             features_file='data/features/si_ti_features.json',
             vmaf_file='data/vmaf/vmaf_table.json',
             video_dir='data/videos',
