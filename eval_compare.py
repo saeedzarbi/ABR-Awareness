@@ -46,21 +46,28 @@ class OurPolicy:
 
 class PensievePolicy:
     """
-    Simplified Pensieve-style agent (network-only input, A3C-style actor)
+    Simplified Pensieve-style agent (network-only input)
+    compatible with your current ContentAwareActor implementation.
     """
     def __init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # same actor head but ignore content/vmaf inputs
-        self.model = ContentAwareActor(
-            net_dim=(6, 8), cont_dim=(0,), vmaf_dim=(0,), n_actions=6
-        ).to(self.device)
+
+        # از همان مدل تو استفاده می‌کنیم، ولی ورودی محتوا و VMAF را صفر می‌دهیم
+        self.model = create_content_aware_model().to(self.device)
         self.model.eval()
 
     def select_action(self, s):
+        # فقط ورودی شبکه فعال است؛ بقیه صفر می‌شود
         net = torch.FloatTensor(s['network']).unsqueeze(0).to(self.device)
+        # ورودی‌های محتوا و vmaf را با صفر پر می‌کنیم تا شکلشان درست باشد
+        cont = torch.zeros_like(torch.FloatTensor(s['content'])).unsqueeze(0).to(self.device)
+        vmaf = torch.zeros_like(torch.FloatTensor(s['vmaf'])).unsqueeze(0).to(self.device)
+
         with torch.no_grad():
-            probs, _ = self.model(net, None, None)
+            probs, _ = self.model(net, cont, vmaf)
+
         return int(probs.argmax(dim=1).item())
+
 
 class MPCPolicy:
     def __init__(self, bitrate_levels=[300,750,1850,2850,4300,6000], H=5):
