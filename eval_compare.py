@@ -1,18 +1,17 @@
 # eval_compare.py
-# -----------------------------
-# Evaluation of multiple ABR agents (Our PPO, Pensieve, MPC, BOLA, ComycoLike)
-# -----------------------------
+# ----------------------------------------------------------
+# Evaluation of multiple ABR agents (Our PPO, Trained Pensieve, MPC, BOLA, ComycoLike)
+# ----------------------------------------------------------
 
-import os, json, argparse, random, numpy as np
+import os, argparse, random, numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
-
-from models.content_aware_model import create_content_aware_model, ContentAwareActor
+from models.content_aware_model import create_content_aware_model
 from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
 from models.fcc_trace_loader import FCCTraceLoader
 from models.content_aware_env_v2 import ContentAwareEnvV2
 from models.pensieve_reward import PensieveReward
+from models.pensieve_actor_compatible import PensieveActorCompatible  # ✅ اضافه شد
 
 SEED = 42
 random.seed(SEED)
@@ -24,6 +23,7 @@ torch.manual_seed(SEED)
 # ----------------------------------------------------------
 
 class OurPolicy:
+    """Content-aware PPO agent"""
     def __init__(self, ckpt_path):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = create_content_aware_model().to(self.device)
@@ -44,28 +44,23 @@ class OurPolicy:
             probs, _ = self.model(net, cont, vmaf)
         return int(probs.argmax(dim=1).item())
 
-class PensievePolicy:
-    """
-    Simplified Pensieve-style agent (network-only input)
-    compatible with your current ContentAwareActor implementation.
-    """
-    def __init__(self):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # از همان مدل تو استفاده می‌کنیم، ولی ورودی محتوا و VMAF را صفر می‌دهیم
-        self.model = create_content_aware_model().to(self.device)
+class PensieveTrainedPolicy:
+    """Uses trained PensieveActorCompatible checkpoint"""
+    def __init__(self, ckpt_path):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = PensieveActorCompatible(state_dim=(6,8), action_dim=6).to(self.device)
+        ckpt = torch.load(ckpt_path, map_location=self.device)
+        if 'model_state_dict' in ckpt:
+            self.model.load_state_dict(ckpt['model_state_dict'])
+        else:
+            self.model.load_state_dict(ckpt)
         self.model.eval()
 
     def select_action(self, s):
-        # فقط ورودی شبکه فعال است؛ بقیه صفر می‌شود
         net = torch.FloatTensor(s['network']).unsqueeze(0).to(self.device)
-        # ورودی‌های محتوا و vmaf را با صفر پر می‌کنیم تا شکلشان درست باشد
-        cont = torch.zeros_like(torch.FloatTensor(s['content'])).unsqueeze(0).to(self.device)
-        vmaf = torch.zeros_like(torch.FloatTensor(s['vmaf'])).unsqueeze(0).to(self.device)
-
         with torch.no_grad():
-            probs, _ = self.model(net, cont, vmaf)
-
+            probs, _ = self.model(net)
         return int(probs.argmax(dim=1).item())
 
 
@@ -73,9 +68,7 @@ class MPCPolicy:
     def __init__(self, bitrate_levels=[300,750,1850,2850,4300,6000], H=5):
         self.bitrates = bitrate_levels
         self.H = H
-        self.reward = PensieveReward(
-            rebuffer_penalty=4.3, smoothness_penalty=1.0, bitrate_levels=bitrate_levels
-        )
+        self.reward = PensieveReward(4.3, 1.0, bitrate_levels)
 
     def _avg_tp(self, past_tp):
         arr = np.array(past_tp[-8:] or [1000.0])
@@ -91,16 +84,12 @@ class MPCPolicy:
             dl_time = (br * 4.0) / max(tp_hat, 1e-3)
             rebuf = max(0.0, dl_time - buffer)
             vmaf = float(s['vmaf'][a] * 100.0)
-            q = self.reward.compute_reward_vmaf(
-                vmaf_score=vmaf,
-                rebuffer_time=rebuf,
-                last_bitrate=last_br,
-                current_bitrate=br
-            )
+            q = self.reward.compute_reward_vmaf(vmaf, rebuf, last_br, br)
             if q > best_q:
                 best_q, best_a = q, a
         self._last_br = self.bitrates[best_a]
         return best_a
+
 
 class BOLAPolicy:
     def __init__(self, bitrate_levels=[300,750,1850,2850,4300,6000]):
@@ -117,14 +106,13 @@ class BOLAPolicy:
         elif buf < 40: idx = 4
         else: idx = 5
         cand = range(max(0, idx-1), min(len(self.bitrates), idx+2))
-        return int(np.argmax(util[list(cand)]) + (min(cand)))
+        return int(np.argmax(util[list(cand)]) + min(cand))
+
 
 class ComycoLikePolicy(MPCPolicy):
     def __init__(self, bitrate_levels=[300,750,1850,2850,4300,6000], H=5):
         super().__init__(bitrate_levels, H)
-        self.reward = PensieveReward(
-            rebuffer_penalty=4.3, smoothness_penalty=2.0, bitrate_levels=bitrate_levels
-        )
+        self.reward = PensieveReward(4.3, 2.0, bitrate_levels)
 
 # ----------------------------------------------------------
 # Environment setup
@@ -200,6 +188,7 @@ def main():
     parser.add_argument('--episodes', type=int, default=100)
     parser.add_argument('--out', type=str, default='results/compare_eval')
     parser.add_argument('--our_ckpt', type=str, default='results/fcc_training_auto/best_model.pth')
+    parser.add_argument('--pensieve_ckpt', type=str, default='results/pensieve_fcc_training/checkpoint_500.pth')
     args = parser.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
@@ -207,7 +196,7 @@ def main():
 
     policies = {
         'our': OurPolicy(args.our_ckpt),
-        'pensieve': PensievePolicy(),
+        'pensieve_trained': PensieveTrainedPolicy(args.pensieve_ckpt),
         'mpc': MPCPolicy(),
         'bola': BOLAPolicy(),
         'comyco_like': ComycoLikePolicy()
@@ -231,13 +220,12 @@ def main():
     out_df.to_csv(out_path, index=False)
     print(f"\n✓ Saved summaries to {out_path}")
 
-    # Optional: significance test
     try:
         import scipy.stats as st
         a = pd.read_csv(os.path.join(args.out, f'{args.dataset}_our_episodes.csv'))['reward']
-        b = pd.read_csv(os.path.join(args.out, f'{args.dataset}_pensieve_episodes.csv'))['reward']
+        b = pd.read_csv(os.path.join(args.out, f'{args.dataset}_pensieve_trained_episodes.csv'))['reward']
         t, p = st.ttest_rel(a, b)
-        print(f"Paired t-test (our vs pensieve): t={t:.2f}, p={p:.3g}")
+        print(f"Paired t-test (our vs trained-pensieve): t={t:.2f}, p={p:.3g}")
     except Exception as e:
         print("Significance test skipped:", e)
 
