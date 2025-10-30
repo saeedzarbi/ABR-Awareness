@@ -1,0 +1,28 @@
+{
+  "model": "results/fcc_training_long/checkpoint_best.pth",
+  "wrapper": "BufferAwarePolicy + SmoothPolicy(max_jump=2)",
+  "timestamp": "2025-10-18T08:48:14.062001",
+  "n_episodes": 40,
+  "metrics": {
+    "reward": {
+      "mean": -4.029523049294949,
+      "std": 388.94035416889403,
+      "min": -2363.1022148132324,
+      "max": 144.30521178245544
+    },
+    "rebuffering": {
+      "mean": 24.184999999999935,
+      "total": 967.3999999999974
+    },
+    "bitrate": {
+      "mean": 1173.046875
+    },
+    "vmaf": {
+      "mean": 0.0
+    }
+  },
+  "comparison": {
+    "baseline_bba": 102.16,
+    "improvement_percent": -103.94432561598958
+  }
+}

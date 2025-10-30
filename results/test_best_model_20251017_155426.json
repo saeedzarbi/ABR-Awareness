@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-10-17T15:54:26.547400",
+  "model": "checkpoint_400.pth + Safety Wrapper",
+  "n_episodes": 50,
+  "metrics": {
+    "reward": {
+      "mean": 76.90142634630203,
+      "std": 147.92548395809752,
+      "min": -633.3869891166687,
+      "max": 164.44441187381744,
+      "median": 98.60448586940765
+    },
+    "rebuffering": {
+      "mean": 8.693999999999978,
+      "std": 32.188516026682464,
+      "total": 434.6999999999989,
+      "max": 165.8999999999995
+    },
+    "bitrate": {
+      "mean": 1110.8125,
+      "std": 719.3416010322874
+    },
+    "safety_interventions": {
+      "mean": 0.2,
+      "total": 10
+    }
+  },
+  "comparison": {
+    "baseline_bba": 102.16,
+    "improvement_percent": -24.72452393666598
+  }
+}
