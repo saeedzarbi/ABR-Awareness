@@ -7,8 +7,8 @@ from models.content_aware_model import create_content_aware_model
 from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
 from models.ppo_trainer import PPOTrainer
 from models.logger import TrainingLogger
-from models.reward_vmaf import compute_vmaf_reward
-from models.reward_standard import compute_standard_reward
+from reward_vmaf import compute_vmaf_reward
+from reward_standard import compute_standard_reward
 
 SEED = 42
 np.random.seed(SEED)
@@ -28,10 +28,10 @@ def main(args):
 
     # Adjust reward function
     if args.no_vmaf:
-        compute_reward = compute_standard_reward
+        reward_fn = compute_standard_reward
         reward_type = "Bitrate-Based"
     else:
-        compute_reward = compute_vmaf_reward
+        reward_fn = compute_vmaf_reward
         reward_type = "VMAF-Based"
 
     print(f"✅ Reward type: {reward_type}\n")
@@ -39,8 +39,8 @@ def main(args):
     # Create environments
     env_train = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='train')
     env_val = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='val')
-    env_train.set_custom_reward_fn(compute_reward)
-    env_val.set_custom_reward_fn(compute_reward)
+    env_train.set_custom_reward_fn(reward_fn)
+    env_val.set_custom_reward_fn(reward_fn)
 
     # Create model
     model = create_content_aware_model().to(device)
