@@ -1,22 +1,22 @@
 #!/bin/bash
+set -e
 
-mkdir -p results/ablation_logs
+mkdir -p results/ablation_runs
 
-echo "policy,avg_reward" > results/ablation_logs/summary.csv
-
-run_exp() {
-  NAME=$1
-  shift
-  echo "\n🚀 Running $NAME..."
-  OUT=$(python train_ablation.py "$@" | tee results/ablation_logs/${NAME}.log)
-  REWARD=$(echo "$OUT" | grep "Best Val Reward" | awk '{print $5}')
-  echo "$NAME,$REWARD" >> results/ablation_logs/summary.csv
+run(){
+  NAME=$1; shift
+  echo -e "\n🚀 Running $NAME..."
+  LOG=results/ablation_runs/${NAME}.log
+  python3 train_ablation.py --tag $NAME "$@" 2>&1 | tee "$LOG"
 }
 
-# Run all ablation configurations
-run_exp full
-run_exp no_content --no-content
-run_exp no_vmaf --no-vmaf
-run_exp pensieve_like --no-content --no-vmaf
+# 4 configs
+run full
+run no_content --no-content
+run no_vmaf --no-vmaf
+run pensieve_like --no-content --no-vmaf
 
-echo "\n✅ Done. Summary saved to results/ablation_logs/summary.csv"
+# Live stats after runs
+python3 ablation_stats_live.py
+
+echo -e "\n✅ All done. See results in results/ablation_runs/"
