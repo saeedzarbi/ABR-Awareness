@@ -2,7 +2,7 @@ import os
 import argparse
 import torch
 import numpy as np
-from models.trace_loader import load_trace
+from models.fcc_trace_loader import FCCTraceLoader
 from models.content_aware_model import create_content_aware_model
 from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
 from models.ppo_trainer import PPOTrainer
@@ -19,12 +19,12 @@ def main(args):
     print(f"\n🧠 Using device: {device}\n")
 
     # Load traces
-    trace_dir = 'data/network_traces/fcc'
-    train_file = 'data/network_traces/fcc/splits/fcc_train.txt'
-    val_file = 'data/network_traces/fcc/splits/fcc_val.txt'
-
     print("📊 Loading traces...")
-    loader = load_trace(trace_dir, train_file, val_file)
+    loader = FCCTraceLoader(
+        fcc_trace_dir='data/network_traces/fcc',
+        train_file='data/network_traces/fcc/splits/fcc_train.txt',
+        val_file='data/network_traces/fcc/splits/fcc_val.txt'
+    )
 
     # Adjust reward function
     if args.no_vmaf:
