@@ -60,8 +60,11 @@ class PensieveTrainedPolicy:
     def select_action(self, s):
         net = torch.FloatTensor(s['network']).unsqueeze(0).to(self.device)
         with torch.no_grad():
-            probs, _ = self.model(net)
+            dummy_cont = torch.zeros((1, 2), dtype=torch.float32).to(self.device)
+            dummy_vmaf = torch.zeros((1, 6), dtype=torch.float32).to(self.device)
+            probs, _ = self.model(net, dummy_cont, dummy_vmaf)
         return int(probs.argmax(dim=1).item())
+
 
 
 class MPCPolicy:
@@ -188,7 +191,7 @@ def main():
     parser.add_argument('--episodes', type=int, default=100)
     parser.add_argument('--out', type=str, default='results/compare_eval')
     parser.add_argument('--our_ckpt', type=str, default='results/fcc_training_auto/best_model.pth')
-    parser.add_argument('--pensieve_ckpt', type=str, default='results/pensieve_fcc_training/checkpoint_500.pth')
+    parser.add_argument('--pensieve_ckpt', type=str, default='results/pensieve_fcc_training/checkpoint_400.pth')
     args = parser.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
