@@ -33,13 +33,15 @@ def evaluate_rewarded(trainer, env, reward_fn, n_episodes):
         total_reward = 0
         last_bitrate = None
         while not done:
-            a = trainer.model.select_action(
-                torch.FloatTensor(s['network']).unsqueeze(0).to(trainer.device),
-                torch.zeros_like(torch.FloatTensor(s['content'])).unsqueeze(0).to(trainer.device)
-                if 'content' in s else torch.zeros(1, 2).to(trainer.device),
-                torch.zeros_like(torch.FloatTensor(s['vmaf'])).unsqueeze(0).to(trainer.device)
-                if 'vmaf' in s else torch.zeros(1, 6).to(trainer.device)
-            ).item()
+            with torch.no_grad():
+                action_probs, _ = trainer.model(
+                    torch.FloatTensor(s['network']).unsqueeze(0).to(trainer.device),
+                    torch.zeros_like(torch.FloatTensor(s['content'])).unsqueeze(0).to(trainer.device)
+                    if 'content' in s else torch.zeros(1, 2).to(trainer.device),
+                    torch.zeros_like(torch.FloatTensor(s['vmaf'])).unsqueeze(0).to(trainer.device)
+                    if 'vmaf' in s else torch.zeros(1, 6).to(trainer.device)
+                )
+                a = int(torch.argmax(action_probs, dim=1).item())
             s_next, _, done, info = env.step(a)
             r = reward_fn(info, last_bitrate)
             total_reward += r
