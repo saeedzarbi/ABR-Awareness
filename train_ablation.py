@@ -44,13 +44,6 @@ def main(args):
     # Create model
     model = create_content_aware_model().to(device)
 
-    if args.no_content:
-        model.disable_content_input()
-        print("⚠️ Content input disabled")
-    if args.no_vmaf:
-        model.disable_vmaf_input()
-        print("⚠️ VMAF input disabled")
-
     # Setup training
     trainer = PPOTrainer(
         model=model,
@@ -63,8 +56,7 @@ def main(args):
         entropy_coef=0.01,
         max_grad_norm=0.5,
         n_epochs=4,
-        batch_size=64,
-        custom_reward_fn=reward_fn
+        batch_size=64
     )
 
     logger = TrainingLogger(log_dir='results/logs', run_name='ablation_study')
@@ -73,7 +65,7 @@ def main(args):
     print("\n🚀 Starting training (Ablation Mode)\n")
     best_reward = float('-inf')
     for update in range(1, 101):
-        rollout = trainer.collect_rollout(n_steps=2048)
+        rollout = trainer.collect_rollout(n_steps=2048, custom_reward_fn=reward_fn)
         eval_metrics = trainer.evaluate_policy(env_val, n_episodes=10, custom_reward_fn=reward_fn)
         avg_reward = eval_metrics.get('reward', 0.0)
         trainer.update_policy(rollout)
