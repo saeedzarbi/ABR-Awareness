@@ -1,4 +1,5 @@
 import os
+import csv
 import argparse
 import torch
 import numpy as np
@@ -71,6 +72,17 @@ def main(args):
 
     print(f"✅ Reward type: {reward_type}\n")
 
+    # Define run tag and output directory
+    run_tag = args.tag or (
+        "full" if (not args.no_content and not args.no_vmaf) else
+        "no_content" if (args.no_content and not args.no_vmaf) else
+        "no_vmaf" if (not args.no_content and args.no_vmaf) else
+        "pensieve_like"
+    )
+    out_dir = os.path.join("results/ablation_runs", run_tag)
+    os.makedirs(out_dir, exist_ok=True)
+    per_update_csv = os.path.join(out_dir, "val_per_update.csv")
+
     env_train = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='train')
     env_val = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='val')
 
@@ -91,15 +103,25 @@ def main(args):
     )
     trainer.device = device
 
-    logger = TrainingLogger(log_dir='results/logs', run_name='ablation_study')
+    logger = TrainingLogger(log_dir='results/logs', run_name=f'ablation_{run_tag}')
     trainer.external_logger = logger
+
+    # Initialize CSV
+    if not os.path.exists(per_update_csv):
+        with open(per_update_csv, 'w', newline='') as f:
+            csv.writer(f).writerow(["update", "val_reward"])
 
     print("\n🚀 Starting training (Ablation Mode)\n")
     best_reward = float('-inf')
-    for update in range(1, 101):
-        rollout = compute_rewarded_rollout(trainer, n_steps=2048, reward_fn=reward_fn)
-        eval_metrics = evaluate_rewarded(trainer, env_val, reward_fn, n_episodes=10)
+    for update in range(1, args.max_updates + 1):
+        rollout = compute_rewarded_rollout(trainer, n_steps=args.n_steps, reward_fn=reward_fn)
+        eval_metrics = evaluate_rewarded(trainer, env_val, reward_fn, n_episodes=args.n_eval_eps)
         avg_reward = eval_metrics.get('reward', 0.0)
+
+        # Log per-update reward
+        with open(per_update_csv, 'a', newline='') as f:
+            csv.writer(f).writerow([update, avg_reward])
+
         trainer.update_policy(rollout)
 
         if avg_reward > best_reward:
@@ -109,11 +131,15 @@ def main(args):
 
     print("\n✅ Training complete.")
     print(f"📈 Best Val Reward: {best_reward:.2f}")
-    print(f"🔬 Ablation setting: no_content={args.no_content}, no_vmaf={args.no_vmaf}")
+    print(f"🔬 Ablation setting: no_content={args.no_content}, no_vmaf={args.no_vmaf}, tag={run_tag}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--no-content', action='store_true', help="Remove content features from model input")
     parser.add_argument('--no-vmaf', action='store_true', help="Use standard reward (bitrate-based) instead of VMAF")
+    parser.add_argument('--tag', type=str, default=None, help='Run tag for outputs (full/no_content/no_vmaf/pensieve_like/custom)')
+    parser.add_argument('--n-steps', type=int, default=2048, help='Rollout steps per update')
+    parser.add_argument('--max-updates', type=int, default=100, help='Number of PPO updates')
+    parser.add_argument('--n-eval-eps', type=int, default=10, help='Number of validation episodes per evaluation')
     args = parser.parse_args()
     main(args)
