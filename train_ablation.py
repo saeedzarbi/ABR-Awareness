@@ -40,8 +40,6 @@ def main(args):
     # Create environments
     env_train = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='train')
     env_val = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='val')
-    env_train.set_custom_reward_fn(reward_fn)
-    env_val.set_custom_reward_fn(reward_fn)
 
     # Create model
     model = create_content_aware_model().to(device)
@@ -65,7 +63,8 @@ def main(args):
         entropy_coef=0.01,
         max_grad_norm=0.5,
         n_epochs=4,
-        batch_size=64
+        batch_size=64,
+        custom_reward_fn=reward_fn
     )
 
     logger = TrainingLogger(log_dir='results/logs', run_name='ablation_study')
@@ -75,7 +74,7 @@ def main(args):
     best_reward = float('-inf')
     for update in range(1, 101):
         rollout = trainer.collect_rollout(n_steps=2048)
-        eval_metrics = trainer.evaluate_policy(env_val, n_episodes=10)
+        eval_metrics = trainer.evaluate_policy(env_val, n_episodes=10, custom_reward_fn=reward_fn)
         avg_reward = eval_metrics.get('reward', 0.0)
         trainer.update_policy(rollout)
 
