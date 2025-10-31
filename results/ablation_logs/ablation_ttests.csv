@@ -1,0 +1,4 @@
+Comparison,n,mean_A,mean_B,t,p,Significant
+Full vs No Content,101,-641.32,-641.32,nan,nan,No
+Full vs No VMAF,101,-641.32,-580.37,-18.89,9.24e-35,Yes
+Full vs Pensieve-Like,101,-641.32,-580.37,-18.89,9.24e-35,Yes
