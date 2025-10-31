@@ -4,10 +4,10 @@ from tabulate import tabulate
 
 # فایل‌های نتایج اپیزود به صورت reward per episode
 paths = {
-    "Full Model": "results/ablation_logs/full_episodes.csv",
-    "No Content": "results/ablation_logs/no_content_episodes.csv",
-    "No VMAF": "results/ablation_logs/no_vmaf_episodes.csv",
-    "Pensieve-Like": "results/ablation_logs/pensieve_like_episodes.csv"
+    "Full Model": "results/ablation_logs/full.log",
+    "No Content": "results/ablation_logs/no_content.log",
+    "No VMAF": "results/ablation_logs/no_vmaf.log",
+    "Pensieve-Like": "results/ablation_logs/pensieve_like.log"
 }
 
 # بارگذاری داده‌ها
