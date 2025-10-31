@@ -9,7 +9,7 @@ mkdir -p results/ablation_real_logs
 
 # 1️⃣ Full (Default)
 echo -e "\n🧠 Training FULL model (content + VMAF)"
-python3 train_ablation.py --type full | tee results/ablation_real_logs/full.log
+python3 train_ablation.py --type all | tee results/ablation_real_logs/full.log
 
 # 2️⃣ No-SITI (بدون ویژگی‌های محتوا)
 echo -e "\n🧩 Training NO-SITI model (no content features)"
