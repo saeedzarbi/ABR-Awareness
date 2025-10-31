@@ -14,11 +14,36 @@ SEED = 42
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 
+def compute_rewarded_rollout(trainer, n_steps, reward_fn):
+    rollout = trainer.collect_rollout(n_steps=n_steps)
+    for traj in rollout:
+        last_bitrate = None
+        for step in traj:
+            step['reward'] = reward_fn(step['info'], last_bitrate)
+            last_bitrate = step['info'].get('bitrate', last_bitrate)
+    return rollout
+
+def evaluate_rewarded(trainer, env, reward_fn, n_episodes):
+    results = []
+    for _ in range(n_episodes):
+        s = env.reset(split='val')
+        done = False
+        total_reward = 0
+        last_bitrate = None
+        while not done:
+            a = trainer.model.select_action(s)
+            s_next, _, done, info = env.step(a)
+            r = reward_fn(info, last_bitrate)
+            total_reward += r
+            last_bitrate = info.get('bitrate', last_bitrate)
+            s = s_next
+        results.append(total_reward)
+    return {"reward": np.mean(results)}
+
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\n🧠 Using device: {device}\n")
 
-    # Load traces
     print("📊 Loading traces...")
     loader = FCCTraceLoader(
         fcc_trace_dir='data/network_traces/fcc',
@@ -27,7 +52,6 @@ def main(args):
         test_file='data/network_traces/fcc/splits/fcc_test.txt'
     )
 
-    # Adjust reward function
     if args.no_vmaf:
         reward_fn = compute_standard_reward
         reward_type = "Bitrate-Based"
@@ -37,14 +61,11 @@ def main(args):
 
     print(f"✅ Reward type: {reward_type}\n")
 
-    # Create environments
     env_train = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='train')
     env_val = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json', 'data/vmaf/vmaf_table.json', 'data/videos', mode='val')
 
-    # Create model
     model = create_content_aware_model().to(device)
 
-    # Setup training
     trainer = PPOTrainer(
         model=model,
         env=env_train,
@@ -65,8 +86,8 @@ def main(args):
     print("\n🚀 Starting training (Ablation Mode)\n")
     best_reward = float('-inf')
     for update in range(1, 101):
-        rollout = trainer.collect_rollout(n_steps=2048, custom_reward_fn=reward_fn)
-        eval_metrics = trainer.evaluate_policy(env_val, n_episodes=10, custom_reward_fn=reward_fn)
+        rollout = compute_rewarded_rollout(trainer, n_steps=2048, reward_fn=reward_fn)
+        eval_metrics = evaluate_rewarded(trainer, env_val, reward_fn, n_episodes=10)
         avg_reward = eval_metrics.get('reward', 0.0)
         trainer.update_policy(rollout)
 
