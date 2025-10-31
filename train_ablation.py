@@ -15,13 +15,16 @@ np.random.seed(SEED)
 torch.manual_seed(SEED)
 
 def compute_rewarded_rollout(trainer, n_steps, reward_fn):
-    rollout = trainer.collect_rollout(n_steps=n_steps)
-    for traj in rollout:
-        last_bitrate = None
-        for step in traj:
-            step['reward'] = reward_fn(step['info'], last_bitrate)
-            last_bitrate = step['info'].get('bitrate', last_bitrate)
-    return rollout
+    buffer = trainer.collect_rollout(n_steps=n_steps)
+    states = buffer.states
+    infos = trainer.env.info_history if hasattr(trainer.env, 'info_history') else []
+    last_bitrate = None
+    for i in range(len(buffer.rewards)):
+        if i < len(infos):
+            info = infos[i]
+            buffer.rewards[i] = reward_fn(info, last_bitrate)
+            last_bitrate = info.get('bitrate', last_bitrate)
+    return buffer
 
 def evaluate_rewarded(trainer, env, reward_fn, n_episodes):
     results = []
