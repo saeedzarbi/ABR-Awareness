@@ -34,7 +34,11 @@ def evaluate_rewarded(trainer, env, reward_fn, n_episodes):
         total_reward = 0
         last_bitrate = None
         while not done:
-            a = trainer.model.select_action(s)
+            a = trainer.model.select_action(
+    s['network'],
+    s.get('content', np.zeros_like(s['network'])),
+    s.get('vmaf', np.zeros_like(s['network'][0]))
+)
             s_next, _, done, info = env.step(a)
             r = reward_fn(info, last_bitrate)
             total_reward += r
