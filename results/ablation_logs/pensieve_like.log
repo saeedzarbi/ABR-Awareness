@@ -1,0 +1,127 @@
+
+🧠 Using device: cpu
+
+📊 Loading traces...
+📊 FCC Traces Loaded:
+   Train: 184
+   Val: 40
+   Test: 40
+✅ Loaded 264 FCC traces into memory
+✅ Reward type: Bitrate-Based
+
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+📊 Logging to: results/logs/ablation_study.jsonl
+
+🚀 Starting training (Ablation Mode)
+
+Update 001 | Val Reward: -2228.04 | Best: -2228.04
+Update 002 | Val Reward: -4287.53 | Best: -2228.04
+Update 003 | Val Reward: -1426.88 | Best: -1426.88
+Update 004 | Val Reward: -1411.93 | Best: -1411.93
+Update 005 | Val Reward: -722.64 | Best: -722.64
+Update 006 | Val Reward: -1216.29 | Best: -722.64
+Update 007 | Val Reward: -1401.38 | Best: -722.64
+Update 008 | Val Reward: -1333.07 | Best: -722.64
+Update 009 | Val Reward: -1664.21 | Best: -722.64
+Update 010 | Val Reward: -782.93 | Best: -722.64
+Update 011 | Val Reward: -1080.32 | Best: -722.64
+Update 012 | Val Reward: -1062.11 | Best: -722.64
+Update 013 | Val Reward: -1150.11 | Best: -722.64
+Update 014 | Val Reward: -1135.95 | Best: -722.64
+Update 015 | Val Reward: -999.13 | Best: -722.64
+Update 016 | Val Reward: -1239.99 | Best: -722.64
+Update 017 | Val Reward: -580.18 | Best: -580.18
+Update 018 | Val Reward: -848.35 | Best: -580.18
+Update 019 | Val Reward: -1126.72 | Best: -580.18
+Update 020 | Val Reward: -532.60 | Best: -532.60
+Update 021 | Val Reward: -1192.86 | Best: -532.60
+Update 022 | Val Reward: -985.76 | Best: -532.60
+Update 023 | Val Reward: -392.56 | Best: -392.56
+Update 024 | Val Reward: -1284.22 | Best: -392.56
+Update 025 | Val Reward: -554.75 | Best: -392.56
+Update 026 | Val Reward: -1044.64 | Best: -392.56
+Update 027 | Val Reward: -1354.18 | Best: -392.56
+Update 028 | Val Reward: -678.49 | Best: -392.56
+Update 029 | Val Reward: -887.22 | Best: -392.56
+Update 030 | Val Reward: -734.59 | Best: -392.56
+Update 031 | Val Reward: -908.15 | Best: -392.56
+Update 032 | Val Reward: -635.50 | Best: -392.56
+Update 033 | Val Reward: -1088.85 | Best: -392.56
+Update 034 | Val Reward: -470.59 | Best: -392.56
+Update 035 | Val Reward: -676.86 | Best: -392.56
+Update 036 | Val Reward: -585.01 | Best: -392.56
+Update 037 | Val Reward: -697.04 | Best: -392.56
+Update 038 | Val Reward: -486.78 | Best: -392.56
+Update 039 | Val Reward: -841.33 | Best: -392.56
+Update 040 | Val Reward: -621.88 | Best: -392.56
+Update 041 | Val Reward: -418.71 | Best: -392.56
+Update 042 | Val Reward: -769.40 | Best: -392.56
+Update 043 | Val Reward: -439.69 | Best: -392.56
+Update 044 | Val Reward: -1113.39 | Best: -392.56
+Update 045 | Val Reward: -579.93 | Best: -392.56
+Update 046 | Val Reward: -601.59 | Best: -392.56
+Update 047 | Val Reward: -308.80 | Best: -308.80
+Update 048 | Val Reward: -689.95 | Best: -308.80
+Update 049 | Val Reward: -520.20 | Best: -308.80
+Update 050 | Val Reward: -1194.75 | Best: -308.80
+Update 051 | Val Reward: -890.31 | Best: -308.80
+Update 052 | Val Reward: -705.35 | Best: -308.80
+Update 053 | Val Reward: -975.95 | Best: -308.80
+Update 054 | Val Reward: -411.37 | Best: -308.80
+Update 055 | Val Reward: -249.18 | Best: -249.18
+Update 056 | Val Reward: -303.84 | Best: -249.18
+Update 057 | Val Reward: -220.54 | Best: -220.54
+Update 058 | Val Reward: -390.15 | Best: -220.54
+Update 059 | Val Reward: -317.23 | Best: -220.54
+Update 060 | Val Reward: -211.05 | Best: -211.05
+Update 061 | Val Reward: -256.11 | Best: -211.05
+Update 062 | Val Reward: -442.70 | Best: -211.05
+Update 063 | Val Reward: -736.31 | Best: -211.05
+Update 064 | Val Reward: -161.30 | Best: -161.30
+Update 065 | Val Reward: -134.40 | Best: -134.40
+Update 066 | Val Reward: -248.82 | Best: -134.40
+Update 067 | Val Reward: -262.24 | Best: -134.40
+Update 068 | Val Reward: -110.91 | Best: -110.91
+Update 069 | Val Reward: -376.41 | Best: -110.91
+Update 070 | Val Reward: -144.43 | Best: -110.91
+Update 071 | Val Reward: -65.08 | Best: -65.08
+Update 072 | Val Reward: -120.50 | Best: -65.08
+Update 073 | Val Reward: -86.64 | Best: -65.08
+Update 074 | Val Reward: -2.20 | Best: -2.20
+Update 075 | Val Reward: -49.69 | Best: -2.20
+Update 076 | Val Reward: -62.24 | Best: -2.20
+Update 077 | Val Reward: 3.72 | Best: 3.72
+Update 078 | Val Reward: -79.71 | Best: 3.72
+Update 079 | Val Reward: -1.62 | Best: 3.72
+Update 080 | Val Reward: -291.69 | Best: 3.72
+Update 081 | Val Reward: 7.85 | Best: 7.85
+Update 082 | Val Reward: -58.22 | Best: 7.85
+Update 083 | Val Reward: 10.53 | Best: 10.53
+Update 084 | Val Reward: 2.05 | Best: 10.53
+Update 085 | Val Reward: -106.44 | Best: 10.53
+Update 086 | Val Reward: -22.62 | Best: 10.53
+Update 087 | Val Reward: -92.45 | Best: 10.53
+Update 088 | Val Reward: 8.69 | Best: 10.53
+Update 089 | Val Reward: -247.01 | Best: 10.53
+Update 090 | Val Reward: 13.77 | Best: 13.77
+Update 091 | Val Reward: -5.93 | Best: 13.77
+Update 092 | Val Reward: -21.59 | Best: 13.77
+Update 093 | Val Reward: -11.96 | Best: 13.77
+Update 094 | Val Reward: -109.74 | Best: 13.77
+Update 095 | Val Reward: -247.59 | Best: 13.77
+Update 096 | Val Reward: -45.64 | Best: 13.77
+Update 097 | Val Reward: -117.96 | Best: 13.77
+Update 098 | Val Reward: -33.48 | Best: 13.77
+Update 099 | Val Reward: -88.94 | Best: 13.77
+Update 100 | Val Reward: -172.18 | Best: 13.77
+
+✅ Training complete.
+📈 Best Val Reward: 13.77
+🔬 Ablation setting: no_content=True, no_vmaf=True
