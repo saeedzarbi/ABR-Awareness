@@ -1,0 +1,378 @@
+================================================================================
+🧪 TRAINING ALL ABLATION MODELS
+================================================================================
+Models to train: ['no_siti', 'no_vmaf', 'network_only']
+This will take several hours...
+================================================================================
+
+
+================================================================================
+📊 [1/3] Training: no_siti
+================================================================================
+
+================================================================================
+🚀 Training Ablation Model: NO_SITI
+================================================================================
+💻 Device: cpu
+
+📦 Loading data...
+📊 FCC Traces Loaded:
+   Train: 184
+   Val: 40
+   Test: 40
+✅ Loaded 264 FCC traces into memory
+
+🏗️  Creating environment...
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+
+🧠 Creating no_siti model...
+   ⚠️  Model WITHOUT SI/TI features
+   Total parameters: 111,303
+📊 Logging to: results/logs/ablation_no_siti.jsonl
+
+🎓 Creating PPO trainer...
+
+================================================================================
+🚂 Starting Training: NO_SITI
+================================================================================
+Total timesteps: 500,000
+Evaluation every: 25 updates
+================================================================================
+
+Update   10 | Steps:   20480 | Episodes:  420 | Reward(20): -117.31 | Reward(100): -165.43 | Rebuffer:  49.4s | Bitrate: 1297kbps
+Update   20 | Steps:   40960 | Episodes:  840 | Reward(20):  +54.69 | Reward(100):  +49.94 | Rebuffer:   3.6s | Bitrate:  745kbps
+
+📊 Validation at update 25...
+   Val Reward: +43.51 ± 133.63
+   🏆 New best! (+inf)
+Update   30 | Steps:   61440 | Episodes: 1260 | Reward(20):  +70.64 | Reward(100):  +70.43 | Rebuffer:   3.3s | Bitrate:  781kbps
+Update   40 | Steps:   81920 | Episodes: 1680 | Reward(20):  +78.83 | Reward(100):  +72.99 | Rebuffer:   2.0s | Bitrate:  750kbps
+Update   50 | Steps:  102400 | Episodes: 2100 | Reward(20):  +81.12 | Reward(100):  +80.27 | Rebuffer:   1.8s | Bitrate:  717kbps
+
+📊 Validation at update 50...
+   Val Reward: -2.04 ± 176.00
+   ⚠️  No improvement (1/5)
+💾 Checkpoint saved: checkpoint_50.pth
+
+Update   60 | Steps:  122880 | Episodes: 2520 | Reward(20):  +84.01 | Reward(100):  +83.86 | Rebuffer:   1.5s | Bitrate:  756kbps
+Update   70 | Steps:  143360 | Episodes: 2940 | Reward(20):  +90.70 | Reward(100):  +88.90 | Rebuffer:   1.3s | Bitrate:  868kbps
+
+📊 Validation at update 75...
+   Val Reward: +96.13 ± 12.18
+   🏆 New best! (+52.63)
+Update   80 | Steps:  163840 | Episodes: 3360 | Reward(20):  +78.64 | Reward(100):  +84.72 | Rebuffer:   2.1s | Bitrate:  656kbps
+Update   90 | Steps:  184320 | Episodes: 3780 | Reward(20):  +89.12 | Reward(100):  +87.93 | Rebuffer:   1.4s | Bitrate:  809kbps
+Update  100 | Steps:  204800 | Episodes: 4200 | Reward(20):  +84.80 | Reward(100):  +88.88 | Rebuffer:   1.7s | Bitrate:  740kbps
+
+📊 Validation at update 100...
+   Val Reward: +49.91 ± 135.48
+   ⚠️  No improvement (1/5)
+💾 Checkpoint saved: checkpoint_100.pth
+
+Update  110 | Steps:  225280 | Episodes: 4620 | Reward(20):  +95.15 | Reward(100):  +94.95 | Rebuffer:   1.4s | Bitrate:  867kbps
+Update  120 | Steps:  245760 | Episodes: 5040 | Reward(20):  +91.25 | Reward(100):  +91.52 | Rebuffer:   1.8s | Bitrate:  834kbps
+
+📊 Validation at update 125...
+   Val Reward: +106.95 ± 12.01
+   🏆 New best! (+10.82)
+Update  130 | Steps:  266240 | Episodes: 5460 | Reward(20):  +81.29 | Reward(100):  +90.90 | Rebuffer:   1.7s | Bitrate:  695kbps
+Update  140 | Steps:  286720 | Episodes: 5880 | Reward(20):  +92.28 | Reward(100):  +91.46 | Rebuffer:   1.5s | Bitrate:  872kbps
+Update  150 | Steps:  307200 | Episodes: 6300 | Reward(20):  +91.28 | Reward(100):  +86.87 | Rebuffer:   1.4s | Bitrate:  844kbps
+
+📊 Validation at update 150...
+   Val Reward: +100.18 ± 16.91
+   ⚠️  No improvement (1/5)
+💾 Checkpoint saved: checkpoint_150.pth
+
+Update  160 | Steps:  327680 | Episodes: 6720 | Reward(20):  +91.69 | Reward(100):  +90.80 | Rebuffer:   1.7s | Bitrate:  924kbps
+Update  170 | Steps:  348160 | Episodes: 7140 | Reward(20):  +94.70 | Reward(100):  +96.50 | Rebuffer:   2.4s | Bitrate: 1020kbps
+
+📊 Validation at update 175...
+   Val Reward: +84.22 ± 26.09
+   ⚠️  No improvement (2/5)
+Update  180 | Steps:  368640 | Episodes: 7560 | Reward(20):  +87.36 | Reward(100):  +92.03 | Rebuffer:   2.5s | Bitrate:  861kbps
+Update  190 | Steps:  389120 | Episodes: 7980 | Reward(20):  +85.86 | Reward(100):  +88.76 | Rebuffer:   5.4s | Bitrate: 1115kbps
+Update  200 | Steps:  409600 | Episodes: 8400 | Reward(20):  +97.32 | Reward(100):  +93.24 | Rebuffer:   1.8s | Bitrate:  967kbps
+
+📊 Validation at update 200...
+   Val Reward: +109.33 ± 14.40
+   🏆 New best! (+2.37)
+💾 Checkpoint saved: checkpoint_200.pth
+
+Update  210 | Steps:  430080 | Episodes: 8820 | Reward(20):  +93.97 | Reward(100):  +95.25 | Rebuffer:   1.5s | Bitrate:  935kbps
+Update  220 | Steps:  450560 | Episodes: 9240 | Reward(20): +104.65 | Reward(100):  +96.52 | Rebuffer:   1.4s | Bitrate: 1097kbps
+
+📊 Validation at update 225...
+   Val Reward: +70.79 ± 59.36
+   ⚠️  No improvement (1/5)
+Update  230 | Steps:  471040 | Episodes: 9660 | Reward(20):  +94.88 | Reward(100):  +82.03 | Rebuffer:   2.5s | Bitrate: 1052kbps
+Update  240 | Steps:  491520 | Episodes: 10080 | Reward(20): +100.12 | Reward(100):  +94.24 | Rebuffer:   1.3s | Bitrate: 1032kbps
+
+================================================================================
+✅ Training Complete: NO_SITI
+================================================================================
+Total updates: 245
+Best reward: +109.33
+Models saved in: results/ablation_no_siti
+================================================================================
+
+✅ [1/3] Completed: no_siti
+
+
+================================================================================
+📊 [2/3] Training: no_vmaf
+================================================================================
+
+================================================================================
+🚀 Training Ablation Model: NO_VMAF
+================================================================================
+💻 Device: cpu
+
+📦 Loading data...
+📊 FCC Traces Loaded:
+   Train: 184
+   Val: 40
+   Test: 40
+✅ Loaded 264 FCC traces into memory
+
+🏗️  Creating environment...
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+
+🧠 Creating no_vmaf model...
+   ⚠️  Model WITHOUT VMAF predictions
+   Total parameters: 111,047
+📊 Logging to: results/logs/ablation_no_vmaf.jsonl
+
+🎓 Creating PPO trainer...
+
+================================================================================
+🚂 Starting Training: NO_VMAF
+================================================================================
+Total timesteps: 500,000
+Evaluation every: 25 updates
+================================================================================
+
+Update   10 | Steps:   20480 | Episodes:  420 | Reward(20): -361.22 | Reward(100): -340.84 | Rebuffer: 134.3s | Bitrate: 1615kbps
+Update   20 | Steps:   40960 | Episodes:  840 | Reward(20):  +54.19 | Reward(100):  +49.65 | Rebuffer:   3.2s | Bitrate:  858kbps
+
+📊 Validation at update 25...
+   Val Reward: +83.90 ± 12.38
+   🏆 New best! (+inf)
+Update   30 | Steps:   61440 | Episodes: 1260 | Reward(20):  +74.05 | Reward(100):  +75.88 | Rebuffer:   1.6s | Bitrate:  730kbps
+Update   40 | Steps:   81920 | Episodes: 1680 | Reward(20):  +73.74 | Reward(100):  +76.91 | Rebuffer:   1.7s | Bitrate:  710kbps
+Update   50 | Steps:  102400 | Episodes: 2100 | Reward(20):  +85.91 | Reward(100):  +83.25 | Rebuffer:   2.1s | Bitrate:  976kbps
+
+📊 Validation at update 50...
+   Val Reward: +87.00 ± 16.68
+   🏆 New best! (+3.10)
+💾 Checkpoint saved: checkpoint_50.pth
+
+Update   60 | Steps:  122880 | Episodes: 2520 | Reward(20):  +95.71 | Reward(100):  +86.60 | Rebuffer:   1.5s | Bitrate: 1108kbps
+Update   70 | Steps:  143360 | Episodes: 2940 | Reward(20):  +93.10 | Reward(100):  +85.43 | Rebuffer:   1.4s | Bitrate: 1060kbps
+
+📊 Validation at update 75...
+   Val Reward: +55.89 ± 41.21
+   ⚠️  No improvement (1/5)
+Update   80 | Steps:  163840 | Episodes: 3360 | Reward(20):  +92.84 | Reward(100):  +87.65 | Rebuffer:   1.8s | Bitrate: 1106kbps
+Update   90 | Steps:  184320 | Episodes: 3780 | Reward(20):  +91.55 | Reward(100):  +95.28 | Rebuffer:   1.5s | Bitrate: 1037kbps
+Update  100 | Steps:  204800 | Episodes: 4200 | Reward(20):  +83.85 | Reward(100):  +89.83 | Rebuffer:   2.7s | Bitrate:  892kbps
+
+📊 Validation at update 100...
+   Val Reward: +88.25 ± 22.55
+   🏆 New best! (+1.25)
+💾 Checkpoint saved: checkpoint_100.pth
+
+Update  110 | Steps:  225280 | Episodes: 4620 | Reward(20):  +83.87 | Reward(100):  +90.96 | Rebuffer:   3.2s | Bitrate:  919kbps
+Update  120 | Steps:  245760 | Episodes: 5040 | Reward(20):  +92.17 | Reward(100):  +94.48 | Rebuffer:   2.1s | Bitrate: 1032kbps
+
+📊 Validation at update 125...
+   Val Reward: +93.56 ± 28.38
+   🏆 New best! (+5.31)
+Update  130 | Steps:  266240 | Episodes: 5460 | Reward(20):  +92.21 | Reward(100):  +94.18 | Rebuffer:   1.9s | Bitrate:  945kbps
+Update  140 | Steps:  286720 | Episodes: 5880 | Reward(20):  +99.09 | Reward(100):  +90.30 | Rebuffer:   1.9s | Bitrate: 1091kbps
+Update  150 | Steps:  307200 | Episodes: 6300 | Reward(20):  +87.80 | Reward(100):  +65.40 | Rebuffer:   3.5s | Bitrate: 1098kbps
+
+📊 Validation at update 150...
+   Val Reward: +97.17 ± 14.99
+   🏆 New best! (+3.61)
+💾 Checkpoint saved: checkpoint_150.pth
+
+Update  160 | Steps:  327680 | Episodes: 6720 | Reward(20):  +97.08 | Reward(100):  +95.37 | Rebuffer:   1.4s | Bitrate: 1048kbps
+Update  170 | Steps:  348160 | Episodes: 7140 | Reward(20):  +89.68 | Reward(100):  +94.62 | Rebuffer:   2.6s | Bitrate: 1051kbps
+
+📊 Validation at update 175...
+   Val Reward: +111.99 ± 19.22
+   🏆 New best! (+14.82)
+Update  180 | Steps:  368640 | Episodes: 7560 | Reward(20):  +91.11 | Reward(100):  +91.71 | Rebuffer:   1.9s | Bitrate:  932kbps
+Update  190 | Steps:  389120 | Episodes: 7980 | Reward(20):  +99.05 | Reward(100):  +94.26 | Rebuffer:   2.4s | Bitrate: 1059kbps
+Update  200 | Steps:  409600 | Episodes: 8400 | Reward(20):  +89.46 | Reward(100):  +94.12 | Rebuffer:   4.1s | Bitrate: 1082kbps
+
+📊 Validation at update 200...
+   Val Reward: +89.99 ± 45.96
+   ⚠️  No improvement (1/5)
+💾 Checkpoint saved: checkpoint_200.pth
+
+Update  210 | Steps:  430080 | Episodes: 8820 | Reward(20):  +99.95 | Reward(100):  +94.63 | Rebuffer:   3.7s | Bitrate: 1369kbps
+Update  220 | Steps:  450560 | Episodes: 9240 | Reward(20):  +93.21 | Reward(100):  +95.53 | Rebuffer:   2.6s | Bitrate: 1052kbps
+
+📊 Validation at update 225...
+   Val Reward: +73.56 ± 43.08
+   ⚠️  No improvement (2/5)
+Update  230 | Steps:  471040 | Episodes: 9660 | Reward(20): +102.73 | Reward(100): +101.65 | Rebuffer:   1.9s | Bitrate: 1154kbps
+Update  240 | Steps:  491520 | Episodes: 10080 | Reward(20):  +98.93 | Reward(100):  +94.05 | Rebuffer:   1.4s | Bitrate:  982kbps
+
+================================================================================
+✅ Training Complete: NO_VMAF
+================================================================================
+Total updates: 245
+Best reward: +111.99
+Models saved in: results/ablation_no_vmaf
+================================================================================
+
+✅ [2/3] Completed: no_vmaf
+
+
+================================================================================
+📊 [3/3] Training: network_only
+================================================================================
+
+================================================================================
+🚀 Training Ablation Model: NETWORK_ONLY
+================================================================================
+💻 Device: cpu
+
+📦 Loading data...
+📊 FCC Traces Loaded:
+   Train: 184
+   Val: 40
+   Test: 40
+✅ Loaded 264 FCC traces into memory
+
+🏗️  Creating environment...
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+
+🧠 Creating network_only model...
+   ⚠️  Model WITHOUT any content features (like Pensieve)
+   Total parameters: 102,663
+📊 Logging to: results/logs/ablation_network_only.jsonl
+
+🎓 Creating PPO trainer...
+
+================================================================================
+🚂 Starting Training: NETWORK_ONLY
+================================================================================
+Total timesteps: 500,000
+Evaluation every: 25 updates
+================================================================================
+
+Update   10 | Steps:   20480 | Episodes:  420 | Reward(20): -552.92 | Reward(100): -429.34 | Rebuffer: 175.7s | Bitrate: 1688kbps
+Update   20 | Steps:   40960 | Episodes:  840 | Reward(20):  +31.01 | Reward(100):  -10.01 | Rebuffer:   8.7s | Bitrate:  976kbps
+
+📊 Validation at update 25...
+   Val Reward: +72.10 ± 38.44
+   🏆 New best! (+inf)
+Update   30 | Steps:   61440 | Episodes: 1260 | Reward(20):  +60.70 | Reward(100):  +57.95 | Rebuffer:   3.6s | Bitrate:  838kbps
+Update   40 | Steps:   81920 | Episodes: 1680 | Reward(20):  +82.05 | Reward(100):  +79.06 | Rebuffer:   3.3s | Bitrate: 1124kbps
+Update   50 | Steps:  102400 | Episodes: 2100 | Reward(20):  +74.06 | Reward(100):  +79.47 | Rebuffer:   5.9s | Bitrate: 1025kbps
+
+📊 Validation at update 50...
+   Val Reward: +89.11 ± 44.60
+   🏆 New best! (+17.01)
+💾 Checkpoint saved: checkpoint_50.pth
+
+Update   60 | Steps:  122880 | Episodes: 2520 | Reward(20):  +87.52 | Reward(100):  +85.48 | Rebuffer:   2.3s | Bitrate: 1050kbps
+Update   70 | Steps:  143360 | Episodes: 2940 | Reward(20):  +84.78 | Reward(100):  +84.01 | Rebuffer:   2.0s | Bitrate:  923kbps
+
+📊 Validation at update 75...
+   Val Reward: +54.07 ± 136.02
+   ⚠️  No improvement (1/5)
+Update   80 | Steps:  163840 | Episodes: 3360 | Reward(20):  +75.01 | Reward(100):  +89.43 | Rebuffer:   3.9s | Bitrate:  856kbps
+Update   90 | Steps:  184320 | Episodes: 3780 | Reward(20): +106.59 | Reward(100): +100.19 | Rebuffer:   1.2s | Bitrate: 1250kbps
+Update  100 | Steps:  204800 | Episodes: 4200 | Reward(20):  +91.48 | Reward(100):  +95.59 | Rebuffer:   1.9s | Bitrate:  909kbps
+
+📊 Validation at update 100...
+   Val Reward: +99.64 ± 17.49
+   🏆 New best! (+10.53)
+💾 Checkpoint saved: checkpoint_100.pth
+
+Update  110 | Steps:  225280 | Episodes: 4620 | Reward(20):  +82.28 | Reward(100):  +90.17 | Rebuffer:   4.4s | Bitrate:  989kbps
+Update  120 | Steps:  245760 | Episodes: 5040 | Reward(20):  +98.95 | Reward(100):  +88.96 | Rebuffer:   1.6s | Bitrate: 1112kbps
+
+📊 Validation at update 125...
+   Val Reward: +119.17 ± 16.51
+   🏆 New best! (+19.53)
+Update  130 | Steps:  266240 | Episodes: 5460 | Reward(20):  +90.02 | Reward(100):  +90.99 | Rebuffer:   1.9s | Bitrate:  982kbps
+Update  140 | Steps:  286720 | Episodes: 5880 | Reward(20):  +92.91 | Reward(100):  +92.47 | Rebuffer:   1.5s | Bitrate:  970kbps
+Update  150 | Steps:  307200 | Episodes: 6300 | Reward(20):  +91.84 | Reward(100):  +93.02 | Rebuffer:   1.9s | Bitrate:  919kbps
+
+📊 Validation at update 150...
+   Val Reward: +116.28 ± 28.70
+   ⚠️  No improvement (1/5)
+💾 Checkpoint saved: checkpoint_150.pth
+
+Update  160 | Steps:  327680 | Episodes: 6720 | Reward(20):  +95.91 | Reward(100):  +96.85 | Rebuffer:   2.5s | Bitrate: 1100kbps
+Update  170 | Steps:  348160 | Episodes: 7140 | Reward(20):  +96.64 | Reward(100):  +93.75 | Rebuffer:   2.5s | Bitrate: 1049kbps
+
+📊 Validation at update 175...
+   Val Reward: +105.45 ± 18.73
+   ⚠️  No improvement (2/5)
+Update  180 | Steps:  368640 | Episodes: 7560 | Reward(20): +103.82 | Reward(100):  +93.32 | Rebuffer:   1.2s | Bitrate: 1168kbps
+Update  190 | Steps:  389120 | Episodes: 7980 | Reward(20):  +85.54 | Reward(100):  +95.57 | Rebuffer:   3.7s | Bitrate:  964kbps
+Update  200 | Steps:  409600 | Episodes: 8400 | Reward(20):  +84.29 | Reward(100):  +90.21 | Rebuffer:   2.0s | Bitrate:  758kbps
+
+📊 Validation at update 200...
+   Val Reward: +110.74 ± 15.16
+   ⚠️  No improvement (3/5)
+💾 Checkpoint saved: checkpoint_200.pth
+
+Update  210 | Steps:  430080 | Episodes: 8820 | Reward(20):  +92.21 | Reward(100):  +97.63 | Rebuffer:   2.1s | Bitrate:  969kbps
+Update  220 | Steps:  450560 | Episodes: 9240 | Reward(20):  +94.75 | Reward(100):  +99.48 | Rebuffer:   2.5s | Bitrate: 1022kbps
+
+📊 Validation at update 225...
+   Val Reward: +54.52 ± 136.93
+   ⚠️  No improvement (4/5)
+Update  230 | Steps:  471040 | Episodes: 9660 | Reward(20):  +89.81 | Reward(100):  +89.00 | Rebuffer:   2.8s | Bitrate:  891kbps
+Update  240 | Steps:  491520 | Episodes: 10080 | Reward(20):  +94.18 | Reward(100):  +94.91 | Rebuffer:   2.0s | Bitrate:  989kbps
+
+================================================================================
+✅ Training Complete: NETWORK_ONLY
+================================================================================
+Total updates: 245
+Best reward: +119.17
+Models saved in: results/ablation_network_only
+================================================================================
+
+✅ [3/3] Completed: network_only
+
+================================================================================
+🎉 ALL ABLATION MODELS TRAINED!
+================================================================================
+
+Saved in:
+   - results/ablation_no_siti/
+   - results/ablation_no_vmaf/
+   - results/ablation_network_only/
+
+Next step: Run evaluation to compare all models
+================================================================================

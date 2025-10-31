@@ -1,0 +1,97 @@
+================================================================================
+🚀 Training Ablation Model: NO_SITI
+================================================================================
+💻 Device: cpu
+
+📦 Loading data...
+📊 FCC Traces Loaded:
+   Train: 184
+   Val: 40
+   Test: 40
+✅ Loaded 264 FCC traces into memory
+
+🏗️  Creating environment...
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+
+🧠 Creating no_siti model...
+   ⚠️  Model WITHOUT SI/TI features
+   Total parameters: 111,303
+📊 Logging to: results/logs/ablation_no_siti.jsonl
+
+🎓 Creating PPO trainer...
+
+================================================================================
+🚂 Starting Training: NO_SITI
+================================================================================
+Total timesteps: 500,000
+Evaluation every: 25 updates
+================================================================================
+
+Update   10 | Steps:   20480 | Episodes:  420 | Reward(20): -336.41 | Reward(100): -328.23 | Rebuffer: 111.7s | Bitrate: 1359kbps
+Update   20 | Steps:   40960 | Episodes:  840 | Reward(20):  -11.33 | Reward(100):  -51.37 | Rebuffer:  18.3s | Bitrate: 1127kbps
+
+📊 Validation at update 25...
+   Val Reward: +80.14 ± 13.92
+   🏆 New best! (+inf)
+Update   30 | Steps:   61440 | Episodes: 1260 | Reward(20):  +18.95 | Reward(100):  +24.40 | Rebuffer:  14.3s | Bitrate:  917kbps
+Update   40 | Steps:   81920 | Episodes: 1680 | Reward(20):  +62.48 | Reward(100):  +60.25 | Rebuffer:   4.9s | Bitrate:  856kbps
+Update   50 | Steps:  102400 | Episodes: 2100 | Reward(20):  +71.36 | Reward(100):  +73.43 | Rebuffer:   3.5s | Bitrate:  902kbps
+
+📊 Validation at update 50...
+   Val Reward: +95.51 ± 8.47
+   🏆 New best! (+15.37)
+💾 Checkpoint saved: checkpoint_50.pth
+
+Update   60 | Steps:  122880 | Episodes: 2520 | Reward(20):  +80.57 | Reward(100):  +79.93 | Rebuffer:   1.8s | Bitrate:  805kbps
+Update   70 | Steps:  143360 | Episodes: 2940 | Reward(20):  +86.33 | Reward(100):  +82.31 | Rebuffer:   1.9s | Bitrate:  905kbps
+
+📊 Validation at update 75...
+   Val Reward: +5.91 ± 181.23
+   ⚠️  No improvement (1/5)
+Update   80 | Steps:  163840 | Episodes: 3360 | Reward(20):  +92.02 | Reward(100):  +87.62 | Rebuffer:   1.3s | Bitrate:  991kbps
+Update   90 | Steps:  184320 | Episodes: 3780 | Reward(20):  +81.27 | Reward(100):  +86.29 | Rebuffer:   4.0s | Bitrate: 1014kbps
+Update  100 | Steps:  204800 | Episodes: 4200 | Reward(20):  +82.68 | Reward(100):  +85.77 | Rebuffer:   1.7s | Bitrate:  807kbps
+
+📊 Validation at update 100...
+   Val Reward: +93.47 ± 22.47
+   ⚠️  No improvement (2/5)
+💾 Checkpoint saved: checkpoint_100.pth
+
+Update  110 | Steps:  225280 | Episodes: 4620 | Reward(20):  +90.55 | Reward(100):  +90.99 | Rebuffer:   1.5s | Bitrate:  913kbps
+Update  120 | Steps:  245760 | Episodes: 5040 | Reward(20):  +86.14 | Reward(100):  +88.69 | Rebuffer:   2.5s | Bitrate:  974kbps
+
+📊 Validation at update 125...
+   Val Reward: +76.87 ± 44.51
+   ⚠️  No improvement (3/5)
+Update  130 | Steps:  266240 | Episodes: 5460 | Reward(20):  +83.96 | Reward(100):  +88.31 | Rebuffer:   1.7s | Bitrate:  784kbps
+Update  140 | Steps:  286720 | Episodes: 5880 | Reward(20): +100.50 | Reward(100):  +89.78 | Rebuffer:   1.2s | Bitrate: 1183kbps
+Update  150 | Steps:  307200 | Episodes: 6300 | Reward(20):  +93.56 | Reward(100):  +88.73 | Rebuffer:   1.9s | Bitrate: 1019kbps
+
+📊 Validation at update 150...
+   Val Reward: +57.05 ± 137.44
+   ⚠️  No improvement (4/5)
+💾 Checkpoint saved: checkpoint_150.pth
+
+Update  160 | Steps:  327680 | Episodes: 6720 | Reward(20):  +71.56 | Reward(100):  +86.30 | Rebuffer:   4.7s | Bitrate:  803kbps
+Update  170 | Steps:  348160 | Episodes: 7140 | Reward(20):  +91.61 | Reward(100):  +90.61 | Rebuffer:   2.1s | Bitrate:  980kbps
+
+📊 Validation at update 175...
+   Val Reward: +85.79 ± 42.54
+   ⚠️  No improvement (5/5)
+
+⏸️  Early stopping triggered!
+
+================================================================================
+✅ Training Complete: NO_SITI
+================================================================================
+Total updates: 175
+Best reward: +95.51
+Models saved in: results/ablation_no_siti
+================================================================================

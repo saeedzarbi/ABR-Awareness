@@ -1,0 +1,97 @@
+================================================================================
+🚀 Training Ablation Model: NETWORK_ONLY
+================================================================================
+💻 Device: cpu
+
+📦 Loading data...
+📊 FCC Traces Loaded:
+   Train: 184
+   Val: 40
+   Test: 40
+✅ Loaded 264 FCC traces into memory
+
+🏗️  Creating environment...
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+✓ Loaded 127 traces
+  Train: 88
+  Val:   19
+  Test:  20
+
+🧠 Creating network_only model...
+   ⚠️  Model WITHOUT any content features (like Pensieve)
+   Total parameters: 102,663
+📊 Logging to: results/logs/ablation_network_only.jsonl
+
+🎓 Creating PPO trainer...
+
+================================================================================
+🚂 Starting Training: NETWORK_ONLY
+================================================================================
+Total timesteps: 500,000
+Evaluation every: 25 updates
+================================================================================
+
+Update   10 | Steps:   20480 | Episodes:  420 | Reward(20):  -81.52 | Reward(100): -140.77 | Rebuffer:  43.5s | Bitrate: 1275kbps
+Update   20 | Steps:   40960 | Episodes:  840 | Reward(20):  +58.73 | Reward(100):  +60.17 | Rebuffer:   4.5s | Bitrate:  924kbps
+
+📊 Validation at update 25...
+   Val Reward: +38.96 ± 131.50
+   🏆 New best! (+inf)
+Update   30 | Steps:   61440 | Episodes: 1260 | Reward(20):  +63.18 | Reward(100):  +65.63 | Rebuffer:   4.8s | Bitrate:  919kbps
+Update   40 | Steps:   81920 | Episodes: 1680 | Reward(20):  +86.97 | Reward(100):  +83.69 | Rebuffer:   1.8s | Bitrate: 1043kbps
+Update   50 | Steps:  102400 | Episodes: 2100 | Reward(20):  +88.10 | Reward(100):  +87.00 | Rebuffer:   1.6s | Bitrate:  968kbps
+
+📊 Validation at update 50...
+   Val Reward: +105.71 ± 14.38
+   🏆 New best! (+66.75)
+💾 Checkpoint saved: checkpoint_50.pth
+
+Update   60 | Steps:  122880 | Episodes: 2520 | Reward(20):  +73.61 | Reward(100):  +87.44 | Rebuffer:   6.4s | Bitrate:  982kbps
+Update   70 | Steps:  143360 | Episodes: 2940 | Reward(20):  +81.98 | Reward(100):  +90.18 | Rebuffer:   3.3s | Bitrate:  859kbps
+
+📊 Validation at update 75...
+   Val Reward: +103.46 ± 15.35
+   ⚠️  No improvement (1/5)
+Update   80 | Steps:  163840 | Episodes: 3360 | Reward(20):  +77.56 | Reward(100):  +92.80 | Rebuffer:   5.3s | Bitrate:  994kbps
+Update   90 | Steps:  184320 | Episodes: 3780 | Reward(20):  +90.93 | Reward(100):  +91.01 | Rebuffer:   2.6s | Bitrate: 1069kbps
+Update  100 | Steps:  204800 | Episodes: 4200 | Reward(20): +102.52 | Reward(100):  +92.61 | Rebuffer:   3.1s | Bitrate: 1349kbps
+
+📊 Validation at update 100...
+   Val Reward: +83.99 ± 46.27
+   ⚠️  No improvement (2/5)
+💾 Checkpoint saved: checkpoint_100.pth
+
+Update  110 | Steps:  225280 | Episodes: 4620 | Reward(20):  +87.37 | Reward(100):  +86.26 | Rebuffer:   3.7s | Bitrate: 1042kbps
+Update  120 | Steps:  245760 | Episodes: 5040 | Reward(20):  +94.20 | Reward(100):  +96.87 | Rebuffer:   2.9s | Bitrate: 1046kbps
+
+📊 Validation at update 125...
+   Val Reward: +94.02 ± 23.60
+   ⚠️  No improvement (3/5)
+Update  130 | Steps:  266240 | Episodes: 5460 | Reward(20): +101.67 | Reward(100):  +90.25 | Rebuffer:   1.5s | Bitrate: 1069kbps
+Update  140 | Steps:  286720 | Episodes: 5880 | Reward(20):  +87.21 | Reward(100):  +83.19 | Rebuffer:   1.4s | Bitrate:  910kbps
+Update  150 | Steps:  307200 | Episodes: 6300 | Reward(20):  +90.81 | Reward(100):  +87.10 | Rebuffer:   1.4s | Bitrate:  906kbps
+
+📊 Validation at update 150...
+   Val Reward: +94.74 ± 16.18
+   ⚠️  No improvement (4/5)
+💾 Checkpoint saved: checkpoint_150.pth
+
+Update  160 | Steps:  327680 | Episodes: 6720 | Reward(20): +102.56 | Reward(100):  +91.48 | Rebuffer:   1.2s | Bitrate: 1109kbps
+Update  170 | Steps:  348160 | Episodes: 7140 | Reward(20): +106.42 | Reward(100):  +97.51 | Rebuffer:   1.2s | Bitrate: 1184kbps
+
+📊 Validation at update 175...
+   Val Reward: +98.48 ± 13.72
+   ⚠️  No improvement (5/5)
+
+⏸️  Early stopping triggered!
+
+================================================================================
+✅ Training Complete: NETWORK_ONLY
+================================================================================
+Total updates: 175
+Best reward: +105.71
+Models saved in: results/ablation_network_only
+================================================================================
