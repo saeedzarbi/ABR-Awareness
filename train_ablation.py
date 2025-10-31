@@ -16,7 +16,6 @@ torch.manual_seed(SEED)
 
 def compute_rewarded_rollout(trainer, n_steps, reward_fn):
     buffer = trainer.collect_rollout(n_steps=n_steps)
-    states = buffer.states
     infos = trainer.env.info_history if hasattr(trainer.env, 'info_history') else []
     last_bitrate = None
     for i in range(len(buffer.rewards)):
@@ -35,10 +34,12 @@ def evaluate_rewarded(trainer, env, reward_fn, n_episodes):
         last_bitrate = None
         while not done:
             a = trainer.model.select_action(
-    s['network'],
-    s.get('content', np.zeros_like(s['network'])),
-    s.get('vmaf', np.zeros_like(s['network'][0]))
-)
+                torch.FloatTensor(s['network']).unsqueeze(0).to(trainer.device),
+                torch.zeros_like(torch.FloatTensor(s['content'])).unsqueeze(0).to(trainer.device)
+                if 'content' in s else torch.zeros(1, 2).to(trainer.device),
+                torch.zeros_like(torch.FloatTensor(s['vmaf'])).unsqueeze(0).to(trainer.device)
+                if 'vmaf' in s else torch.zeros(1, 6).to(trainer.device)
+            ).item()
             s_next, _, done, info = env.step(a)
             r = reward_fn(info, last_bitrate)
             total_reward += r
@@ -86,6 +87,7 @@ def main(args):
         n_epochs=4,
         batch_size=64
     )
+    trainer.device = device
 
     logger = TrainingLogger(log_dir='results/logs', run_name='ablation_study')
     trainer.external_logger = logger
