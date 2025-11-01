@@ -69,18 +69,6 @@ def main():
         # ✅ Apply composite reward
         infos = getattr(env_train, 'info_history', [])
         last_bitrate = None
-        for i in range(len(rollout.rewards)):
-            if i < len(infos):
-                rollout.rewards[i] = compute_composite_reward(infos[i], last_bitrate)
-                last_bitrate = infos[i].get('bitrate', last_bitrate)
-
-        # === Update policy ===
-        trainer.lr = max(1e-4, base_lr * (0.995 ** update))
-        trainer.entropy_coef = max(0.005, base_entropy * (0.99 ** update))
-        train_info = trainer.update_policy(rollout)
-
-        # === Validation evaluation ===
-        val_rewards = []
         for _ in range(5):
             s = env_val.reset(split='val')
             done = False
@@ -94,7 +82,15 @@ def main():
                     vmaf = torch.FloatTensor(s['vmaf']).unsqueeze(0).to(device)
                     a = trainer.model.select_action(net, cont, vmaf)
 
+                    # ✅ تبدیل خروجی مدل به عدد صحیح
+                    if isinstance(a, tuple):
+                        a = a[0]
+                    if isinstance(a, torch.Tensor):
+                        a = int(a.item())
+
+                # حالا a یک عدد صحیح بین 0 تا 5 است
                 s_next, _, done, info = env_val.step(a)
+
                 total_r += compute_composite_reward(info, last_bitrate)
                 last_bitrate = info.get('bitrate', last_bitrate)
                 s = s_next
@@ -102,6 +98,7 @@ def main():
             val_rewards.append(total_r)
 
         avg_val_r = np.mean(val_rewards)
+
 
         # === Early stopping check ===
         if avg_val_r > best_val_reward:
