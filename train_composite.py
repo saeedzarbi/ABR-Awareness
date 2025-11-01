@@ -101,6 +101,7 @@ def main():
 
         avg_val_r = np.mean(val_rewards)
 
+        train_info = trainer.update_policy(rollout)
 
         # === Early stopping check ===
         if avg_val_r > best_val_reward:
