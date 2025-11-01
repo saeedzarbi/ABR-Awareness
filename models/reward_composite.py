@@ -9,8 +9,8 @@ Used in: train_composite.py
 
 import numpy as np
 
-
-def compute_composite_reward(info, last_bitrate=None, alpha=0.7, beta=0.3, gamma=5.0, delta=0.7):
+def compute_composite_reward(info, last_bitrate=None,
+                             alpha=0.7, beta=0.4, gamma=4.0, delta=0.7):
     bitrate = info.get("bitrate", 0.0)
     rebuffer = info.get("rebuffer_time", 0.0)
     vmaf = info.get("vmaf", 50.0)
