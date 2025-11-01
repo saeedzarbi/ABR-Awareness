@@ -33,7 +33,7 @@ def main():
     env_val = ContentAwareEnvFCC(loader, 'data/features/si_ti_features.json',
                                  'data/vmaf/vmaf_table.json', 'data/videos', mode='val')
 
-    # === Model ===
+    # === Model & Trainer ===
     model = create_content_aware_model().to(device)
     trainer = PPOTrainer(
         model=model,
@@ -49,23 +49,24 @@ def main():
         batch_size=64
     )
     trainer.device = device
+
     logger = TrainingLogger(log_dir='results/logs', run_name='composite_reward')
     trainer.external_logger = logger
 
     print("🎓 Training initialized.\n")
 
-    # === Adaptive parameters ===
+    # === Adaptive hyperparameters ===
     base_lr = 3e-4
     base_entropy = 0.02
     best_val_reward = float('-inf')
     patience = 15
     stop_counter = 0
 
+    # === Training Loop ===
     for update in range(1, 201):
-    # Rollout
         rollout = trainer.collect_rollout(n_steps=2048)
 
-        # Compute new reward manually
+        # ✅ Apply composite reward
         infos = getattr(env_train, 'info_history', [])
         last_bitrate = None
         for i in range(len(rollout.rewards)):
@@ -73,31 +74,36 @@ def main():
                 rollout.rewards[i] = compute_composite_reward(infos[i], last_bitrate)
                 last_bitrate = infos[i].get('bitrate', last_bitrate)
 
-        # === (Remove advantage normalization here) ===
-        # PPOTrainer handles it internally.
-
         # === Update policy ===
         trainer.lr = max(1e-4, base_lr * (0.995 ** update))
         trainer.entropy_coef = max(0.005, base_entropy * (0.99 ** update))
         train_info = trainer.update_policy(rollout)
 
-        # === Evaluate ===
+        # === Validation evaluation ===
         val_rewards = []
         for _ in range(5):
             s = env_val.reset(split='val')
             done = False
             last_bitrate = None
-            total_r = 0
+            total_r = 0.0
+
             while not done:
                 with torch.no_grad():
-                    a = trainer.model.select_action(s['network'], s['content'], s['vmaf'])
+                    net = torch.FloatTensor(s['network']).unsqueeze(0).to(device)
+                    cont = torch.FloatTensor(s['content']).unsqueeze(0).to(device)
+                    vmaf = torch.FloatTensor(s['vmaf']).unsqueeze(0).to(device)
+                    a = trainer.model.select_action(net, cont, vmaf)
+
                 s_next, _, done, info = env_val.step(a)
                 total_r += compute_composite_reward(info, last_bitrate)
                 last_bitrate = info.get('bitrate', last_bitrate)
                 s = s_next
+
             val_rewards.append(total_r)
+
         avg_val_r = np.mean(val_rewards)
 
+        # === Early stopping check ===
         if avg_val_r > best_val_reward:
             best_val_reward = avg_val_r
             stop_counter = 0
@@ -106,8 +112,8 @@ def main():
         else:
             stop_counter += 1
 
-        print(f"[{update:03d}] Train Loss: {train_info['policy_loss']:.4f} | "
-              f"ValR: {avg_val_r:.2f} | Best: {best_val_reward:.2f} | "
+        print(f"[{update:03d}] TrainLoss: {train_info['policy_loss']:.4f} | "
+              f"ValR: {avg_val_r:7.2f} | Best: {best_val_reward:7.2f} | "
               f"Entropy: {trainer.entropy_coef:.4f} | LR: {trainer.lr:.6f}")
 
         if stop_counter >= patience:
@@ -117,6 +123,7 @@ def main():
     print("\n✅ Training complete.")
     print(f"📈 Best validation reward: {best_val_reward:.2f}")
     print("💾 Model saved to results/composite_training/best_model.pth\n")
+
 
 if __name__ == "__main__":
     main()
