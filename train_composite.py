@@ -69,6 +69,8 @@ def main():
         # ✅ Apply composite reward
         infos = getattr(env_train, 'info_history', [])
         last_bitrate = None
+        val_rewards = []  # ✅ تعریف قبل از حلقه
+
         for _ in range(5):
             s = env_val.reset(split='val')
             done = False
