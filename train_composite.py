@@ -81,7 +81,6 @@ def main():
         trainer.entropy_coef = max(0.005, base_entropy * (0.99 ** update))
         train_info = trainer.update_policy(rollout)
 
-
         # === Evaluate ===
         val_rewards = []
         for _ in range(5):
