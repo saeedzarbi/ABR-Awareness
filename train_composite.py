@@ -62,7 +62,7 @@ def main():
     stop_counter = 0
 
     for update in range(1, 201):
-        # Rollout
+    # Rollout
         rollout = trainer.collect_rollout(n_steps=2048)
 
         # Compute new reward manually
@@ -73,14 +73,14 @@ def main():
                 rollout.rewards[i] = compute_composite_reward(infos[i], last_bitrate)
                 last_bitrate = infos[i].get('bitrate', last_bitrate)
 
-        # === Normalize advantages ===
-        adv = rollout.advantages
-        rollout.advantages = (adv - adv.mean()) / (adv.std() + 1e-8)
+        # === (Remove advantage normalization here) ===
+        # PPOTrainer handles it internally.
 
         # === Update policy ===
         trainer.lr = max(1e-4, base_lr * (0.995 ** update))
         trainer.entropy_coef = max(0.005, base_entropy * (0.99 ** update))
         train_info = trainer.update_policy(rollout)
+
 
         # === Evaluate ===
         val_rewards = []
