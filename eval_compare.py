@@ -2,12 +2,12 @@ import os
 import argparse
 import csv
 import random
-from typing import Dict, Tuple
+from typing import Dict
 
 import numpy as np
 import torch
 
-# --- Project imports (match your repo layout) ---
+# --- Project imports ---
 from models.fcc_trace_loader import FCCTraceLoader
 from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
 from models.content_aware_model import create_content_aware_model
@@ -15,6 +15,7 @@ from models.reward_composite import compute_composite_reward
 
 
 def set_seeds(seed: int = 42):
+    """Set global random seeds for reproducibility."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -23,6 +24,7 @@ def set_seeds(seed: int = 42):
 
 
 def build_env(mode: str) -> ContentAwareEnvFCC:
+    """Build FCC evaluation environment with composite reward enabled."""
     loader = FCCTraceLoader(
         fcc_trace_dir='data/network_traces/fcc',
         train_file='data/network_traces/fcc/splits/fcc_train.txt',
@@ -36,14 +38,15 @@ def build_env(mode: str) -> ContentAwareEnvFCC:
         'data/videos',
         mode=mode,
     )
+    env.use_composite_reward = True  # ✅ ensure composite reward mode is active
     return env
 
 
 def load_model(ckpt_path: str, device: torch.device) -> torch.nn.Module:
+    """Load trained PyTorch model from checkpoint."""
     model = create_content_aware_model().to(device)
     if not os.path.isfile(ckpt_path):
         raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
-    # Safer load to silence FutureWarning
     state = torch.load(ckpt_path, map_location=device, weights_only=False)
     model.load_state_dict(state)
     model.eval()
@@ -59,29 +62,18 @@ def evaluate_model(env: ContentAwareEnvFCC,
                    device: torch.device,
                    episodes: int = 100,
                    use_composite: bool = True) -> Dict[str, float]:
-    """Run evaluation and return aggregate metrics.
-
-    We accumulate both the environment's native reward and the composite reward,
-    but return the chosen metric (use_composite) as `reward`.
-    """
-    env_rewards = []
-    comp_rewards = []
-    rebuf_list = []
-    bitrate_list = []
-    vmaf_list = []
-    switches_list = []
+    """Run evaluation and return aggregate metrics."""
+    env_rewards, comp_rewards = [], []
+    rebuf_list, bitrate_list, vmaf_list, switches_list = [], [], [], []
 
     for ep in range(episodes):
-        s = env.reset(split='test', video_id=np.random.choice([1,2,3,4,5,6]))
+        s = env.reset(split='test', video_id=np.random.choice([1, 2, 3, 4, 5, 6]))
         done = False
         last_bitrate = None
         last_action_bitrate = None
 
-        ep_env_r = 0.0
-        ep_comp_r = 0.0
-        ep_rebuf = 0.0
-        ep_bitrates = []
-        ep_vmafs = []
+        ep_env_r = ep_comp_r = ep_rebuf = 0.0
+        ep_bitrates, ep_vmafs = [], []
         ep_switches = 0
 
         while not done:
@@ -100,15 +92,12 @@ def evaluate_model(env: ContentAwareEnvFCC,
             ep_bitrates.append(float(info.get('bitrate', 0.0)))
             ep_vmafs.append(float(info.get('vmaf', 0.0)))
 
-            # Count switches by bitrate, not by action index (safer if mapping changes)
+            # Switches
             current_bitrate = float(info.get('bitrate', 0.0))
             if last_action_bitrate is not None and current_bitrate != last_action_bitrate:
                 ep_switches += 1
             last_action_bitrate = current_bitrate
-
-            # for smoothness penalty in composite
             last_bitrate = current_bitrate if current_bitrate > 0 else last_bitrate
-
             s = s_next
 
         env_rewards.append(ep_env_r)
@@ -118,7 +107,6 @@ def evaluate_model(env: ContentAwareEnvFCC,
         vmaf_list.append(np.mean(ep_vmafs) if ep_vmafs else 0.0)
         switches_list.append(ep_switches)
 
-    # Aggregate
     env_reward_mean = float(np.mean(env_rewards)) if env_rewards else 0.0
     comp_reward_mean = float(np.mean(comp_rewards)) if comp_rewards else 0.0
 
@@ -136,6 +124,7 @@ def evaluate_model(env: ContentAwareEnvFCC,
 
 
 def save_csv(path: str, rows: Dict[str, Dict[str, float]]):
+    """Save evaluation metrics to CSV."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     fieldnames = [
         'name', 'episodes', 'reward', 'reward_env_mean', 'reward_comp_mean',
@@ -169,14 +158,17 @@ def main():
     print(f'🧠 Loading model from {args.ckpt} on {device}...')
     model = load_model(args.ckpt, device)
 
-    print(f"\n>>> Evaluating OUR MODEL on FCC test set ({args.episodes} eps)\n    - Primary metric: {'COMPOSITE' if args.use_composite else 'ENV/DEFAULT'} reward\n")
+    print(f"\n>>> Evaluating OUR MODEL on FCC test set ({args.episodes} eps)\n"
+          f"    - Primary metric: {'COMPOSITE' if args.use_composite else 'ENV/DEFAULT'} reward\n")
+
     ours = evaluate_model(env, model, device, episodes=args.episodes, use_composite=args.use_composite)
 
-    print(f"  Reward={ours['reward']:.2f}  Rebuf={ours['rebuffer_s']:.2f}s  Bitrate={ours['bitrate_kbps']:.0f}kbps  VMAF={ours['vmaf']:.1f}  Switches={ours['switches']:.2f}")
-    print(f"  (env_reward_mean={ours['reward_env_mean']:.2f}, composite_reward_mean={ours['reward_comp_mean']:.2f})\n")
+    print(f"  Reward={ours['reward']:.2f}  Rebuf={ours['rebuffer_s']:.2f}s  "
+          f"Bitrate={ours['bitrate_kbps']:.0f}kbps  VMAF={ours['vmaf']:.1f}  Switches={ours['switches']:.2f}")
+    print(f"  (env_reward_mean={ours['reward_env_mean']:.2f}, "
+          f"composite_reward_mean={ours['reward_comp_mean']:.2f})\n")
 
-    # Save summary CSV
-    save_csv(args.out, { 'our_model_composite' if args.use_composite else 'our_model_env': ours })
+    save_csv(args.out, {'our_model_composite' if args.use_composite else 'our_model_env': ours})
     print(f"✓ Saved summaries to {args.out}")
 
 
