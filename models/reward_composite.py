@@ -1,37 +1,20 @@
 import numpy as np
 
 def compute_composite_reward(info, last_bitrate=None,
-                             alpha=1.0, beta=0.5, gamma=1.8, delta=0.4, buffer_bonus=0.3):
+                             alpha=1.2,   # ↑ تأکید بیشتر روی کیفیت VMAF
+                             beta=0.5,    # وزن bitrate
+                             gamma=4.0,   # ↑ افزایش جریمه‌ی rebuffer
+                             delta=0.6,   # ↑ کاهش نوسانات (switch penalty)
+                             buffer_bonus=0.3):
     """
-    ✅ Balanced Composite QoE Reward (normalized and perceptually weighted)
+    ✅ Composite QoE Reward (Balanced for Quality, Stability, and Smoothness)
 
-    Combines perceptual (VMAF), bitrate, and rebuffer/smoothness penalties with
-    mild buffer stability bonus. Designed for stable PPO convergence and realistic QoE.
-
-    Parameters
-    ----------
-    info : dict
-        Step information from the environment containing:
-        - bitrate (kbps)
-        - rebuffer_time (s)
-        - vmaf (0–100)
-        - buffer (optional, s)
-    last_bitrate : float, optional
-        Bitrate from previous chunk for smoothness penalty.
-    alpha : float
-        Weight for perceptual quality (VMAF).
-    beta : float
-        Weight for bitrate contribution.
-    gamma : float
-        Weight for rebuffering penalty (logarithmic).
-    delta : float
-        Weight for bitrate switching penalty.
-    buffer_bonus : float
-        Positive bonus factor for maintaining stable buffer.
-
-    Returns
-    -------
-    float : final reward (scaled to range approximately [-10, +10])
+    ترکیب شده از:
+    - کیفیت ادراکی (VMAF)
+    - bitrate
+    - rebuffer penalty (log-scale)
+    - smoothness penalty
+    - buffer stability bonus
     """
 
     bitrate = info.get("bitrate", 0.0)
@@ -43,18 +26,18 @@ def compute_composite_reward(info, last_bitrate=None,
     bitrate_mbps = bitrate / 1000.0
     vmaf_norm = np.clip(vmaf / 100.0, 0.0, 1.0)
 
-    # Log-scaled rebuffer penalty (less aggressive)
+    # Log-scaled rebuffer penalty
     rebuffer_penalty = np.log1p(rebuffer) * gamma
 
-    # Smoothness penalty
+    # Smoothness penalty (switching between bitrates)
     smooth_penalty = 0.0
     if last_bitrate is not None:
         smooth_penalty = abs(bitrate - last_bitrate) / 1000.0
 
-    # Small buffer stability bonus
+    # Buffer stability bonus
     buffer_reward = buffer_bonus * np.tanh(buffer / 10.0)
 
-    # Weighted reward
+    # Weighted reward combination
     raw_reward = (
         alpha * vmaf_norm +
         beta * bitrate_mbps +
@@ -63,7 +46,6 @@ def compute_composite_reward(info, last_bitrate=None,
         delta * smooth_penalty
     )
 
-    # Normalize to stable PPO range
-    reward = np.tanh(raw_reward / 5.0) * 10.0
-
+    # Normalize and clip to stable PPO range
+    reward = np.tanh(raw_reward / 8.0) * 10.0
     return float(np.clip(reward, -10.0, 10.0))
