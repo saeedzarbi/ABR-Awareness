@@ -1,6 +1,6 @@
 import numpy as np
 
-def compute_composite_balanced_reward(info, last_bitrate=None,alpha = 1.4,
+def compute_composite_reward(info, last_bitrate=None,alpha = 1.4,
                              beta = 0.5,     
                              gamma = 4.5,     
                              delta = 0.6,     
@@ -42,4 +42,4 @@ def compute_composite_balanced_reward(info, last_bitrate=None,alpha = 1.4,
 
 if __name__ == "__main__":
     test_info = {"bitrate": 1850, "rebuffer_time": 1.2, "vmaf": 72, "buffer": 12.0}
-    print("Sample Reward:", compute_composite_balanced_reward(test_info))
+    print("Sample Reward:", compute_composite_reward(test_info))
