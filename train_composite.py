@@ -85,16 +85,17 @@ def main():
     trainer = PPOTrainer(
         model=model,
         env=env_train,
-        lr=2e-4,           # ⬅️ کم‌تر از قبل برای پایداری
+        lr=1.8e-4,          # ← کمی کمتر برای پایداری نهایی
         gamma=0.99,
         gae_lambda=0.95,
         clip_epsilon=0.2,
         value_coef=0.5,
-        entropy_coef=0.02,
+        entropy_coef=0.025, # ← کمی بیشتر برای جلوگیری از premature convergence
         max_grad_norm=0.5,
         n_epochs=4,
         batch_size=64
     )
+
     trainer.device = device
 
     logger = TrainingLogger(log_dir='results/logs', run_name='composite_reward_balanced')
