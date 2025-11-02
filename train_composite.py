@@ -11,7 +11,7 @@ from models.ppo_trainer import PPOTrainer
 from models.logger import TrainingLogger
 
 # ⬅️ نسخه‌ی بالانس‌شده‌ی پاداش
-from models.reward_composite import compute_balanced_reward
+from models.reward_composite import compute_composite_reward
 
 SEED = 42
 np.random.seed(SEED)
@@ -120,7 +120,7 @@ def main():
         last_bitrate = None
         n = min(len(rollout.rewards), len(infos))
         for i in range(n):
-            rollout.rewards[i] = compute_balanced_reward(infos[i], last_bitrate)
+            rollout.rewards[i] = compute_composite_reward(infos[i], last_bitrate)
             last_bitrate = infos[i].get('bitrate', last_bitrate)
 
         # LR & Entropy decay
@@ -147,7 +147,7 @@ def main():
                     a = trainer.model.select_action(net, cont, vmaf)
                     a = _to_int_action(a)
                 s_next, _, done, info = env_val.step(a)
-                total_r += compute_balanced_reward(info, last_bitrate)
+                total_r += compute_composite_reward(info, last_bitrate)
                 last_bitrate = info.get('bitrate', last_bitrate)
                 s = s_next
             val_rewards.append(total_r)
