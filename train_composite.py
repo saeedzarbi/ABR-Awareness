@@ -33,11 +33,13 @@ class SafetyEnvWrapper:
         # read last buffer from internal state representation (env.buffer in seconds)
         buf = getattr(self.env, "buffer", 0.0)
         a = int(action)
-        if buf < 3:          # فقط وقتی بافر خیلی پایین است محدود کن
+        if buf < 4:
             a = min(a, 1)
         elif buf < 8:
             a = min(a, 2)
-        # در غیر این صورت اجازه‌ی تصمیم آزاد به عامل بده
+        elif buf < 12:
+            a = min(a, 3)
+
 
         return self.env.step(a)
 

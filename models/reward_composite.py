@@ -1,16 +1,11 @@
 import numpy as np
 
-def compute_composite_reward(info, last_bitrate=None,
-                             alpha=2.0,    # ↑ اهمیت بیشتر کیفیت تصویر
-                             beta=1.0,    # ↑ اهمیت بیشتر نرخ بیت
-                             gamma=2.5,   # ↓ جریمه نرم‌تر برای rebuffer
-                             delta=0.4,   # ↓ جریمه تغییر نرخ بیت
-                             buffer_bonus=0.5):  # ↑ پاداش ثبات بافر
-    """
-    ⚖️ Improved Balanced Composite QoE Reward
-    ترکیب بهینه‌تر کیفیت، پایداری و سرعت برای جلوگیری از رفتار بیش‌ازحد محافظه‌کارانه
-    """
-
+def compute_composite_balanced_reward(info, last_bitrate=None,alpha = 1.4,
+                             beta = 0.5,     
+                             gamma = 4.5,     
+                             delta = 0.6,     
+                             buffer_bonus = 0.3,  
+                             ):  
     bitrate = info.get("bitrate", 0.0)
     rebuffer = info.get("rebuffer_time", 0.0)
     vmaf = info.get("vmaf", 50.0)
