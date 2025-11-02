@@ -1,236 +1,184 @@
-# eval_compare.py
-# ----------------------------------------------------------
-# Evaluation of multiple ABR agents (Our PPO, Trained Pensieve, MPC, BOLA, ComycoLike)
-# ----------------------------------------------------------
+import os
+import argparse
+import csv
+import random
+from typing import Dict, Tuple
 
-import os, argparse, random, numpy as np
-import pandas as pd
+import numpy as np
 import torch
-from models.content_aware_model import create_content_aware_model
-from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
+
+# --- Project imports (match your repo layout) ---
 from models.fcc_trace_loader import FCCTraceLoader
-from models.content_aware_env_v2 import ContentAwareEnvV2
-from models.pensieve_reward import PensieveReward
-from models.pensieve_actor_compatible import PensieveActorCompatible  # ✅ اضافه شد
-
-SEED = 42
-random.seed(SEED)
-np.random.seed(SEED)
-torch.manual_seed(SEED)
-
-# ----------------------------------------------------------
-# Policy Classes
-# ----------------------------------------------------------
-
-class OurPolicy:
-    """Content-aware PPO agent"""
-    def __init__(self, ckpt_path):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = create_content_aware_model().to(self.device)
-        state = torch.load(ckpt_path, map_location=self.device)
-        if isinstance(state, dict) and 'model_state_dict' in state:
-            self.model.load_state_dict(state['model_state_dict'])
-        elif isinstance(state, dict) and 'state_dict' in state:
-            self.model.load_state_dict(state['state_dict'])
-        else:
-            self.model.load_state_dict(state)
-        self.model.eval()
-
-    def select_action(self, s):
-        net = torch.FloatTensor(s['network']).unsqueeze(0).to(self.device)
-        cont = torch.FloatTensor(s['content']).unsqueeze(0).to(self.device)
-        vmaf = torch.FloatTensor(s['vmaf']).unsqueeze(0).to(self.device)
-        with torch.no_grad():
-            probs, _ = self.model(net, cont, vmaf)
-        return int(probs.argmax(dim=1).item())
+from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
+from models.content_aware_model import create_content_aware_model
+from models.reward_composite import compute_composite_reward
 
 
-class PensieveTrainedPolicy:
-    """Uses trained PensieveActorCompatible checkpoint"""
-    def __init__(self, ckpt_path):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = PensieveActorCompatible(state_dim=(6,8), action_dim=6).to(self.device)
-        ckpt = torch.load(ckpt_path, map_location=self.device)
-        if 'model_state_dict' in ckpt:
-            self.model.load_state_dict(ckpt['model_state_dict'])
-        else:
-            self.model.load_state_dict(ckpt)
-        self.model.eval()
-
-    def select_action(self, s):
-        net = torch.FloatTensor(s['network']).unsqueeze(0).to(self.device)
-        with torch.no_grad():
-            dummy_cont = torch.zeros((1, 2), dtype=torch.float32).to(self.device)
-            dummy_vmaf = torch.zeros((1, 6), dtype=torch.float32).to(self.device)
-            probs, _ = self.model(net, dummy_cont, dummy_vmaf)
-        return int(probs.argmax(dim=1).item())
+def set_seeds(seed: int = 42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
-
-class MPCPolicy:
-    def __init__(self, bitrate_levels=[300,750,1850,2850,4300,6000], H=5):
-        self.bitrates = bitrate_levels
-        self.H = H
-        self.reward = PensieveReward(4.3, 1.0, bitrate_levels)
-
-    def _avg_tp(self, past_tp):
-        arr = np.array(past_tp[-8:] or [1000.0])
-        arr = np.clip(arr, 1e-3, None)
-        return len(arr) / np.sum(1.0 / arr)
-
-    def select_action(self, s):
-        last_br = getattr(self, "_last_br", 0)
-        tp_hat = self._avg_tp(getattr(self, "_past_tp", []))
-        buffer = s['network'][2, -1] * 60.0
-        best_a, best_q = 0, -1e9
-        for a, br in enumerate(self.bitrates):
-            dl_time = (br * 4.0) / max(tp_hat, 1e-3)
-            rebuf = max(0.0, dl_time - buffer)
-            vmaf = float(s['vmaf'][a] * 100.0)
-            q = self.reward.compute_reward_vmaf(vmaf, rebuf, last_br, br)
-            if q > best_q:
-                best_q, best_a = q, a
-        self._last_br = self.bitrates[best_a]
-        return best_a
+def build_env(mode: str) -> ContentAwareEnvFCC:
+    loader = FCCTraceLoader(
+        fcc_trace_dir='data/network_traces/fcc',
+        train_file='data/network_traces/fcc/splits/fcc_train.txt',
+        val_file='data/network_traces/fcc/splits/fcc_val.txt',
+        test_file='data/network_traces/fcc/splits/fcc_test.txt',
+    )
+    env = ContentAwareEnvFCC(
+        loader,
+        'data/features/si_ti_features.json',
+        'data/vmaf/vmaf_table.json',
+        'data/videos',
+        mode=mode,
+    )
+    return env
 
 
-class BOLAPolicy:
-    def __init__(self, bitrate_levels=[300,750,1850,2850,4300,6000]):
-        self.bitrates = bitrate_levels
-
-    def select_action(self, s):
-        buf = s['network'][2, -1] * 60.0
-        v = (s['vmaf'] * 100.0).clip(1, 100)
-        util = np.log(v)
-        if buf < 6: idx = 0
-        elif buf < 12: idx = 1
-        elif buf < 20: idx = 2
-        elif buf < 30: idx = 3
-        elif buf < 40: idx = 4
-        else: idx = 5
-        cand = range(max(0, idx-1), min(len(self.bitrates), idx+2))
-        return int(np.argmax(util[list(cand)]) + min(cand))
+def load_model(ckpt_path: str, device: torch.device) -> torch.nn.Module:
+    model = create_content_aware_model().to(device)
+    if not os.path.isfile(ckpt_path):
+        raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
+    # Safer load to silence FutureWarning
+    state = torch.load(ckpt_path, map_location=device, weights_only=False)
+    model.load_state_dict(state)
+    model.eval()
+    return model
 
 
-class ComycoLikePolicy(MPCPolicy):
-    def __init__(self, bitrate_levels=[300,750,1850,2850,4300,6000], H=5):
-        super().__init__(bitrate_levels, H)
-        self.reward = PensieveReward(4.3, 2.0, bitrate_levels)
+def _to_tensor(x, device):
+    return torch.as_tensor(x, dtype=torch.float32, device=device).unsqueeze(0)
 
-# ----------------------------------------------------------
-# Environment setup
-# ----------------------------------------------------------
 
-def make_env(dataset):
-    if dataset == 'fcc':
-        loader = FCCTraceLoader(
-            fcc_trace_dir='data/network_traces/fcc',
-            train_file='data/network_traces/fcc/splits/fcc_train.txt',
-            val_file='data/network_traces/fcc/splits/fcc_val.txt',
-            test_file='data/network_traces/fcc/splits/fcc_test.txt'
-        )
-        env_val = ContentAwareEnvFCC(
-            fcc_trace_loader=loader,
-            features_file='data/features/si_ti_features.json',
-            vmaf_file='data/vmaf/vmaf_table.json',
-            video_dir='data/videos',
-            mode='val'
-        )
-    elif dataset == 'cooked':
-        env_val = ContentAwareEnvV2(
-            trace_dir='data/network_traces/cooked_traces',
-            features_file='data/features/si_ti_features.json',
-            vmaf_file='data/vmaf/vmaf_table.json'
-        )
-    else:
-        raise ValueError("dataset must be fcc or cooked")
-    return env_val
+def evaluate_model(env: ContentAwareEnvFCC,
+                   model: torch.nn.Module,
+                   device: torch.device,
+                   episodes: int = 100,
+                   use_composite: bool = True) -> Dict[str, float]:
+    """Run evaluation and return aggregate metrics.
 
-# ----------------------------------------------------------
-# Evaluation Loop
-# ----------------------------------------------------------
+    We accumulate both the environment's native reward and the composite reward,
+    but return the chosen metric (use_composite) as `reward`.
+    """
+    env_rewards = []
+    comp_rewards = []
+    rebuf_list = []
+    bitrate_list = []
+    vmaf_list = []
+    switches_list = []
 
-def run_policy(env, policy, episodes=100, dataset='fcc'):
-    results = []
     for ep in range(episodes):
-        s = env.reset(split='val')
+        s = env.reset(split='test', video_id=np.random.choice([1,2,3,4,5,6]))
         done = False
-        total_reward, total_rebuf, total_vmaf, total_bitrate, switches = 0, 0, 0, 0, 0
-        last_br = None
-        chunks = 0
-        while not done:
-            a = policy.select_action(s)
-            s_next, r, done, info = env.step(a)
-            total_reward += r
-            total_rebuf += info.get('rebuffer_time', 0.0)
-            total_bitrate += info.get('bitrate', 0.0)
-            total_vmaf += float(s['vmaf'][a] * 100.0)
-            if last_br is not None and info.get('bitrate') != last_br:
-                switches += 1
-            last_br = info.get('bitrate', last_br)
-            s = s_next if s_next is not None else s
-            chunks += 1
-        results.append({
-            'episode': ep,
-            'reward': total_reward,
-            'rebuffer_s': total_rebuf,
-            'avg_bitrate_kbps': total_bitrate / max(1, chunks),
-            'avg_vmaf': total_vmaf / max(1, chunks),
-            'switches': switches,
-            'chunks': chunks
-        })
-    return pd.DataFrame(results)
+        last_bitrate = None
+        last_action_bitrate = None
 
-# ----------------------------------------------------------
-# Main entry
-# ----------------------------------------------------------
+        ep_env_r = 0.0
+        ep_comp_r = 0.0
+        ep_rebuf = 0.0
+        ep_bitrates = []
+        ep_vmafs = []
+        ep_switches = 0
+
+        while not done:
+            with torch.no_grad():
+                net = _to_tensor(s['network'], device)
+                cont = _to_tensor(s['content'], device)
+                vmaf = _to_tensor(s['vmaf'], device)
+                action, _, _ = model.select_action(net, cont, vmaf)
+
+            s_next, env_reward, done, info = env.step(int(action))
+
+            # Track metrics
+            ep_env_r += float(env_reward)
+            ep_comp_r += compute_composite_reward(info, last_bitrate)
+            ep_rebuf += float(info.get('rebuffer_time', 0.0))
+            ep_bitrates.append(float(info.get('bitrate', 0.0)))
+            ep_vmafs.append(float(info.get('vmaf', 0.0)))
+
+            # Count switches by bitrate, not by action index (safer if mapping changes)
+            current_bitrate = float(info.get('bitrate', 0.0))
+            if last_action_bitrate is not None and current_bitrate != last_action_bitrate:
+                ep_switches += 1
+            last_action_bitrate = current_bitrate
+
+            # for smoothness penalty in composite
+            last_bitrate = current_bitrate if current_bitrate > 0 else last_bitrate
+
+            s = s_next
+
+        env_rewards.append(ep_env_r)
+        comp_rewards.append(ep_comp_r)
+        rebuf_list.append(ep_rebuf)
+        bitrate_list.append(np.mean(ep_bitrates) if ep_bitrates else 0.0)
+        vmaf_list.append(np.mean(ep_vmafs) if ep_vmafs else 0.0)
+        switches_list.append(ep_switches)
+
+    # Aggregate
+    env_reward_mean = float(np.mean(env_rewards)) if env_rewards else 0.0
+    comp_reward_mean = float(np.mean(comp_rewards)) if comp_rewards else 0.0
+
+    metrics = {
+        'reward': comp_reward_mean if use_composite else env_reward_mean,
+        'reward_env_mean': env_reward_mean,
+        'reward_comp_mean': comp_reward_mean,
+        'rebuffer_s': float(np.mean(rebuf_list)) if rebuf_list else 0.0,
+        'bitrate_kbps': float(np.mean(bitrate_list)) if bitrate_list else 0.0,
+        'vmaf': float(np.mean(vmaf_list)) if vmaf_list else 0.0,
+        'switches': float(np.mean(switches_list)) if switches_list else 0.0,
+        'episodes': episodes,
+    }
+    return metrics
+
+
+def save_csv(path: str, rows: Dict[str, Dict[str, float]]):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fieldnames = [
+        'name', 'episodes', 'reward', 'reward_env_mean', 'reward_comp_mean',
+        'rebuffer_s', 'bitrate_kbps', 'vmaf', 'switches'
+    ]
+    with open(path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for name, m in rows.items():
+            writer.writerow({'name': name, **m})
+
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, choices=['fcc','cooked'], default='fcc')
-    parser.add_argument('--episodes', type=int, default=100)
-    parser.add_argument('--out', type=str, default='results/compare_eval')
-    parser.add_argument('--our_ckpt', type=str, default='results/composite_training/best_model.pth')
-    parser.add_argument('--pensieve_ckpt', type=str, default='results/pensieve_fcc_training/checkpoint_400.pth')
+    parser = argparse.ArgumentParser(description='Evaluate content-aware ABR model with unified composite reward.')
+    parser.add_argument('--ckpt', type=str, default='results/composite_training/best_model.pth',
+                        help='Path to model checkpoint (.pth)')
+    parser.add_argument('--episodes', type=int, default=100, help='Number of test episodes')
+    parser.add_argument('--seed', type=int, default=42, help='Seed for reproducibility')
+    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
+    parser.add_argument('--use-composite', action='store_true',
+                        help='Report composite reward as the primary reward')
+    parser.add_argument('--out', type=str, default='results/compare_eval/fcc_summary_fixed.csv')
     args = parser.parse_args()
 
-    os.makedirs(args.out, exist_ok=True)
-    env = make_env(args.dataset)
+    set_seeds(args.seed)
+    device = torch.device(args.device)
 
-    policies = {
-        'our': OurPolicy(args.our_ckpt),
-        'pensieve_trained': PensieveTrainedPolicy(args.pensieve_ckpt),
-        'mpc': MPCPolicy(),
-        'bola': BOLAPolicy(),
-        'comyco_like': ComycoLikePolicy()
-    }
+    print('🧪 Building test environment (FCC)...')
+    env = build_env(mode='test')
 
-    summaries = []
-    for name, pol in policies.items():
-        print(f"\n>>> Evaluating: {name} on {args.dataset} ({args.episodes} eps)")
-        df = run_policy(env, pol, episodes=args.episodes, dataset=args.dataset)
-        df.to_csv(os.path.join(args.out, f'{args.dataset}_{name}_episodes.csv'), index=False)
-        summary = df[['reward','rebuffer_s','avg_bitrate_kbps','avg_vmaf','switches']].mean().to_dict()
-        summary['policy'] = name
-        summary['episodes'] = len(df)
-        summaries.append(summary)
-        print(f"  Reward={summary['reward']:.2f}  Rebuf={summary['rebuffer_s']:.2f}s  "
-              f"Bitrate={summary['avg_bitrate_kbps']:.0f}kbps  VMAF={summary['avg_vmaf']:.1f}  "
-              f"Switches={summary['switches']:.2f}")
+    print(f'🧠 Loading model from {args.ckpt} on {device}...')
+    model = load_model(args.ckpt, device)
 
-    out_df = pd.DataFrame(summaries)
-    out_path = os.path.join(args.out, f'{args.dataset}_summary.csv')
-    out_df.to_csv(out_path, index=False)
-    print(f"\n✓ Saved summaries to {out_path}")
+    print(f"\n>>> Evaluating OUR MODEL on FCC test set ({args.episodes} eps)\n    - Primary metric: {'COMPOSITE' if args.use_composite else 'ENV/DEFAULT'} reward\n")
+    ours = evaluate_model(env, model, device, episodes=args.episodes, use_composite=args.use_composite)
 
-    try:
-        import scipy.stats as st
-        a = pd.read_csv(os.path.join(args.out, f'{args.dataset}_our_episodes.csv'))['reward']
-        b = pd.read_csv(os.path.join(args.out, f'{args.dataset}_pensieve_trained_episodes.csv'))['reward']
-        t, p = st.ttest_rel(a, b)
-        print(f"Paired t-test (our vs trained-pensieve): t={t:.2f}, p={p:.3g}")
-    except Exception as e:
-        print("Significance test skipped:", e)
+    print(f"  Reward={ours['reward']:.2f}  Rebuf={ours['rebuffer_s']:.2f}s  Bitrate={ours['bitrate_kbps']:.0f}kbps  VMAF={ours['vmaf']:.1f}  Switches={ours['switches']:.2f}")
+    print(f"  (env_reward_mean={ours['reward_env_mean']:.2f}, composite_reward_mean={ours['reward_comp_mean']:.2f})\n")
+
+    # Save summary CSV
+    save_csv(args.out, { 'our_model_composite' if args.use_composite else 'our_model_env': ours })
+    print(f"✓ Saved summaries to {args.out}")
+
 
 if __name__ == '__main__':
     main()
