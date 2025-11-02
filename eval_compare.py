@@ -9,7 +9,7 @@ import torch
 from models.fcc_trace_loader import FCCTraceLoader
 from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
 from models.content_aware_model import create_content_aware_model
-from models.reward_composite import compute_balanced_reward  # ✅ نسخه جدید
+from models.reward_composite import compute_composite_reward  # ✅ نسخه جدید
 
 def set_seeds(seed: int = 42):
     random.seed(seed)
@@ -72,7 +72,7 @@ def evaluate_model(env, model, device, episodes=100):
                 action = min(int(action), 3)
 
             s_next, env_r, done, info = env.step(int(action))
-            r = compute_balanced_reward(info, last_bitrate)
+            r = compute_composite_reward(info, last_bitrate)
             last_bitrate = info.get("bitrate", last_bitrate)
             ep_reward += r
             ep_rebuf += info.get("rebuffer_time", 0.0)

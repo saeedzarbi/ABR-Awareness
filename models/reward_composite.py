@@ -1,6 +1,6 @@
 import numpy as np
 
-def compute_balanced_reward(info, last_bitrate=None,
+def compute_composite_reward(info, last_bitrate=None,
                              alpha=1.2,   # وزن کیفیت تصویری (VMAF)
                              beta=0.5,    # وزن bitrate
                              gamma=4.0,   # شدت جریمه rebuffer
