@@ -190,7 +190,7 @@ def main():
     parser.add_argument('--dataset', type=str, choices=['fcc','cooked'], default='fcc')
     parser.add_argument('--episodes', type=int, default=100)
     parser.add_argument('--out', type=str, default='results/compare_eval')
-    parser.add_argument('--our_ckpt', type=str, default='results/fcc_training_auto/best_model.pth')
+    parser.add_argument('--our_ckpt', type=str, default='results/composite_training/best_model.pth')
     parser.add_argument('--pensieve_ckpt', type=str, default='results/pensieve_fcc_training/checkpoint_400.pth')
     args = parser.parse_args()
 
