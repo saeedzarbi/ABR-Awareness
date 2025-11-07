@@ -483,7 +483,7 @@ class EnvironmentManager:
         self.config = config
         
         # Import environment components
-        from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
+        from models.content_aware_env_fcc import ContentAwareEnvFCC
         from models.fcc_trace_loader import FCCTraceLoader
         
         # Initialize trace loader
