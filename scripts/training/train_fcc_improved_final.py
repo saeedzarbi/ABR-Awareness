@@ -64,7 +64,7 @@ def train_on_fcc_improved():
         'save_interval': 50,
         
         # Output
-        'output_dir': 'results/fcc_training_improved',
+        'output_dir': 'results/fcc_training_improved_new',
         'log_file': 'results/fcc_training_improved/train.jsonl'
     }
     
