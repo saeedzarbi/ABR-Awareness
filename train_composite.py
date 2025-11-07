@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from models.fcc_trace_loader import FCCTraceLoader
 from models.content_aware_model import create_content_aware_model
-from models.content_aware_env_fcc_seeded import ContentAwareEnvFCC
+from models.content_aware_env_fcc import ContentAwareEnvFCC
 from models.ppo_trainer import PPOTrainer
 from models.logger import TrainingLogger
 
