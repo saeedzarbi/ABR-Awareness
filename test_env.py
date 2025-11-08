@@ -1,12 +1,9 @@
-import sys
-sys.path.insert(0, '.')
-
-from models.fcc_trace_loader import FCCTraceLoader
+# test_env_output.py
 from models.content_aware_env_fcc import ContentAwareEnvFCC
+from models.fcc_trace_loader import FCCTraceLoader
 
-print("Testing environment...")
-
-loader = FCCTraceLoader(
+# Load environment
+fcc_loader = FCCTraceLoader(
     fcc_trace_dir='data/fcc_traces',
     train_file='data/network_traces/fcc/splits/fcc_train.txt',
     val_file='data/network_traces/fcc/splits/fcc_val.txt',
@@ -14,32 +11,19 @@ loader = FCCTraceLoader(
 )
 
 env = ContentAwareEnvFCC(
-    fcc_trace_loader=loader,
+    fcc_trace_loader=fcc_loader,
     features_file='data/features/si_ti_features.json',
     vmaf_file='data/vmaf/vmaf_table.json',
     video_dir='data/videos',
-    mode='train'
+    mode='val'
 )
 
-# تست reset
-print("Testing reset...")
+# Test one step
 state = env.reset()
+print("State keys:", state.keys())
+print("VMAF predictions:", state['vmaf'])
 
-if state is None:
-    print("❌ Reset returned None!")
-else:
-    print(f"✅ Reset OK")
-    print(f"   Network: {state['network'].shape}")
-    print(f"   Content: {state['content'].shape}")
-    print(f"   VMAF: {state['vmaf'].shape}")
+next_state, reward, done, info = env.step(action=3)
+print("\nInfo keys:", info.keys())
+print("Info content:", info)
 
-# تست step
-print("\nTesting step...")
-try:
-    state, reward, done, info = env.step(0)
-    print(f"✅ Step OK")
-    print(f"   Reward: {reward:.2f}")
-    print(f"   Rebuffer: {info['rebuffer_time']:.2f}s")
-    print(f"   Bitrate: {info['bitrate']} kbps")
-except Exception as e:
-    print(f"❌ Step failed: {e}")
