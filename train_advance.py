@@ -71,7 +71,7 @@ class AdvancedTrainingConfig:
     best_reward_threshold: float = 100.0
     
     # Output directories
-    output_dir: str = 'results/advanced_training'
+    output_dir: str = 'results/advanced_trainings'
     log_dir: str = 'results/logs'
     run_name: str = f'advanced_run_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
     
