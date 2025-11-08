@@ -748,7 +748,8 @@ class ContentAwareEnvV2:
         
         # Get next state
         next_state = self.get_state() if not done else None
-        
+        vmaf_predictions = self.get_vmaf_predictions()
+        actual_vmaf = float(vmaf_predictions[action])
         # Info dict
         info = {
             'rebuffer_time': float(rebuffer_time),
@@ -758,7 +759,8 @@ class ContentAwareEnvV2:
             'throughput': float(avg_throughput),
             'download_time': float(download_time),
             'video_id': int(self.video_id),  # ✅ Added for tracking
-            'video_name': self.get_video_name()  # ✅ Added for tracking
+            'video_name': self.get_video_name(),  # ✅ Added for tracking
+            'vmaf': actual_vmaf
         }
         
         return next_state, reward, done, info
