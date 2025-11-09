@@ -20,8 +20,12 @@ model = ContentAwareActor(
     content_dim=2
 ).to(device)
 
-# Load checkpoint
-checkpoint = torch.load('results/optimized_training_v2/best_model.pth', map_location=device)
+# Load checkpoint - FIX: add weights_only=False
+checkpoint = torch.load(
+    'results/optimized_training_v2/best_model.pth', 
+    map_location=device,
+    weights_only=False  # ← Fix for PyTorch 2.6
+)
 model.load_state_dict(checkpoint['model_state_dict'])
 model.eval()
 
@@ -173,3 +177,5 @@ print(f"  Reward:    {reward_gain:+.2f} ({reward_gain/abs(results_bba['reward'])
 print(f"  Rebuffer:  {rebuffer_reduction:+.1f}% reduction")
 
 print("\n" + "="*80)
+print("✅ Evaluation Complete")
+print("="*80)
