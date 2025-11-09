@@ -1,13 +1,10 @@
 """
-Optimized Training Script for Content-Aware ABR
-Based on comprehensive code review and empirical results
-
-Key Improvements:
-1. Configurable reward penalties
-2. Learning rate scheduling  
-3. Better early stopping
-4. Validation-only evaluation
-5. Per-video tracking
+Optimized Training Script for Content-Aware ABR - FIXED VERSION
+Key fixes for failed training run:
+1. INCREASED exploration (higher entropy)
+2. Slower entropy decay
+3. More patient early stopping
+4. Better learning rate schedule
 """
 
 import os
@@ -30,7 +27,7 @@ from models.ppo_trainer import PPOTrainer
 
 class OptimizedConfig:
     """
-    Optimized configuration based on checkpoint_240 success
+    Fixed configuration - addresses poor exploration issue
     """
     
     # Data paths
@@ -42,46 +39,46 @@ class OptimizedConfig:
     vmaf_file: str = 'data/vmaf/vmaf_table.json'
     video_dir: str = 'data/videos'
     
-    # PPO hyperparameters (proven to work)
-    total_timesteps: int = 600_000  # ~240 updates
+    # PPO hyperparameters - FIXED FOR BETTER EXPLORATION
+    total_timesteps: int = 600_000
     rollout_steps: int = 2048
-    batch_size: int = 64
+    batch_size: int = 32  # Smaller for more frequent updates
     n_epochs: int = 4
     learning_rate: float = 3e-4
     gamma: float = 0.99
     gae_lambda: float = 0.95
     clip_epsilon: float = 0.2
     
-    # Regularization
-    entropy_coef: float = 0.01
-    entropy_decay: float = 0.995  # Gradual decay
-    entropy_min: float = 0.001
+    # CRITICAL: Much higher entropy for exploration
+    entropy_coef: float = 0.05  # 5x higher than before
+    entropy_decay: float = 0.998  # Much slower decay
+    entropy_min: float = 0.005  # Higher floor
     value_coef: float = 0.5
     max_grad_norm: float = 0.5
     
-    # Learning rate schedule
+    # Learning rate schedule - slower decay
     use_lr_schedule: bool = True
-    lr_decay_rate: float = 0.99
-    lr_decay_interval: int = 20  # Decay every 20 updates
+    lr_decay_rate: float = 0.995  # Slower than 0.99
+    lr_decay_interval: int = 30  # Less frequent (was 20)
     lr_min: float = 1e-5
     
     # Training control
-    target_update: int = 240  # Stop around successful checkpoint
-    max_updates: int = 280  # Safety margin
+    target_update: int = 240
+    max_updates: int = 300
     eval_interval: int = 10
     checkpoint_interval: int = 20
     log_interval: int = 5
     n_eval_episodes: int = 10
     
-    # Early stopping (aggressive to avoid overfitting)
-    early_stopping_patience: int = 20
-    early_stopping_min_delta: float = 1.0
+    # More patient early stopping
+    early_stopping_patience: int = 30  # Was 20
+    early_stopping_min_delta: float = 2.0  # Higher threshold
     target_reward: float = 100.0
-    target_rebuffer: float = 1.5
+    target_rebuffer: float = 2.0  # More realistic
     
     # Output
-    output_dir: str = 'results/optimized_training'
-    run_name: str = f'optimized_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    output_dir: str = 'results/optimized_training_v2'
+    run_name: str = f'fixed_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
     
     def __init__(self):
         os.makedirs(self.output_dir, exist_ok=True)
@@ -104,7 +101,6 @@ class SimpleLogger:
         }
         self.metrics_history.append(entry)
         
-        # Append to file
         with open(self.log_file, 'a') as f:
             f.write(json.dumps(entry) + '\n')
     
@@ -196,9 +192,9 @@ def train_optimized():
     """Main training function"""
     
     print("="*80)
-    print("🚀 OPTIMIZED TRAINING: Content-Aware ABR")
+    print("🚀 FIXED TRAINING: Content-Aware ABR v2")
     print("="*80)
-    print(f"   Target: Reproduce checkpoint_240 success")
+    print(f"   FIXES: Higher entropy + Slower decay + Better exploration")
     print(f"   Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*80)
     
@@ -208,9 +204,10 @@ def train_optimized():
     
     print(f"\n📋 Configuration:")
     print(f"   Device: {device}")
-    print(f"   Target updates: {config.target_update}")
+    print(f"   Batch size: {config.batch_size} (smaller = more updates)")
     print(f"   Learning rate: {config.learning_rate} → {config.lr_min}")
-    print(f"   Entropy coef: {config.entropy_coef} → {config.entropy_min}")
+    print(f"   Entropy: {config.entropy_coef} → {config.entropy_min} (HIGHER for exploration)")
+    print(f"   Entropy decay: {config.entropy_decay} (SLOWER)")
     print(f"   Early stopping patience: {config.early_stopping_patience}")
     
     # Create environments
@@ -274,13 +271,13 @@ def train_optimized():
         train_info = trainer.update_policy(rollout)
         update_count += 1
         
-        # Learning rate decay
+        # Learning rate decay (slower)
         if config.use_lr_schedule and update_count % config.lr_decay_interval == 0:
             current_lr = max(current_lr * config.lr_decay_rate, config.lr_min)
             for param_group in trainer.optimizer.param_groups:
                 param_group['lr'] = current_lr
         
-        # Entropy decay
+        # Entropy decay (much slower)
         current_entropy = max(current_entropy * config.entropy_decay, config.entropy_min)
         trainer.entropy_coef = current_entropy
         
@@ -411,7 +408,7 @@ if __name__ == '__main__':
         
         print(f"\n🎉 Success!")
         print(f"   Best validation reward: {results['mean_reward']:+.2f}")
-        print(f"   Compare with checkpoint_240: +103.2")
+        print(f"   Target: +116.46 (checkpoint_100)")
         
     except KeyboardInterrupt:
         print("\n⚠️  Training interrupted")
