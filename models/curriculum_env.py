@@ -20,7 +20,13 @@ class CurriculumEnvironment(ContentAwareEnvFCC):
         """
         Initialize curriculum environment
         """
-        # Call parent init
+        # CRITICAL: Set these BEFORE calling super().__init__()
+        # because parent's __init__ calls reset()
+        self.current_difficulty = 0.0
+        self.curriculum_loader = None
+        self.use_curriculum = False
+        
+        # Now call parent init (which will call reset())
         super().__init__(
             fcc_trace_loader=fcc_trace_loader,
             features_file=features_file,
@@ -38,17 +44,13 @@ class CurriculumEnvironment(ContentAwareEnvFCC):
         
         # Setup curriculum (only for training)
         if mode == 'train':
-            print("\nSetting up curriculum...")
+            print("\n📚 Setting up curriculum...")
             self.curriculum_loader = CurriculumTraceLoader(
                 fcc_trace_loader=fcc_trace_loader,
                 n_samples=100
             )
             self.use_curriculum = True
-        else:
-            self.curriculum_loader = None
-            self.use_curriculum = False
-        
-        self.current_difficulty = 0.0
+            print("✅ Curriculum ready!\n")
     
     def set_difficulty(self, difficulty: float):
         """
@@ -73,7 +75,7 @@ class CurriculumEnvironment(ContentAwareEnvFCC):
         self.buffer = 0.0
         
         # Get trace (curriculum for training, random for val/test)
-        if self.use_curriculum and split == 'train':
+        if self.use_curriculum and self.curriculum_loader and split == 'train':
             trace_data = self.curriculum_loader.get_curriculum_trace(self.current_difficulty)
         else:
             trace_data = self.fcc_trace_loader.get_trace(mode=split)
