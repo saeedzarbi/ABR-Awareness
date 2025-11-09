@@ -101,9 +101,18 @@ class PensieveReward:
         # Smoothness penalty (bitrate change in Mbps)
         bitrate_change = abs(current_bitrate - last_bitrate) / 1000.0
         smoothness_term = self.smoothness_penalty * bitrate_change
+        if current_bitrate >= self.min_bitrate_threshold:
+            bitrate_bonus = self.bitrate_bonus_weight * (current_bitrate / 6000.0)
+        else:
+            bitrate_bonus = -0.5  # Penalty for too low bitrate
+        
+        # NEW: Extra bonus if no rebuffering AND high bitrate
+        no_rebuffer_bonus = 0
+        if rebuffer_time == 0 and current_bitrate >= 1850:
+            no_rebuffer_bonus = 1.0
         
         # Total QoE
-        reward = quality - rebuffer_term - smoothness_term
+        reward = quality - rebuffer_term - smoothness_term + bitrate_bonus + no_rebuffer_bonus
         
         return reward
     
