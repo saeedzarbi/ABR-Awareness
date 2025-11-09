@@ -1,7 +1,7 @@
 # models/content_aware_env_fcc.py
 
 import numpy as np
-from models.content_aware_env_v2 import ContentAwareEnvV2
+from models.content_aware_env_v3 import ContentAwareEnvV2
 
 class ContentAwareEnvFCC(ContentAwareEnvV2):
     """
