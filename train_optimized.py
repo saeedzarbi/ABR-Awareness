@@ -1,10 +1,5 @@
 """
-Optimized Training Script for Content-Aware ABR - FIXED VERSION
-Key fixes for failed training run:
-1. INCREASED exploration (higher entropy)
-2. Slower entropy decay
-3. More patient early stopping
-4. Better learning rate schedule
+Optimized Training V3 - Fixed Quality/Rebuffering Balance
 """
 
 import os
@@ -27,7 +22,7 @@ from models.ppo_trainer import PPOTrainer
 
 class OptimizedConfig:
     """
-    Fixed configuration - addresses poor exploration issue
+    V3: Balanced quality + rebuffering
     """
     
     # Data paths
@@ -39,46 +34,48 @@ class OptimizedConfig:
     vmaf_file: str = 'data/vmaf/vmaf_table.json'
     video_dir: str = 'data/videos'
     
-    # PPO hyperparameters - FIXED FOR BETTER EXPLORATION
+    # PPO hyperparameters
     total_timesteps: int = 600_000
     rollout_steps: int = 2048
-    batch_size: int = 32  # Smaller for more frequent updates
+    batch_size: int = 32
     n_epochs: int = 4
     learning_rate: float = 3e-4
     gamma: float = 0.99
     gae_lambda: float = 0.95
     clip_epsilon: float = 0.2
     
-    # CRITICAL: Much higher entropy for exploration
-    entropy_coef: float = 0.05  # 5x higher than before
-    entropy_decay: float = 0.998  # Much slower decay
-    entropy_min: float = 0.005  # Higher floor
+    # INCREASED entropy for better exploration
+    entropy_coef: float = 0.08  # Higher
+    entropy_decay: float = 0.999  # Very slow
+    entropy_min: float = 0.01  # Higher floor
     value_coef: float = 0.5
     max_grad_norm: float = 0.5
     
-    # Learning rate schedule - slower decay
+    # Learning rate schedule
     use_lr_schedule: bool = True
-    lr_decay_rate: float = 0.995  # Slower than 0.99
-    lr_decay_interval: int = 30  # Less frequent (was 20)
+    lr_decay_rate: float = 0.997
+    lr_decay_interval: int = 40
     lr_min: float = 1e-5
     
-    # Training control
-    target_update: int = 240
-    max_updates: int = 300
+    # Training control - LONGER training
+    target_update: int = 200  # More updates
+    max_updates: int = 250
     eval_interval: int = 10
     checkpoint_interval: int = 20
     log_interval: int = 5
     n_eval_episodes: int = 10
     
-    # More patient early stopping
-    early_stopping_patience: int = 30  # Was 20
-    early_stopping_min_delta: float = 2.0  # Higher threshold
+    # IMPROVED early stopping - check BOTH quality AND rebuffering
+    early_stopping_patience: int = 40
+    early_stopping_min_delta: float = 2.0
     target_reward: float = 100.0
-    target_rebuffer: float = 2.0  # More realistic
+    target_rebuffer: float = 2.0
+    target_vmaf: float = 60.0  # NEW: minimum VMAF threshold
+    target_bitrate: float = 1500.0  # NEW: minimum bitrate threshold
     
     # Output
-    output_dir: str = 'results/optimized_training_v2'
-    run_name: str = f'fixed_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    output_dir: str = 'results/optimized_training_v3'
+    run_name: str = f'balanced_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
     
     def __init__(self):
         os.makedirs(self.output_dir, exist_ok=True)
@@ -192,9 +189,9 @@ def train_optimized():
     """Main training function"""
     
     print("="*80)
-    print("🚀 FIXED TRAINING: Content-Aware ABR v2")
+    print("🚀 BALANCED TRAINING V3: Quality + Rebuffering")
     print("="*80)
-    print(f"   FIXES: Higher entropy + Slower decay + Better exploration")
+    print(f"   Goal: High VMAF (>60) + Low Rebuffering (<2s)")
     print(f"   Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*80)
     
@@ -204,11 +201,12 @@ def train_optimized():
     
     print(f"\n📋 Configuration:")
     print(f"   Device: {device}")
-    print(f"   Batch size: {config.batch_size} (smaller = more updates)")
-    print(f"   Learning rate: {config.learning_rate} → {config.lr_min}")
-    print(f"   Entropy: {config.entropy_coef} → {config.entropy_min} (HIGHER for exploration)")
-    print(f"   Entropy decay: {config.entropy_decay} (SLOWER)")
-    print(f"   Early stopping patience: {config.early_stopping_patience}")
+    print(f"   Target updates: {config.target_update}")
+    print(f"   Entropy: {config.entropy_coef} → {config.entropy_min} (HIGH for exploration)")
+    print(f"   Targets: Reward>{config.target_reward}, "
+          f"Rebuffer<{config.target_rebuffer}s, "
+          f"VMAF>{config.target_vmaf}, "
+          f"Bitrate>{config.target_bitrate}kbps")
     
     # Create environments
     print(f"\n🏗️  Creating Environments...")
@@ -251,6 +249,7 @@ def train_optimized():
     
     # Training state
     best_val_reward = float('-inf')
+    best_balanced_score = float('-inf')  # NEW: track best balanced performance
     no_improvement_count = 0
     update_count = 0
     timestep = 0
@@ -271,13 +270,13 @@ def train_optimized():
         train_info = trainer.update_policy(rollout)
         update_count += 1
         
-        # Learning rate decay (slower)
+        # Learning rate decay
         if config.use_lr_schedule and update_count % config.lr_decay_interval == 0:
             current_lr = max(current_lr * config.lr_decay_rate, config.lr_min)
             for param_group in trainer.optimizer.param_groups:
                 param_group['lr'] = current_lr
         
-        # Entropy decay (much slower)
+        # Entropy decay (very slow)
         current_entropy = max(current_entropy * config.entropy_decay, config.entropy_min)
         trainer.entropy_coef = current_entropy
         
@@ -311,10 +310,20 @@ def train_optimized():
             print(f"   VMAF:      {eval_results['mean_vmaf']:.1f}")
             print(f"   Bitrate:   {eval_results['mean_bitrate']:.0f} kbps")
             
-            # Check improvement
-            improvement = eval_results['mean_reward'] - best_val_reward
+            # NEW: Balanced score (reward + quality bonus - rebuffer penalty)
+            balanced_score = (
+                eval_results['mean_reward'] + 
+                eval_results['mean_vmaf'] * 0.5 -  # Quality bonus
+                eval_results['mean_rebuffer'] * 2.0  # Rebuffer penalty
+            )
+            
+            print(f"   Balanced Score: {balanced_score:.2f}")
+            
+            # Check improvement (use balanced score)
+            improvement = balanced_score - best_balanced_score
             
             if improvement > config.early_stopping_min_delta:
+                best_balanced_score = balanced_score
                 best_val_reward = eval_results['mean_reward']
                 no_improvement_count = 0
                 
@@ -328,25 +337,32 @@ def train_optimized():
                     'reward': eval_results['mean_reward'],
                     'rebuffer': eval_results['mean_rebuffer'],
                     'vmaf': eval_results['mean_vmaf'],
+                    'bitrate': eval_results['mean_bitrate'],
+                    'balanced_score': balanced_score,
                     'config': vars(config)
                 }, best_path)
                 
-                print(f"\n   🏆 New best! Saved to best_model.pth")
+                print(f"\n   🏆 New best! (Balanced={balanced_score:.2f})")
             else:
                 no_improvement_count += 1
                 print(f"   ⚠️  No improvement ({no_improvement_count}/{config.early_stopping_patience})")
             
-            # Target reached?
+            # NEW: Target reached? Check ALL metrics
             if (eval_results['mean_reward'] > config.target_reward and 
-                eval_results['mean_rebuffer'] < config.target_rebuffer):
-                print(f"\n   🎯 TARGET REACHED!")
-                print(f"      Stopping at update {update_count}")
+                eval_results['mean_rebuffer'] < config.target_rebuffer and
+                eval_results['mean_vmaf'] > config.target_vmaf and
+                eval_results['mean_bitrate'] > config.target_bitrate):
+                print(f"\n   🎯 ALL TARGETS REACHED!")
+                print(f"      Reward: {eval_results['mean_reward']:.2f} > {config.target_reward}")
+                print(f"      Rebuffer: {eval_results['mean_rebuffer']:.2f}s < {config.target_rebuffer}s")
+                print(f"      VMAF: {eval_results['mean_vmaf']:.1f} > {config.target_vmaf}")
+                print(f"      Bitrate: {eval_results['mean_bitrate']:.0f} > {config.target_bitrate}kbps")
                 break
             
             # Early stopping
             if no_improvement_count >= config.early_stopping_patience:
                 print(f"\n   ⏸️  Early stopping triggered")
-                print(f"      Best reward: {best_val_reward:+.2f}")
+                print(f"      Best balanced score: {best_balanced_score:+.2f}")
                 break
         
         # Regular checkpoint
@@ -364,7 +380,6 @@ def train_optimized():
         # Target update reached
         if update_count >= config.target_update:
             print(f"\n   ✅ Target update {config.target_update} reached")
-            print(f"      Stopping to avoid overfitting")
             break
     
     # Final evaluation
@@ -394,8 +409,9 @@ def train_optimized():
     print("="*80)
     print(f"   Total updates: {update_count}")
     print(f"   Total timesteps: {timestep:,}")
-    print(f"   Best val reward: {best_val_reward:+.2f}")
+    print(f"   Best balanced score: {best_balanced_score:+.2f}")
     print(f"   Final reward: {final_results['mean_reward']:+.2f}")
+    print(f"   Final VMAF: {final_results['mean_vmaf']:.1f}")
     print(f"   Saved to: {config.output_dir}")
     print("="*80)
     
@@ -406,9 +422,10 @@ if __name__ == '__main__':
     try:
         model, results = train_optimized()
         
-        print(f"\n🎉 Success!")
-        print(f"   Best validation reward: {results['mean_reward']:+.2f}")
-        print(f"   Target: +116.46 (checkpoint_100)")
+        print(f"\n🎉 Training Complete!")
+        print(f"   Final reward: {results['mean_reward']:+.2f}")
+        print(f"   Final VMAF: {results['mean_vmaf']:.1f}")
+        print(f"   Target: Reward +116.46, VMAF 85-90")
         
     except KeyboardInterrupt:
         print("\n⚠️  Training interrupted")
