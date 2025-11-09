@@ -488,7 +488,7 @@ def compare_all_checkpoints():
         'results/advanced_training/checkpoint_250.pth',
         'results/advanced_training/checkpoint_240.pth',
         'results/fcc_training_improved/checkpoint_best.pth',
-        'results/fcc_training_improved_new/checkpoint_best.pth',
+        'results/fcc_training_improved_last/checkpoint_best.pth',
     ]
     
     loaded_checkpoints = []
