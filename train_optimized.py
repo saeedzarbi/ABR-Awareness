@@ -1,20 +1,19 @@
 """
-IMPROVED TRAINING: Combined Approach
-Includes all improvements:
-1. Better reward shaping
-2. Curriculum learning
-3. Warmstart initialization
-4. Constrained exploration (via entropy)
+ULTIMATE TRAINING: Best of Both Worlds
+1. Data Augmentation (از script شما)
+2. Higher Entropy (از script شما)
+3. Curriculum Learning (از approach ما)
+4. Improved Reward (از approach ما)
+5. Aggressive Early Stopping (از script شما)
 """
 
 import os
 import sys
 import torch
-import torch.nn as nn
 import numpy as np
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict
 import json
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -26,9 +25,9 @@ from models.ppo_trainer import PPOTrainer
 from models.warmstart import warmstart_model
 
 
-class ImprovedConfig:
+class UltimateConfig:
     """
-    Configuration for improved training
+    Ultimate configuration combining best practices
     """
     
     # Data paths
@@ -40,8 +39,8 @@ class ImprovedConfig:
     vmaf_file: str = 'data/vmaf/vmaf_table.json'
     video_dir: str = 'data/videos'
     
-    # PPO hyperparameters
-    total_timesteps: int = 600_000  # ~240 updates
+    # PPO hyperparameters - BEST SETTINGS
+    total_timesteps: int = 600_000
     rollout_steps: int = 2048
     batch_size: int = 64
     n_epochs: int = 4
@@ -50,9 +49,9 @@ class ImprovedConfig:
     gae_lambda: float = 0.95
     clip_epsilon: float = 0.2
     
-    # Entropy for exploration (higher than before)
-    entropy_coef: float = 0.05
-    entropy_decay: float = 0.998
+    # CRITICAL: High entropy from your script
+    entropy_coef: float = 0.15  # ✅ از script شما
+    entropy_decay: float = 0.995
     entropy_min: float = 0.005
     value_coef: float = 0.5
     max_grad_norm: float = 0.5
@@ -60,13 +59,16 @@ class ImprovedConfig:
     # Learning rate schedule
     use_lr_schedule: bool = True
     lr_decay_rate: float = 0.99
-    lr_decay_interval: int = 25
+    lr_decay_interval: int = 30
     lr_min: float = 1e-5
+    
+    # Data Augmentation - از script شما
+    use_augmentation: bool = True
+    augmentation_prob: float = 0.5
     
     # Curriculum learning
     use_curriculum: bool = True
-    curriculum_start_update: int = 0
-    curriculum_end_update: int = 168  # 70% of 240
+    curriculum_end_update: int = 150
     
     # Warmstart
     use_warmstart: bool = True
@@ -74,30 +76,74 @@ class ImprovedConfig:
     warmstart_epochs: int = 15
     
     # Training control
-    target_update: int = 240
-    max_updates: int = 280
-    eval_interval: int = 10
-    checkpoint_interval: int = 20
-    log_interval: int = 5
+    target_update: int = 200
+    max_updates: int = 250
+    eval_interval: int = 25  # ✅ از script شما
+    checkpoint_interval: int = 50
+    log_interval: int = 10
     n_eval_episodes: int = 10
     
-    # Early stopping
-    early_stopping_patience: int = 30
+    # Aggressive early stopping - از script شما
+    early_stopping_patience: int = 5  # ✅ کمتر از 30
     early_stopping_min_delta: float = 2.0
-    target_reward: float = 105.0  # Beat Hybrid baseline
-    target_rebuffer: float = 4.0
-    target_bitrate: float = 1000.0  # Minimum average bitrate
+    target_reward: float = 100.0
     
     # Output
-    output_dir: str = 'results/improved_training'
-    run_name: str = f'improved_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    output_dir: str = 'results/ultimate_training'
+    run_name: str = f'ultimate_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
     
     def __init__(self):
         os.makedirs(self.output_dir, exist_ok=True)
 
 
-class EnhancedLogger:
-    """Enhanced logger with more metrics"""
+class AugmentedFCCTraceLoader(FCCTraceLoader):
+    """
+    FCC Loader با data augmentation - از script شما
+    """
+    
+    def __init__(self, *args, augmentation_prob=0.5, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.augmentation_prob = augmentation_prob
+        print(f"   ✅ Data Augmentation enabled (p={augmentation_prob})")
+    
+    def augment_trace(self, trace_data):
+        """
+        Augment trace data
+        """
+        augmented = trace_data.copy()
+        
+        # Method 1: Gaussian noise on throughput
+        if np.random.random() < 0.5:
+            noise = np.random.normal(0, 0.1, len(augmented))
+            augmented[:, 1] += noise
+            augmented[:, 1] = np.clip(augmented[:, 1], 0.1, 10.0)
+        
+        # Method 2: Bandwidth scaling
+        if np.random.random() < 0.5:
+            scale = np.random.uniform(0.8, 1.2)
+            augmented[:, 1] *= scale
+            augmented[:, 1] = np.clip(augmented[:, 1], 0.1, 10.0)
+        
+        # Method 3: Time jitter
+        if np.random.random() < 0.3:
+            jitter = np.random.uniform(0.95, 1.05)
+            augmented[:, 0] *= jitter
+        
+        return augmented
+    
+    def get_trace(self, mode='train'):
+        """Get trace with optional augmentation"""
+        trace = super().get_trace(mode)
+        
+        # Only augment in train mode
+        if mode == 'train' and np.random.random() < self.augmentation_prob:
+            trace = self.augment_trace(trace)
+        
+        return trace
+
+
+class SimpleLogger:
+    """Simple logger"""
     
     def __init__(self, log_dir: str, run_name: str):
         os.makedirs(log_dir, exist_ok=True)
@@ -126,16 +172,27 @@ class EnhancedLogger:
               f"Ent={metrics.get('entropy', 0):.4f}")
 
 
-def create_environment(config: ImprovedConfig, mode: str):
-    """Create curriculum environment"""
+def create_environment(config: UltimateConfig, mode: str):
+    """Create environment with augmentation"""
     
-    fcc_loader = FCCTraceLoader(
-        fcc_trace_dir=config.fcc_trace_dir,
-        train_file=config.train_split,
-        val_file=config.val_split,
-        test_file=config.test_split
-    )
+    # Create augmented loader
+    if config.use_augmentation:
+        fcc_loader = AugmentedFCCTraceLoader(
+            fcc_trace_dir=config.fcc_trace_dir,
+            train_file=config.train_split,
+            val_file=config.val_split,
+            test_file=config.test_split,
+            augmentation_prob=config.augmentation_prob
+        )
+    else:
+        fcc_loader = FCCTraceLoader(
+            fcc_trace_dir=config.fcc_trace_dir,
+            train_file=config.train_split,
+            val_file=config.val_split,
+            test_file=config.test_split
+        )
     
+    # Create curriculum environment
     env = CurriculumEnvironment(
         fcc_trace_loader=fcc_loader,
         features_file=config.features_file,
@@ -148,12 +205,12 @@ def create_environment(config: ImprovedConfig, mode: str):
 
 
 def evaluate_on_validation(
-    model: ContentAwareActor,
-    val_env: CurriculumEnvironment,
+    model,
+    val_env,
     n_episodes: int = 10,
     device: str = 'cpu'
 ) -> Dict:
-    """Evaluate model on validation set"""
+    """Evaluate model"""
     
     episode_results = []
     
@@ -198,8 +255,8 @@ def evaluate_on_validation(
     }
 
 
-def print_action_distribution(trainer: PPOTrainer):
-    """Print action distribution from recent episodes"""
+def print_action_distribution(trainer):
+    """Print action distribution"""
     if not hasattr(trainer, 'recent_actions'):
         return
     
@@ -212,34 +269,39 @@ def print_action_distribution(trainer: PPOTrainer):
             print("\n   Action Distribution (last 1000 steps):")
             for i, count in enumerate(action_counts):
                 pct = count / total * 100
-                print(f"      Action {i} ({bitrate_levels[i]:4d} kbps): {pct:5.1f}%")
+                bar = '█' * int(pct / 2)
+                print(f"      Action {i} ({bitrate_levels[i]:4d} kbps): {pct:5.1f}% {bar}")
 
 
-def train_improved():
-    """Main improved training function"""
+def train_ultimate():
+    """
+    Ultimate training with all improvements
+    """
     
     print("="*80)
-    print("🚀 IMPROVED TRAINING: Combined Approach")
+    print("🚀 ULTIMATE TRAINING: Best of Both Worlds")
     print("="*80)
-    print("   Improvements:")
-    print("   ✓ Better reward shaping (bitrate bonus)")
-    print("   ✓ Curriculum learning (easy → hard traces)")
-    print("   ✓ Warmstart initialization (heuristic policy)")
-    print("   ✓ Higher exploration (entropy)")
+    print("   Features:")
+    print("   ✓ Data Augmentation (noise, scaling, jitter)")
+    print("   ✓ High Entropy (0.15 → 0.005)")
+    print("   ✓ Curriculum Learning (easy → hard)")
+    print("   ✓ Improved Reward (bitrate bonus)")
+    print("   ✓ Warmstart Initialization")
+    print("   ✓ Aggressive Early Stopping (patience=5)")
     print(f"   Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*80)
     
     # Configuration
-    config = ImprovedConfig()
+    config = UltimateConfig()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     print(f"\n📋 Configuration:")
     print(f"   Device: {device}")
-    print(f"   Warmstart: {config.use_warmstart}")
+    print(f"   Data Augmentation: {config.use_augmentation} (p={config.augmentation_prob})")
     print(f"   Curriculum: {config.use_curriculum}")
-    print(f"   Learning rate: {config.learning_rate}")
+    print(f"   Warmstart: {config.use_warmstart}")
     print(f"   Entropy: {config.entropy_coef} → {config.entropy_min}")
-    print(f"   Target reward: {config.target_reward} (beat Hybrid baseline)")
+    print(f"   Early Stopping: patience={config.early_stopping_patience}")
     
     # Create environments
     print(f"\n🏗️  Creating Environments...")
@@ -258,7 +320,7 @@ def train_improved():
     total_params = sum(p.numel() for p in model.parameters())
     print(f"   Parameters: {total_params:,}")
     
-    # Warmstart initialization
+    # Warmstart
     if config.use_warmstart:
         print(f"\n🔥 Warmstart Initialization...")
         model = warmstart_model(
@@ -288,14 +350,13 @@ def train_improved():
     trainer.recent_actions = []
     
     # Logger
-    logger = EnhancedLogger(
+    logger = SimpleLogger(
         log_dir=os.path.join(config.output_dir, 'logs'),
         run_name=config.run_name
     )
     
     # Training state
     best_val_reward = float('-inf')
-    best_balanced_score = float('-inf')
     no_improvement_count = 0
     update_count = 0
     timestep = 0
@@ -325,7 +386,7 @@ def train_improved():
         # Track actions
         if hasattr(rollout, 'actions'):
             trainer.recent_actions.extend(rollout.actions)
-            trainer.recent_actions = trainer.recent_actions[-5000:]  # Keep last 5000
+            trainer.recent_actions = trainer.recent_actions[-5000:]
         
         # Update policy
         train_info = trainer.update_policy(rollout)
@@ -344,11 +405,9 @@ def train_improved():
         # Logging
         if update_count % config.log_interval == 0:
             recent_20 = trainer.episode_rewards[-20:] if len(trainer.episode_rewards) >= 20 else trainer.episode_rewards
-            recent_100 = trainer.episode_rewards[-100:] if len(trainer.episode_rewards) >= 100 else trainer.episode_rewards
             
             metrics = {
                 'reward_20': np.mean(recent_20) if recent_20 else 0,
-                'reward_100': np.mean(recent_100) if recent_100 else 0,
                 'difficulty': difficulty,
                 'lr': current_lr,
                 'entropy': current_entropy,
@@ -372,21 +431,13 @@ def train_improved():
             print(f"   VMAF:      {eval_results['mean_vmaf']:.1f}")
             print(f"   Bitrate:   {eval_results['mean_bitrate']:.0f} kbps")
             
-            # Balanced score (reward + quality bonus)
-            balanced_score = (
-                eval_results['mean_reward'] + 
-                eval_results['mean_vmaf'] * 0.3
-            )
-            print(f"   Balanced:  {balanced_score:.2f}")
-            
             # Print action distribution
             print_action_distribution(trainer)
             
             # Check improvement
-            improvement = balanced_score - best_balanced_score
+            improvement = eval_results['mean_reward'] - best_val_reward
             
             if improvement > config.early_stopping_min_delta:
-                best_balanced_score = balanced_score
                 best_val_reward = eval_results['mean_reward']
                 no_improvement_count = 0
                 
@@ -396,54 +447,43 @@ def train_improved():
                     'update': update_count,
                     'timestep': timestep,
                     'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': trainer.optimizer.state_dict(),
                     'reward': eval_results['mean_reward'],
                     'rebuffer': eval_results['mean_rebuffer'],
                     'vmaf': eval_results['mean_vmaf'],
                     'bitrate': eval_results['mean_bitrate'],
-                    'balanced_score': balanced_score,
                     'difficulty': difficulty,
                     'config': vars(config)
                 }, best_path)
                 
-                print(f"\n   🏆 New best! Saved to best_model.pth")
+                print(f"\n   🏆 New best! (+{improvement:.2f}) Saved to best_model.pth")
             else:
                 no_improvement_count += 1
                 print(f"   ⚠️  No improvement ({no_improvement_count}/{config.early_stopping_patience})")
             
             # Target reached?
-            if (eval_results['mean_reward'] > config.target_reward and 
-                eval_results['mean_rebuffer'] < config.target_rebuffer and
-                eval_results['mean_bitrate'] > config.target_bitrate):
-                print(f"\n   🎯 ALL TARGETS REACHED!")
+            if eval_results['mean_reward'] > config.target_reward:
+                print(f"\n   🎯 TARGET REACHED!")
                 print(f"      Reward: {eval_results['mean_reward']:.2f} > {config.target_reward}")
-                print(f"      Rebuffer: {eval_results['mean_rebuffer']:.2f}s < {config.target_rebuffer}s")
-                print(f"      Bitrate: {eval_results['mean_bitrate']:.0f} > {config.target_bitrate}kbps")
                 break
             
             # Early stopping
             if no_improvement_count >= config.early_stopping_patience:
                 print(f"\n   ⏸️  Early stopping triggered")
-                print(f"      Best balanced score: {best_balanced_score:+.2f}")
+                print(f"      Best reward: {best_val_reward:+.2f}")
+                print(f"      Stopping at update {update_count}")
                 break
         
-        # Regular checkpoint
+        # Checkpoint
         if update_count % config.checkpoint_interval == 0:
             ckpt_path = os.path.join(config.output_dir, f'checkpoint_{update_count}.pth')
             torch.save({
                 'update': update_count,
                 'timestep': timestep,
                 'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': trainer.optimizer.state_dict(),
                 'best_val_reward': best_val_reward,
                 'difficulty': difficulty
             }, ckpt_path)
             print(f"\n   💾 Checkpoint: checkpoint_{update_count}.pth")
-        
-        # Target update reached
-        if update_count >= config.target_update:
-            print(f"\n   ✅ Target update {config.target_update} reached")
-            break
     
     # Final evaluation
     print(f"\n" + "="*80)
@@ -458,6 +498,10 @@ def train_improved():
     print(f"   • VMAF:      {final_results['mean_vmaf']:.1f}")
     print(f"   • Bitrate:   {final_results['mean_bitrate']:.0f} kbps")
     
+    # Final action distribution
+    print(f"\n   Final Action Distribution:")
+    print_action_distribution(trainer)
+    
     # Compare with baseline
     print(f"\n   Comparison with Hybrid Baseline:")
     print(f"   • Hybrid:    +101.34 reward")
@@ -469,19 +513,6 @@ def train_improved():
     else:
         gap = 101.34 - final_results['mean_reward']
         print(f"   • Result:    ❌ Below baseline by {gap:.2f}")
-    
-    # Save final
-    final_path = os.path.join(config.output_dir, f'final_model_{update_count}.pth')
-    torch.save({
-        'update': update_count,
-        'model_state_dict': model.state_dict(),
-        'final_results': final_results,
-        'config': vars(config)
-    }, final_path)
-    
-    # Final action distribution
-    print(f"\n   Final Action Distribution:")
-    print_action_distribution(trainer)
     
     print(f"\n" + "="*80)
     print("✅ TRAINING COMPLETE")
@@ -499,17 +530,19 @@ def train_improved():
 
 if __name__ == '__main__':
     try:
-        model, results = train_improved()
+        model, results = train_ultimate()
         
-        print(f"\n🎉 Success!")
+        print(f"\n🎉 Training Complete!")
         print(f"   Final reward: {results['mean_reward']:+.2f}")
         print(f"   Final bitrate: {results['mean_bitrate']:.0f} kbps")
         print(f"   Target: Beat +101.34 (Hybrid baseline)")
         
         if results['mean_reward'] > 101.34:
-            print(f"   ✅ SUCCESS: Beat baseline!")
+            print(f"   ✅ SUCCESS!")
+        elif results['mean_reward'] > 80:
+            print(f"   ⚠️  Close, but not quite there")
         else:
-            print(f"   ⚠️  Below baseline, but improved approach validated")
+            print(f"   ❌ Need to write paper about challenges")
         
     except KeyboardInterrupt:
         print("\n⚠️  Training interrupted")
