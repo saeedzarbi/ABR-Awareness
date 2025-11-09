@@ -311,7 +311,7 @@ def main():
     CHECKPOINT_PATHS = [
         'results/advanced_training/best_model.pth',
         'results/advanced_training/checkpoint_250.pth',
-        'results/fcc_training_improved/checkpoint_best.pth'
+        'results/fcc_training_improved_last/checkpoint_best.pth'
     ]
     
     # Find existing checkpoint
