@@ -1,12 +1,11 @@
 """
-Content-Aware Environment V3 - FIXED THROUGHPUT CONVERSION
+Content-Aware Environment V2 with Bitrate-based Reward
 """
 
 import numpy as np
 import json
 import random
 from pathlib import Path
-import sys
 import logging
 
 try:
@@ -37,7 +36,7 @@ def resolve_path(relative_path):
 
 class ContentAwareEnvV2:
     """
-    Environment with FIXED throughput conversion
+    Environment with Bitrate-based reward (Pensieve original)
     """
     
     def __init__(
@@ -73,9 +72,9 @@ class ContentAwareEnvV2:
         with open(vmaf_file, 'r') as f:
             self.vmaf_table = json.load(f)
         
-        # REDUCED rebuffer penalty for more stable training
+        # Bitrate-based reward
         self.reward_func = PensieveReward(
-            rebuffer_penalty=2.0,      # Reduced from 4.3
+            rebuffer_penalty=2.0,
             smoothness_penalty=1.0,
             bitrate_levels=bitrate_levels
         )
@@ -186,8 +185,6 @@ class ContentAwareEnvV2:
     def step(self, action):
         """Execute action with FIXED throughput conversion"""
         selected_bitrate = self.bitrate_levels[action]
-        
-        # Chunk size in kilobits
         chunk_size_kbit = float(selected_bitrate) * float(self.chunk_duration)
         
         download_time = 0.0
@@ -195,21 +192,15 @@ class ContentAwareEnvV2:
         dt = 0.1
         max_download_time = 32.0
         
-        sample_throughputs = []
-        
         while downloaded_kbit < chunk_size_kbit and download_time < max_download_time:
             tp_raw = self.current_trace.get_throughput(self.trace_time)
-            sample_throughputs.append(tp_raw)
             
             # FIXED: Always convert Mbps to kbps
-            # FCC traces are in Mbps (0.8-1.0 range)
             if tp_raw is None:
                 throughput_kbps = 0.0
             else:
-                # Always multiply by 1000 to convert Mbps → kbps
-                throughput_kbps = float(tp_raw) * 1000.0
+                throughput_kbps = float(tp_raw) * 1000.0  # Mbps → kbps
             
-            # Clip to reasonable range (0-10000 kbps = 0-10 Mbps)
             throughput_kbps = np.clip(throughput_kbps, 0.0, 10000.0)
             
             downloaded_kbit += throughput_kbps * dt
@@ -219,16 +210,14 @@ class ContentAwareEnvV2:
             if download_time >= max_download_time:
                 break
         
-        # Average throughput
         avg_throughput = (downloaded_kbit / download_time) if download_time > 0 else 0.0
         
         # Buffer dynamics
         rebuffer_time = max(0.0, download_time - self.buffer)
-        
         self.buffer = max(0.0, self.buffer - download_time) + self.chunk_duration
         self.buffer = min(self.buffer, 60.0)
         
-        # Compute reward
+        # Compute reward (BITRATE-BASED)
         reward = self.compute_reward(action, rebuffer_time)
         
         # Update history
@@ -260,17 +249,17 @@ class ContentAwareEnvV2:
         return next_state, reward, done, info
     
     def compute_reward(self, action, rebuffer_time):
-        vmaf_predictions = self.get_vmaf_predictions()
-        vmaf_score = vmaf_predictions[action]
-        
+        """
+        Compute reward using BITRATE (Pensieve original)
+        """
         current_bitrate = self.bitrate_levels[action]
         last_bitrate = self.past_bitrates[-1] if len(self.past_bitrates) > 0 else 0
         
-        reward = self.reward_func.compute_reward_vmaf(
-            vmaf_score=vmaf_score,
+        # Use bitrate-based reward
+        reward = self.reward_func.compute_reward_bitrate(
+            current_bitrate=current_bitrate,
             rebuffer_time=rebuffer_time,
-            last_bitrate=last_bitrate,
-            current_bitrate=current_bitrate
+            last_bitrate=last_bitrate
         )
         
         return float(reward)
@@ -278,7 +267,7 @@ class ContentAwareEnvV2:
 
 if __name__ == '__main__':
     print("="*60)
-    print("Testing Fixed Environment")
+    print("Testing Environment with Bitrate Reward")
     print("="*60)
     
     env = ContentAwareEnvV2(use_real_traces=True)
@@ -286,26 +275,20 @@ if __name__ == '__main__':
     
     state = env.reset(video_id=1, split='train')
     
-    print("\nTesting with conservative actions:")
+    print("\nTesting 5 steps:")
     actions = [0, 1, 2, 1, 0]
     
     total_reward = 0
-    total_rebuffer = 0
     
     for i, action in enumerate(actions):
         next_state, reward, done, info = env.step(action)
-        
         total_reward += reward
-        total_rebuffer += info['rebuffer_time']
         
         print(f"  Step {i+1}: bitrate={env.bitrate_levels[action]}kbps, "
-              f"reward={reward:+7.3f}, rebuffer={info['rebuffer_time']:.2f}s, "
-              f"throughput={info['throughput']:.0f}kbps, "
-              f"vmaf={info['vmaf']:.1f}")
+              f"reward={reward:+.3f}, rebuffer={info['rebuffer_time']:.2f}s")
         
         if done:
             break
     
-    print(f"\n  Total reward: {total_reward:7.2f}")
-    print(f"  Total rebuffering: {total_rebuffer:.2f}s")
-    print(f"\n✓ Tests passed! Environment should work correctly now.")
+    print(f"\n  Total reward: {total_reward:.2f}")
+    print("\n✓ Tests passed!")
