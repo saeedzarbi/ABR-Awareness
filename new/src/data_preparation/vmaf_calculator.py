@@ -56,6 +56,7 @@ class VMAFCalculator:
     ) -> Optional[float]:
         """
         Calculate VMAF score between reference and distorted video.
+        Scales both to 1920x1080 for consistent comparison.
         
         Args:
             reference_video: Original high-quality video
@@ -65,61 +66,67 @@ class VMAFCalculator:
         Returns:
             Mean VMAF score (0-100) or None if failed
         """
-        # Scale both videos to same resolution before comparison
-        # Use reference video resolution as target
+        # Scale both videos to 1080p for fair comparison
+        target_resolution = "1920:1080"
+        
         vmaf_filter = (
-            f"[1:v]setpts=PTS-STARTPTS,scale=iw:ih:flags=bicubic[reference];"
-            f"[0:v]setpts=PTS-STARTPTS,scale=iw:ih:flags=bicubic[distorted];"
-            f"[distorted][reference]libvmaf="
+            f"[0:v]scale={target_resolution}:flags=bicubic,setpts=PTS-STARTPTS[dist];"
+            f"[1:v]scale={target_resolution}:flags=bicubic,setpts=PTS-STARTPTS[ref];"
+            f"[dist][ref]libvmaf="
             f"log_fmt=json:"
             f"log_path={output_json}:"
-            f"n_threads=4:"
-            f"model=version=vmaf_v0.6.1"
+            f"n_threads=4"
         )
         
         cmd = [
             'ffmpeg',
             '-i', str(distorted_video),    # Distorted first
-            '-i', str(reference_video),    # Reference second
+            '-i', str(reference_video),    # Reference second  
             '-filter_complex', vmaf_filter,
             '-f', 'null',
-            '-'
+            '-',
+            '-y'  # Overwrite output
         ]
         
         try:
-            # Run FFmpeg with error output for debugging
+            # Run FFmpeg
             result = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                timeout=300  # 5 minute timeout
             )
             
-            # Check if successful
             if result.returncode != 0:
-                # Print error for debugging
-                error_lines = result.stderr.split('\n')
-                relevant_errors = [line for line in error_lines if 'error' in line.lower()]
-                if relevant_errors:
-                    print(f"\n    FFmpeg error: {relevant_errors[0][:100]}")
+                # Only show error if verbose debugging needed
+                # print(f"    FFmpeg stderr: {result.stderr[-500:]}")
                 return None
             
             # Parse VMAF output
             if output_json.exists():
-                with open(output_json, 'r') as f:
-                    data = json.load(f)
+                try:
+                    with open(output_json, 'r') as f:
+                        data = json.load(f)
                     
-                # Extract mean VMAF score
-                if 'pooled_metrics' in data:
-                    vmaf_score = data['pooled_metrics']['vmaf']['mean']
-                    return round(vmaf_score, 2)
+                    # Extract mean VMAF score
+                    if 'pooled_metrics' in data:
+                        vmaf_score = data['pooled_metrics']['vmaf']['mean']
+                        return round(vmaf_score, 2)
+                    elif 'VMAF score' in data:  # Older format
+                        return round(data['VMAF score'], 2)
+                except json.JSONDecodeError:
+                    print(f"    ✗ Invalid JSON output")
+                    return None
             
             return None
             
+        except subprocess.TimeoutExpired:
+            print(f"    ✗ Timeout after 5 minutes")
+            return None
         except Exception as e:
-            print(f"    ✗ VMAF calculation failed: {e}")
+            print(f"    ✗ Error: {str(e)[:100]}")
             return None
-
     def calculate_for_video(
         self,
         video_name: str,
