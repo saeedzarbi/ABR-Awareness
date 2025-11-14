@@ -43,8 +43,8 @@ class ABREnv(gym.Env):
     BUFFER_MAX = 30.0     # Maximum buffer size (seconds)
     
     # Reward weights
-    REBUFFER_PENALTY = 4.3  # Penalty per second of rebuffering
-    SMOOTH_PENALTY = 1.0    # Penalty for bitrate switches
+    REBUFFER_PENALTY = 10  # Penalty per second of rebuffering
+    SMOOTH_PENALTY = 0.2    # Penalty for bitrate switches
     
     def __init__(
         self,
@@ -251,12 +251,25 @@ class ABREnv(gym.Env):
         quality = self.vmaf_scores.get(bitrate_kbps, 50.0) / 100.0
         rebuffer_penalty = self.REBUFFER_PENALTY * rebuffer_time
         
-        # Smoothness penalty (bitrate change)
+        # Smoothness penalty - only penalize large jumps
         bitrate_change = abs(action - self.last_bitrate_idx)
-        smooth_penalty = self.SMOOTH_PENALTY * bitrate_change / (len(self.BITRATE_LEVELS) - 1)
+        if bitrate_change > 2:  # Only penalize jumps > 2 levels
+            smooth_penalty = self.SMOOTH_PENALTY * bitrate_change / (len(self.BITRATE_LEVELS) - 1)
+        else:
+            smooth_penalty = 0.0  # Small changes are free
+        
+        # Buffer safety penalty/bonus
+        if self.buffer_level < 5.0:
+            # Dangerous low buffer - strong penalty
+            buffer_penalty = 1.5 * (5.0 - self.buffer_level)
+        elif self.buffer_level > 15.0:
+            # Healthy buffer - small bonus
+            buffer_penalty = -0.1
+        else:
+            buffer_penalty = 0.0
         
         # Total reward
-        reward = quality - rebuffer_penalty - smooth_penalty
+        reward = quality - rebuffer_penalty - smooth_penalty - buffer_penalty
         
         # Update metrics
         self.total_quality += quality
