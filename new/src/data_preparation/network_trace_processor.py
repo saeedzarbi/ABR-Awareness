@@ -1,6 +1,6 @@
 """
 Process network traces for ABR simulation.
-Works with existing FCC trace files.
+Works with FCC trace files in various formats.
 """
 
 import os
@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 import json
 import shutil
+import re
 
 
 class NetworkTraceProcessor:
@@ -30,6 +31,7 @@ class NetworkTraceProcessor:
     def copy_traces_from_source(self, max_traces: int = None) -> List[Path]:
         """
         Copy trace files from source directory.
+        Supports files without .txt extension.
         
         Args:
             max_traces: Maximum number of traces to copy (None = all)
@@ -47,11 +49,20 @@ class NetworkTraceProcessor:
         print(f"Target: {self.traces_dir}")
         print(f"{'='*60}\n")
         
-        # Find all trace files in source
-        source_files = list(self.source_traces_dir.glob("*.txt"))
+        # Find all files (not just .txt)
+        source_files = []
+        for item in self.source_traces_dir.iterdir():
+            if item.is_file():
+                # Check if it starts with common FCC patterns
+                if any(pattern in item.name for pattern in ['test_', 'fcc_', 'trace_', 'http', 'norway_', 'report_']):
+                    source_files.append(item)
+        
+        # If no pattern match, get all files
+        if not source_files:
+            source_files = [f for f in self.source_traces_dir.iterdir() if f.is_file()]
         
         if not source_files:
-            print(f"✗ No .txt files found in source directory")
+            print(f"✗ No trace files found in source directory")
             return []
         
         print(f"Found {len(source_files)} trace files in source")
@@ -66,16 +77,16 @@ class NetworkTraceProcessor:
             target_file = self.traces_dir / source_file.name
             
             if target_file.exists():
-                print(f"[{idx}/{len(source_files)}] {source_file.name} - ✓ Already exists")
+                print(f"[{idx}/{len(source_files)}] {source_file.name[:50]}... - ✓ Already exists")
                 copied.append(target_file)
                 continue
             
             try:
                 shutil.copy2(source_file, target_file)
-                print(f"[{idx}/{len(source_files)}] {source_file.name} - ✓ Copied")
+                print(f"[{idx}/{len(source_files)}] {source_file.name[:50]}... - ✓ Copied")
                 copied.append(target_file)
             except Exception as e:
-                print(f"[{idx}/{len(source_files)}] {source_file.name} - ✗ Error: {e}")
+                print(f"[{idx}/{len(source_files)}] {source_file.name[:50]}... - ✗ Error: {e}")
         
         print(f"\n✓ Copied {len(copied)}/{len(source_files)} traces")
         
@@ -84,10 +95,10 @@ class NetworkTraceProcessor:
     def parse_fcc_trace(self, trace_path: Path) -> pd.DataFrame:
         """
         Parse a single FCC trace file.
-        
-        FCC format: Each line is "timestamp throughput"
-        - timestamp: in seconds
-        - throughput: in Mbps
+        Handles multiple formats:
+        - "timestamp throughput"
+        - Just "throughput" values
+        - Tab or space separated
         
         Args:
             trace_path: Path to trace file
@@ -97,37 +108,65 @@ class NetworkTraceProcessor:
         """
         try:
             data = []
+            line_number = 0
             
-            with open(trace_path, 'r') as f:
+            with open(trace_path, 'r', encoding='utf-8', errors='ignore') as f:
                 for line in f:
                     line = line.strip()
                     if not line or line.startswith('#'):
                         continue
                     
+                    # Split by whitespace (space or tab)
                     parts = line.split()
-                    if len(parts) >= 2:
-                        try:
+                    
+                    if len(parts) == 0:
+                        continue
+                    
+                    try:
+                        if len(parts) >= 2:
+                            # Format: "timestamp throughput"
                             timestamp = float(parts[0])
-                            throughput_mbps = float(parts[1])
-                            throughput_kbps = throughput_mbps * 1000  # Convert to Kbps
-                            
-                            data.append({
-                                'timestamp': timestamp,
-                                'throughput_kbps': throughput_kbps
-                            })
-                        except ValueError:
+                            throughput_value = float(parts[1])
+                        elif len(parts) == 1:
+                            # Format: just "throughput" (generate timestamps)
+                            timestamp = float(line_number)
+                            throughput_value = float(parts[0])
+                        else:
                             continue
+                        
+                        # Detect if throughput is in Mbps or Kbps
+                        # Usually FCC traces are in Mbps, but check magnitude
+                        if throughput_value < 100:  # Likely Mbps
+                            throughput_kbps = throughput_value * 1000
+                        else:  # Already in Kbps
+                            throughput_kbps = throughput_value
+                        
+                        # Filter out unrealistic values
+                        if throughput_kbps < 1 or throughput_kbps > 100000:
+                            continue
+                        
+                        data.append({
+                            'timestamp': timestamp,
+                            'throughput_kbps': throughput_kbps
+                        })
+                        
+                        line_number += 1
+                        
+                    except ValueError:
+                        continue
             
             df = pd.DataFrame(data)
             
             # Reset timestamps to start from 0
             if not df.empty:
                 df['timestamp'] = df['timestamp'] - df['timestamp'].min()
+                # Sort by timestamp
+                df = df.sort_values('timestamp').reset_index(drop=True)
             
             return df
         
         except Exception as e:
-            print(f"✗ Error parsing {trace_path.name}: {e}")
+            print(f"      ✗ Error parsing: {str(e)[:50]}")
             return pd.DataFrame()
     
     def process_trace(
@@ -149,11 +188,15 @@ class NetworkTraceProcessor:
         """
         df = self.parse_fcc_trace(trace_path)
         
-        if df.empty:
+        if df.empty or len(df) < 2:
             return {}
         
         # Resample to fixed interval
         max_time = df['timestamp'].max()
+        
+        # If trace is too short, skip it
+        if max_time < 5.0:
+            return {}
         
         # If trace is shorter than target, loop it
         if max_time < target_duration:
@@ -168,18 +211,17 @@ class NetworkTraceProcessor:
         # Trim to target duration
         df = df[df['timestamp'] <= target_duration].copy()
         
+        if len(df) < 2:
+            return {}
+        
         # Resample to fixed interval using interpolation
         target_timestamps = np.arange(0, target_duration, sample_interval)
         
-        if len(df) > 1:
-            resampled_throughput = np.interp(
-                target_timestamps,
-                df['timestamp'].values,
-                df['throughput_kbps'].values
-            )
-        else:
-            # If only one data point, use constant
-            resampled_throughput = np.ones(len(target_timestamps)) * df['throughput_kbps'].iloc[0]
+        resampled_throughput = np.interp(
+            target_timestamps,
+            df['timestamp'].values,
+            df['throughput_kbps'].values
+        )
         
         result = {
             'trace_name': trace_path.stem,
@@ -209,7 +251,7 @@ class NetworkTraceProcessor:
         Returns:
             List of processed traces
         """
-        trace_files = list(self.traces_dir.glob("*.txt"))
+        trace_files = [f for f in self.traces_dir.iterdir() if f.is_file()]
         
         if not trace_files:
             print("✗ No trace files found in traces directory")
@@ -224,9 +266,11 @@ class NetworkTraceProcessor:
         
         processed_traces = []
         failed = 0
+        skipped = 0
         
         for idx, trace_path in enumerate(trace_files, 1):
-            print(f"[{idx}/{len(trace_files)}] {trace_path.name}...", end=' ')
+            trace_name = trace_path.name[:40] + "..." if len(trace_path.name) > 40 else trace_path.name
+            print(f"[{idx}/{len(trace_files)}] {trace_name}", end=' ')
             
             processed = self.process_trace(
                 trace_path,
@@ -240,16 +284,21 @@ class NetworkTraceProcessor:
                 # Save individual processed trace
                 output_path = self.output_dir / f"{trace_path.stem}.json"
                 with open(output_path, 'w') as f:
-                    json.dump(processed, f, indent=2)
+                    json.dump(processed, f)
                 
-                print(f"✓ (avg: {processed['mean_throughput']:.0f} Kbps)")
+                print(f"✓ {processed['mean_throughput']:.0f} Kbps")
             else:
-                print("✗ Failed")
+                print("✗")
                 failed += 1
+                if failed > 10 and idx < 20:
+                    # Too many failures at start, might be wrong format
+                    print("\n⚠ Too many failures. Check trace file format.")
         
-        print(f"\n✓ Processed {len(processed_traces)}/{len(trace_files)} traces")
+        print(f"\n{'='*60}")
+        print(f"✓ Processed: {len(processed_traces)}/{len(trace_files)} traces")
         if failed > 0:
-            print(f"⚠ Failed: {failed} traces")
+            print(f"✗ Failed: {failed} traces")
+        print(f"{'='*60}")
         
         # Save summary
         if processed_traces:
@@ -266,7 +315,7 @@ class NetworkTraceProcessor:
             
             csv_path = self.output_dir / 'traces_summary.csv'
             summary_df.to_csv(csv_path, index=False)
-            print(f"✓ Summary saved to: {csv_path}")
+            print(f"\n✓ Summary saved to: {csv_path}")
         
         return processed_traces
     
@@ -337,6 +386,8 @@ def main():
     
     # Step 2: Process traces
     print("\nStep 2: Process traces")
+    input("Press Enter to start processing...")
+    
     processed = processor.process_all_traces(
         target_duration=60.0,  # 60 seconds per trace
         sample_interval=1.0    # 1 second intervals
@@ -346,10 +397,14 @@ def main():
         processor.print_summary()
         
         print("\n✓ Network trace processing complete!")
+        print(f"\nProcessed traces saved in: {processor.output_dir}")
         print("\nNext step: Build ABR environment")
         print("  python src/environment/abr_env.py")
     else:
-        print("\n✗ No traces processed")
+        print("\n✗ No traces processed successfully")
+        print("\nTip: Check if trace files have correct format:")
+        print("  Each line should be: timestamp throughput")
+        print("  Or just: throughput")
 
 
 if __name__ == '__main__':
