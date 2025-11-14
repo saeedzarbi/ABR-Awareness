@@ -1,6 +1,6 @@
 """
 Process network traces for ABR simulation.
-Supports FCC broadband dataset and custom trace formats.
+Works with existing FCC trace files.
 """
 
 import os
@@ -8,89 +8,78 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Tuple
-import requests
-import gzip
+import json
 import shutil
 
 
 class NetworkTraceProcessor:
     """Process and prepare network bandwidth traces."""
     
-    # FCC dataset URLs (sample subset)
-    FCC_TRACES_URLS = [
-        "https://raw.githubusercontent.com/hongzimao/pensieve/master/sim/cooked_traces/",
-    ]
-    
     def __init__(
         self,
+        source_traces_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/data/fcc_traces',
         traces_dir: str = 'data/network_traces',
         output_dir: str = 'data/network_traces/processed'
     ):
+        self.source_traces_dir = Path(source_traces_dir)
         self.traces_dir = Path(traces_dir)
         self.output_dir = Path(output_dir)
         self.traces_dir.mkdir(parents=True, exist_ok=True)
         self.output_dir.mkdir(parents=True, exist_ok=True)
     
-    def download_fcc_traces(self, num_traces: int = 50) -> List[Path]:
+    def copy_traces_from_source(self, max_traces: int = None) -> List[Path]:
         """
-        Download FCC network traces from Pensieve repository.
+        Copy trace files from source directory.
         
         Args:
-            num_traces: Number of traces to download
+            max_traces: Maximum number of traces to copy (None = all)
             
         Returns:
-            List of downloaded trace file paths
+            List of copied trace file paths
         """
+        if not self.source_traces_dir.exists():
+            print(f"✗ Source directory not found: {self.source_traces_dir}")
+            return []
+        
         print(f"\n{'='*60}")
-        print(f"Downloading FCC Network Traces")
-        print(f"Target: {num_traces} traces")
+        print(f"Copying FCC Network Traces")
+        print(f"Source: {self.source_traces_dir}")
+        print(f"Target: {self.traces_dir}")
         print(f"{'='*60}\n")
         
-        # Common trace names from Pensieve dataset
-        trace_names = [
-            f"report_bicycle_0{i}.txt" for i in range(0, min(10, num_traces))
-        ] + [
-            f"report_bus_0{i}.txt" for i in range(0, min(10, num_traces-10))
-        ] + [
-            f"report_car_0{i}.txt" for i in range(0, min(10, num_traces-20))
-        ] + [
-            f"report_ferry_0{i}.txt" for i in range(0, min(10, num_traces-30))
-        ] + [
-            f"report_metro_0{i}.txt" for i in range(0, min(10, num_traces-40))
-        ]
+        # Find all trace files in source
+        source_files = list(self.source_traces_dir.glob("*.txt"))
         
-        base_url = "https://raw.githubusercontent.com/hongzimao/pensieve/master/sim/cooked_traces/"
+        if not source_files:
+            print(f"✗ No .txt files found in source directory")
+            return []
         
-        downloaded = []
+        print(f"Found {len(source_files)} trace files in source")
         
-        for idx, trace_name in enumerate(trace_names[:num_traces], 1):
-            trace_path = self.traces_dir / trace_name
+        if max_traces:
+            source_files = source_files[:max_traces]
+            print(f"Limiting to {max_traces} traces")
+        
+        copied = []
+        
+        for idx, source_file in enumerate(source_files, 1):
+            target_file = self.traces_dir / source_file.name
             
-            if trace_path.exists():
-                print(f"[{idx}/{num_traces}] {trace_name} - ✓ Already exists")
-                downloaded.append(trace_path)
+            if target_file.exists():
+                print(f"[{idx}/{len(source_files)}] {source_file.name} - ✓ Already exists")
+                copied.append(target_file)
                 continue
             
-            url = base_url + trace_name
-            
             try:
-                print(f"[{idx}/{num_traces}] Downloading {trace_name}...", end=' ')
-                response = requests.get(url, timeout=10)
-                
-                if response.status_code == 200:
-                    with open(trace_path, 'wb') as f:
-                        f.write(response.content)
-                    print("✓")
-                    downloaded.append(trace_path)
-                else:
-                    print(f"✗ (HTTP {response.status_code})")
-            
+                shutil.copy2(source_file, target_file)
+                print(f"[{idx}/{len(source_files)}] {source_file.name} - ✓ Copied")
+                copied.append(target_file)
             except Exception as e:
-                print(f"✗ ({str(e)[:30]})")
+                print(f"[{idx}/{len(source_files)}] {source_file.name} - ✗ Error: {e}")
         
-        print(f"\n✓ Downloaded {len(downloaded)}/{num_traces} traces")
+        print(f"\n✓ Copied {len(copied)}/{len(source_files)} traces")
         
-        return downloaded
+        return copied
     
     def parse_fcc_trace(self, trace_path: Path) -> pd.DataFrame:
         """
@@ -117,14 +106,17 @@ class NetworkTraceProcessor:
                     
                     parts = line.split()
                     if len(parts) >= 2:
-                        timestamp = float(parts[0])
-                        throughput_mbps = float(parts[1])
-                        throughput_kbps = throughput_mbps * 1000  # Convert to Kbps
-                        
-                        data.append({
-                            'timestamp': timestamp,
-                            'throughput_kbps': throughput_kbps
-                        })
+                        try:
+                            timestamp = float(parts[0])
+                            throughput_mbps = float(parts[1])
+                            throughput_kbps = throughput_mbps * 1000  # Convert to Kbps
+                            
+                            data.append({
+                                'timestamp': timestamp,
+                                'throughput_kbps': throughput_kbps
+                            })
+                        except ValueError:
+                            continue
             
             df = pd.DataFrame(data)
             
@@ -169,7 +161,7 @@ class NetworkTraceProcessor:
             dfs = []
             for i in range(num_loops):
                 df_copy = df.copy()
-                df_copy['timestamp'] += i * max_time
+                df_copy['timestamp'] += i * (max_time + sample_interval)
                 dfs.append(df_copy)
             df = pd.concat(dfs, ignore_index=True)
         
@@ -178,11 +170,16 @@ class NetworkTraceProcessor:
         
         # Resample to fixed interval using interpolation
         target_timestamps = np.arange(0, target_duration, sample_interval)
-        resampled_throughput = np.interp(
-            target_timestamps,
-            df['timestamp'].values,
-            df['throughput_kbps'].values
-        )
+        
+        if len(df) > 1:
+            resampled_throughput = np.interp(
+                target_timestamps,
+                df['timestamp'].values,
+                df['throughput_kbps'].values
+            )
+        else:
+            # If only one data point, use constant
+            resampled_throughput = np.ones(len(target_timestamps)) * df['throughput_kbps'].iloc[0]
         
         result = {
             'trace_name': trace_path.stem,
@@ -215,7 +212,7 @@ class NetworkTraceProcessor:
         trace_files = list(self.traces_dir.glob("*.txt"))
         
         if not trace_files:
-            print("✗ No trace files found")
+            print("✗ No trace files found in traces directory")
             return []
         
         print(f"\n{'='*60}")
@@ -226,6 +223,7 @@ class NetworkTraceProcessor:
         print(f"{'='*60}\n")
         
         processed_traces = []
+        failed = 0
         
         for idx, trace_path in enumerate(trace_files, 1):
             print(f"[{idx}/{len(trace_files)}] {trace_path.name}...", end=' ')
@@ -241,15 +239,17 @@ class NetworkTraceProcessor:
                 
                 # Save individual processed trace
                 output_path = self.output_dir / f"{trace_path.stem}.json"
-                import json
                 with open(output_path, 'w') as f:
                     json.dump(processed, f, indent=2)
                 
                 print(f"✓ (avg: {processed['mean_throughput']:.0f} Kbps)")
             else:
                 print("✗ Failed")
+                failed += 1
         
         print(f"\n✓ Processed {len(processed_traces)}/{len(trace_files)} traces")
+        if failed > 0:
+            print(f"⚠ Failed: {failed} traces")
         
         # Save summary
         if processed_traces:
@@ -314,20 +314,28 @@ def main():
     print("\n📡 Network Trace Processor for ABR Research\n")
     
     processor = NetworkTraceProcessor(
+        source_traces_dir='/home/saeedzarbi95/test/ABR-Awareness/data/fcc_traces',
         traces_dir='data/network_traces',
         output_dir='data/network_traces/processed'
     )
     
-    # Download traces
-    print("Step 1: Download traces")
-    choice = input("Download FCC traces? (y/n): ").strip().lower()
+    # Step 1: Copy traces from source
+    print("Step 1: Copy traces from source directory")
+    choice = input("Copy all traces or limit? (all/limit): ").strip().lower()
     
-    if choice == 'y':
-        num_traces = input("How many traces? (default: 20): ").strip()
-        num_traces = int(num_traces) if num_traces else 20
-        processor.download_fcc_traces(num_traces=num_traces)
+    if choice == 'limit':
+        num = input("How many traces? (default: 50): ").strip()
+        max_traces = int(num) if num else 50
+    else:
+        max_traces = None
     
-    # Process traces
+    copied = processor.copy_traces_from_source(max_traces=max_traces)
+    
+    if not copied:
+        print("✗ No traces copied. Exiting.")
+        return
+    
+    # Step 2: Process traces
     print("\nStep 2: Process traces")
     processed = processor.process_all_traces(
         target_duration=60.0,  # 60 seconds per trace
