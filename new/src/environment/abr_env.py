@@ -316,9 +316,9 @@ def test_environment():
     # Create environment
     env = ABREnv(
         video_name='sample1',
-        trace_dir='data/network_traces/processed',
-        vmaf_dir='data/vmaf_scores',
-        siti_dir='data/content_features',
+        trace_dir='src/data_preparation/data/network_traces/processed',
+        vmaf_dir='src/data_preparation/data/vmaf_scores',
+        siti_dir='src/data_preparation/data/content_features',
         max_chunks=10,
         random_seed=42
     )
