@@ -49,9 +49,9 @@ class ABREnv(gym.Env):
     def __init__(
         self,
         video_name: str = 'sample1',
-        trace_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/src/data_preparation/data/network_traces/processed',
-        vmaf_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/src/data_preparation/data/vmaf_scores',
-        siti_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/src/data_preparation/data/content_features',
+        trace_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/data/network_traces/processed',
+        vmaf_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores',
+        siti_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/data/content_features',
         max_chunks: int = 48,  # 48 chunks * 4s = 192s video
         random_seed: Optional[int] = None
     ):
