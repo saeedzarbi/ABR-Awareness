@@ -43,8 +43,8 @@ class ABREnv(gym.Env):
     BUFFER_MAX = 30.0     # Maximum buffer size (seconds)
     
     # Reward weights
-    REBUFFER_PENALTY = 10  # Penalty per second of rebuffering
-    SMOOTH_PENALTY = 0.2    # Penalty for bitrate switches
+    REBUFFER_PENALTY = 6.0  # Penalty per second of rebuffering
+    SMOOTH_PENALTY = 1.5    # Penalty for bitrate switches
     
     def __init__(
         self,
