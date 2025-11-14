@@ -48,7 +48,6 @@ class VMAFCalculator:
             return 'libvmaf' in result.stdout
         except:
             return False
-    
     def calculate_vmaf(
         self,
         reference_video: Path,
@@ -66,14 +65,16 @@ class VMAFCalculator:
         Returns:
             Mean VMAF score (0-100) or None if failed
         """
-        # VMAF filter with model path
+        # Scale both videos to same resolution before comparison
+        # Use reference video resolution as target
         vmaf_filter = (
-            f"[0:v]setpts=PTS-STARTPTS[reference];"
-            f"[1:v]setpts=PTS-STARTPTS[distorted];"
+            f"[1:v]setpts=PTS-STARTPTS,scale=iw:ih:flags=bicubic[reference];"
+            f"[0:v]setpts=PTS-STARTPTS,scale=iw:ih:flags=bicubic[distorted];"
             f"[distorted][reference]libvmaf="
             f"log_fmt=json:"
             f"log_path={output_json}:"
-            f"n_threads=4"
+            f"n_threads=4:"
+            f"model=version=vmaf_v0.6.1"
         )
         
         cmd = [
@@ -86,13 +87,22 @@ class VMAFCalculator:
         ]
         
         try:
-            # Run FFmpeg (suppress output)
-            subprocess.run(
+            # Run FFmpeg with error output for debugging
+            result = subprocess.run(
                 cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=True
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
             )
+            
+            # Check if successful
+            if result.returncode != 0:
+                # Print error for debugging
+                error_lines = result.stderr.split('\n')
+                relevant_errors = [line for line in error_lines if 'error' in line.lower()]
+                if relevant_errors:
+                    print(f"\n    FFmpeg error: {relevant_errors[0][:100]}")
+                return None
             
             # Parse VMAF output
             if output_json.exists():
@@ -109,7 +119,7 @@ class VMAFCalculator:
         except Exception as e:
             print(f"    ✗ VMAF calculation failed: {e}")
             return None
-    
+
     def calculate_for_video(
         self,
         video_name: str,
