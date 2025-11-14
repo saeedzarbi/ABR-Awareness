@@ -43,8 +43,9 @@ class ABREnv(gym.Env):
     BUFFER_MAX = 30.0     # Maximum buffer size (seconds)
     
     # Reward weights
-    REBUFFER_PENALTY = 10  # Penalty per second of rebuffering
-    SMOOTH_PENALTY = 0.2    # Penalty for bitrate switches
+    REBUFFER_PENALTY = 6.0  # Penalty per second of rebuffering
+    SMOOTH_PENALTY = 0.3    # Penalty for bitrate switches
+    QUALITY_WEIGHT = 2.0
     
     def __init__(
         self,
@@ -248,28 +249,30 @@ class ABREnv(gym.Env):
         self.buffer_level = min(self.buffer_level + self.CHUNK_DURATION, self.BUFFER_MAX)
         
         # Calculate reward components
+# Calculate reward components with quality emphasis
         quality = self.vmaf_scores.get(bitrate_kbps, 50.0) / 100.0
+        quality_weighted = quality * 2.0  # NEW: 2x weight for quality
+        
         rebuffer_penalty = self.REBUFFER_PENALTY * rebuffer_time
         
         # Smoothness penalty - only penalize large jumps
         bitrate_change = abs(action - self.last_bitrate_idx)
-        if bitrate_change > 2:  # Only penalize jumps > 2 levels
+        if bitrate_change > 2:  # Only jumps > 2 levels
             smooth_penalty = self.SMOOTH_PENALTY * bitrate_change / (len(self.BITRATE_LEVELS) - 1)
         else:
             smooth_penalty = 0.0  # Small changes are free
         
-        # Buffer safety penalty/bonus
+        # Buffer safety mechanism
+        buffer_penalty = 0.0
         if self.buffer_level < 5.0:
-            # Dangerous low buffer - strong penalty
-            buffer_penalty = 1.5 * (5.0 - self.buffer_level)
+            # Dangerous low buffer - penalty increases as buffer decreases
+            buffer_penalty = 1.0 * (5.0 - self.buffer_level)
         elif self.buffer_level > 15.0:
             # Healthy buffer - small bonus
-            buffer_penalty = -0.1
-        else:
-            buffer_penalty = 0.0
+            buffer_penalty = -0.15
         
         # Total reward
-        reward = quality - rebuffer_penalty - smooth_penalty - buffer_penalty
+        reward = quality_weighted - rebuffer_penalty - smooth_penalty - buffer_penalty
         
         # Update metrics
         self.total_quality += quality
