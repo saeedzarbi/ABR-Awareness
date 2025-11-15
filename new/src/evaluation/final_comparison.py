@@ -1,6 +1,6 @@
 """
 Comprehensive comparison of all methods on all videos.
-Compares: PPO V1, V2, V3, BBA, MPC, Random
+Compares: PPO V1, V2, V3, V4, BBA, MPC, Random
 """
 
 import sys
@@ -38,6 +38,16 @@ class ComprehensiveEvaluator:
     def load_models(self):
         """Load all available models."""
         print("\n📦 Loading models...\n")
+        
+        # PPO V4 (newest)
+        try:
+            v4_path = PATHS['models'] / 'ppo_abr_v4' / 'best_model' / 'best_model'
+            if not v4_path.with_suffix('.zip').exists():
+                v4_path = PATHS['models'] / 'ppo_abr_v4' / 'final_model'
+            self.methods['PPO_V4'] = PPO.load(str(v4_path))
+            print("  ✓ PPO V4 loaded (Buffer-Aware Dynamic Reward)")
+        except Exception as e:
+            print(f"  ⚠ PPO V4 not available: {e}")
         
         # PPO V3
         try:
@@ -398,7 +408,7 @@ class ComprehensiveEvaluator:
             return
         
         fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-        fig.suptitle('PPO Version Progression', fontsize=14, fontweight='bold')
+        fig.suptitle('PPO Version Progression (V1 → V2 → V3 → V4)', fontsize=14, fontweight='bold')
         
         ppo_summary = ppo_df.groupby('method').agg({
             'reward_mean': 'mean',
@@ -407,7 +417,7 @@ class ComprehensiveEvaluator:
         }).reset_index()
         
         # Sort by version
-        version_order = ['PPO_V1', 'PPO_V2', 'PPO_V3']
+        version_order = ['PPO_V1', 'PPO_V2', 'PPO_V3', 'PPO_V4']
         ppo_summary['method'] = pd.Categorical(
             ppo_summary['method'],
             categories=[v for v in version_order if v in ppo_summary['method'].values],
@@ -475,7 +485,7 @@ def main():
     args = parser.parse_args()
     
     print("\n" + "="*80)
-    print("🔬 Comprehensive ABR Method Comparison")
+    print("🔬 Comprehensive ABR Method Comparison (Including V4)")
     print("="*80)
     
     # Initialize evaluator
@@ -505,7 +515,7 @@ def main():
     print("  - comprehensive_results.csv")
     print("  - summary_statistics.csv")
     print("  - comprehensive_comparison.png")
-    print("  - ppo_progression.png")
+    print("  - ppo_progression.png (V1→V2→V3→V4)")
     print("="*80 + "\n")
 
 
