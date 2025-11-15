@@ -1,6 +1,7 @@
 """
 ABR (Adaptive Bitrate) Gym Environment for Deep Reinforcement Learning.
 Content-aware environment with VMAF, SI/TI features.
+V4: Buffer-aware dynamic reward.
 """
 
 import gymnasium as gym
@@ -28,6 +29,7 @@ class ABREnv(gym.Env):
     
     Reward:
         QoE = quality - rebuffering_penalty - smoothness_penalty
+        V4: Dynamic reward weights based on buffer level
     """
     
     metadata = {'render_modes': ['human']}
@@ -42,17 +44,15 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0  # Target buffer level (seconds)
     BUFFER_MAX = 30.0     # Maximum buffer size (seconds)
     
-    # Reward weights
-    REBUFFER_PENALTY = 6.0  # Penalty per second of rebuffering
-    SMOOTH_PENALTY = 0.3    # Penalty for bitrate switches
-    QUALITY_WEIGHT = 2.0
+    # Reward parameters (V4: dynamic based on buffer)
+    SMOOTH_PENALTY = 0.25
     
     def __init__(
         self,
         video_name: str = 'sample1',
-        trace_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/data/network_traces/processed',
-        vmaf_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores',
-        siti_dir: str = '/home/saeedzarbi95/test/ABR-Awareness/new/data/content_features',
+        trace_dir: str = 'data/network_traces/processed',
+        vmaf_dir: str = 'data/vmaf_scores',
+        siti_dir: str = 'data/content_features',
         max_chunks: int = 48,  # 48 chunks * 4s = 192s video
         random_seed: Optional[int] = None
     ):
@@ -120,7 +120,7 @@ class ABREnv(gym.Env):
     
     def _load_vmaf_scores(self):
         """Load VMAF scores for the video."""
-        vmaf_file = self.vmaf_dir / f"{self.video_name}" / "vmaf_summary.csv"
+        vmaf_file = self.vmaf_dir / self.video_name / "vmaf_summary.csv"
         
         # Try alternative path
         if not vmaf_file.exists():
@@ -248,34 +248,57 @@ class ABREnv(gym.Env):
         self.buffer_level = max(0, self.buffer_level - download_time)
         self.buffer_level = min(self.buffer_level + self.CHUNK_DURATION, self.BUFFER_MAX)
         
-        # Calculate reward components
-# Calculate reward components with quality emphasis
-        quality = self.vmaf_scores.get(bitrate_kbps, 50.0) / 100.0
-        quality_weighted = quality * 2.0  # NEW: 2x weight for quality
+        # ========== DYNAMIC BUFFER-AWARE REWARD (V4) ==========
         
-        rebuffer_penalty = self.REBUFFER_PENALTY * rebuffer_time
+        # Get base quality score
+        base_quality = self.vmaf_scores.get(bitrate_kbps, 50.0) / 100.0
         
-        # Smoothness penalty - only penalize large jumps
+        # Dynamic weights based on buffer safety level
+        if self.buffer_level > 15.0:
+            # SAFE ZONE: High buffer = can afford to be aggressive
+            quality_weight = 3.5
+            rebuffer_penalty_weight = 3.0
+        elif self.buffer_level > 10.0:
+            # GOOD ZONE: Balanced approach
+            quality_weight = 3.0
+            rebuffer_penalty_weight = 4.5
+        elif self.buffer_level > 5.0:
+            # MEDIUM ZONE: Slightly cautious
+            quality_weight = 2.5
+            rebuffer_penalty_weight = 5.5
+        else:
+            # DANGER ZONE: Very conservative
+            quality_weight = 2.0
+            rebuffer_penalty_weight = 7.0
+        
+        # Weighted quality
+        quality_weighted = base_quality * quality_weight
+        
+        # Rebuffering penalty
+        rebuffer_penalty = rebuffer_penalty_weight * rebuffer_time
+        
+        # Smoothness penalty - only for large jumps
         bitrate_change = abs(action - self.last_bitrate_idx)
-        if bitrate_change > 2:  # Only jumps > 2 levels
+        if bitrate_change > 2:
             smooth_penalty = self.SMOOTH_PENALTY * bitrate_change / (len(self.BITRATE_LEVELS) - 1)
         else:
-            smooth_penalty = 0.0  # Small changes are free
+            smooth_penalty = 0.0
         
-        # Buffer safety mechanism
-        buffer_penalty = 0.0
-        if self.buffer_level < 5.0:
-            # Dangerous low buffer - penalty increases as buffer decreases
-            buffer_penalty = 1.0 * (5.0 - self.buffer_level)
-        elif self.buffer_level > 15.0:
-            # Healthy buffer - small bonus
-            buffer_penalty = -0.15
+        # Buffer bonus/penalty
+        if self.buffer_level < 3.0:
+            # Critical low buffer - extra penalty
+            buffer_penalty = 2.0 * (3.0 - self.buffer_level)
+        elif self.buffer_level > 20.0:
+            # Very healthy buffer - small bonus
+            buffer_penalty = -0.2
+        else:
+            buffer_penalty = 0.0
         
         # Total reward
         reward = quality_weighted - rebuffer_penalty - smooth_penalty - buffer_penalty
         
         # Update metrics
-        self.total_quality += quality
+        self.total_quality += base_quality
         self.total_rebuffer += rebuffer_time
         self.total_smooth += smooth_penalty
         
@@ -299,7 +322,7 @@ class ABREnv(gym.Env):
             'throughput': throughput_kbps,
             'buffer': self.buffer_level,
             'rebuffer': rebuffer_time,
-            'quality': quality,
+            'quality': base_quality,
             'reward': reward
         })
         
@@ -332,9 +355,9 @@ def test_environment():
     # Create environment
     env = ABREnv(
         video_name='sample1',
-        trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/src/data_preparation/data/network_traces/processed',
-        vmaf_dir='/home/saeedzarbi95/test/ABR-Awareness/new/src/data_preparation/data/vmaf_scores',
-        siti_dir='/home/saeedzarbi95/test/ABR-Awareness/new/src/data_preparation/data/content_features',
+        trace_dir='data/network_traces/processed',
+        vmaf_dir='data/vmaf_scores',
+        siti_dir='data/content_features',
         max_chunks=10,
         random_seed=42
     )
@@ -375,8 +398,8 @@ def test_environment():
     print(f"{'='*60}\n")
     
     print("✓ Environment test completed successfully!")
-    print("\nNext step: Train PPO agent")
-    print("  python src/training/train_ppo.py")
+    print("\nNext step: Train PPO V4 agent")
+    print("  python src/training/train_ppo_v4_dynamic.py")
 
 
 if __name__ == '__main__':
