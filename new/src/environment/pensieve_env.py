@@ -202,8 +202,7 @@ class PensieveEnv(gym.Env):
     
     def _get_info(self) -> Dict:
         """Get info."""
-        avg_quality = np.mean([self.BITRATE_LEVELS[int(q * 5)] for q in self.quality_history]) / 100.0
-        
+        avg_quality = np.mean(self.quality_history) if self.quality_history else 0.5        
         return {
             'chunk_idx': self.chunk_idx,
             'total_rebuffer': self.total_rebuffer,
