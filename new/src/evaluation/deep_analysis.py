@@ -258,7 +258,7 @@ class DeepAnalyzer:
             
             oracle_rewards.append(oracle_reward)
         
-        print(f"PPO V3 Average Reward:    {np.mean(ppo_rewards):8.2f} ± {np.std(ppo_rewards):.2f}")
+        print(f"PPO V4 Average Reward:    {np.mean(ppo_rewards):8.2f} ± {np.std(ppo_rewards):.2f}")
         print(f"Oracle Average Reward:    {np.mean(oracle_rewards):8.2f} ± {np.std(oracle_rewards):.2f}")
         print(f"Gap:                      {np.mean(oracle_rewards) - np.mean(ppo_rewards):8.2f}")
         print(f"PPO achieves:             {np.mean(ppo_rewards)/np.mean(oracle_rewards)*100:6.1f}% of oracle")
@@ -382,14 +382,14 @@ def main():
     """Run deep analysis."""
     
     print("\n" + "="*80)
-    print("🔬 Deep Analysis of PPO V3")
+    print("🔬 Deep Analysis of PPO V4")
     print("="*80)
     
     # Load model
-    model_path = PATHS['models'] / 'ppo_abr_v3' / 'best_model' / 'best_model'
+    model_path = PATHS['models'] / 'ppo_abr_v4' / 'best_model' / 'best_model'
     
     if not model_path.with_suffix('.zip').exists():
-        model_path = PATHS['models'] / 'ppo_abr_v3' / 'final_model'
+        model_path = PATHS['models'] / 'ppo_abr_v4' / 'final_model'
     
     print(f"\nModel: {model_path}")
     
