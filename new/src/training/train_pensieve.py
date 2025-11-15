@@ -27,18 +27,18 @@ class PensieveConfig:
     NUM_ENVS = 8
     
     # PPO hyperparameters (similar to Pensieve's A3C)
-    LEARNING_RATE = 1e-4
+    LEARNING_RATE = 3e-4
     N_STEPS = 2048
     BATCH_SIZE = 64
     N_EPOCHS = 10
     GAMMA = 0.99
     GAE_LAMBDA = 0.95
     CLIP_RANGE = 0.2
-    ENT_COEF = 0.01  # Less exploration than our V4
+    ENT_COEF = 0.08  # Less exploration than our V4
     VF_COEF = 0.5
     MAX_GRAD_NORM = 0.5
     
-    TOTAL_TIMESTEPS = 500_000
+    TOTAL_TIMESTEPS = 800_000
     EVAL_FREQ = 10_000
     SAVE_FREQ = 20_000
     

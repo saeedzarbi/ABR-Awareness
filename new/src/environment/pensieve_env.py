@@ -29,9 +29,9 @@ class PensieveEnv(gym.Env):
     BUFFER_MAX = 30.0
     
     # Pensieve-style linear reward
-    QUALITY_WEIGHT = 1.0
-    REBUFFER_PENALTY = 4.3
-    SMOOTH_PENALTY = 1.0
+    QUALITY_WEIGHT = 1.5
+    REBUFFER_PENALTY = 2.5
+    SMOOTH_PENALTY = 0.5
     
     def __init__(
         self,
