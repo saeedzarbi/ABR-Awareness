@@ -1,6 +1,6 @@
 """
 Comprehensive comparison of all methods on all videos.
-Compares: PPO V1, V2, V3, V4, BBA, MPC, Random
+Compares: PPO V1, V2, V3, V4, Pensieve, BBA, MPC, Random
 """
 
 import sys
@@ -26,6 +26,14 @@ try:
 except:
     HAS_MPC = False
     print("⚠ MPC baseline not available")
+
+# Try to import Pensieve environment
+try:
+    from src.environment.pensieve_env import PensieveEnv
+    HAS_PENSIEVE_ENV = True
+except:
+    HAS_PENSIEVE_ENV = False
+    print("⚠ Pensieve environment not available")
 
 
 class ComprehensiveEvaluator:
@@ -79,6 +87,17 @@ class ComprehensiveEvaluator:
         except Exception as e:
             print(f"  ⚠ PPO V1 not available: {e}")
         
+        # Pensieve (MIT 2017 approach)
+        if HAS_PENSIEVE_ENV:
+            try:
+                pensieve_path = PATHS['models'] / 'pensieve' / 'best_model' / 'best_model'
+                if not pensieve_path.with_suffix('.zip').exists():
+                    pensieve_path = PATHS['models'] / 'pensieve' / 'final_model'
+                self.methods['Pensieve'] = PPO.load(str(pensieve_path))
+                print("  ✓ Pensieve loaded (MIT 2017 - A3C replicated with PPO)")
+            except Exception as e:
+                print(f"  ⚠ Pensieve not available: {e}")
+        
         # BBA
         self.methods['BBA'] = BBA([300, 750, 1200, 1850, 2850, 6000])
         print("  ✓ BBA loaded")
@@ -123,16 +142,28 @@ class ComprehensiveEvaluator:
     ) -> dict:
         """Evaluate a single method on a single video."""
         
-        # Create environment
+        # Create appropriate environment
         try:
-            env = ABREnv(
-                video_name=video_name,
-                trace_dir=str(PATHS['processed_traces']),
-                vmaf_dir=str(PATHS['vmaf_scores']),
-                siti_dir=str(PATHS['content_features']),
-                max_chunks=48,
-                random_seed=42
-            )
+            if method_name == 'Pensieve':
+                # Use Pensieve environment (no content features)
+                if not HAS_PENSIEVE_ENV:
+                    print(f"    ✗ Pensieve env not available for {video_name}")
+                    return None
+                env = PensieveEnv(
+                    trace_dir=str(PATHS['processed_traces']),
+                    max_chunks=48,
+                    random_seed=42
+                )
+            else:
+                # Use standard ABR environment (with content features)
+                env = ABREnv(
+                    video_name=video_name,
+                    trace_dir=str(PATHS['processed_traces']),
+                    vmaf_dir=str(PATHS['vmaf_scores']),
+                    siti_dir=str(PATHS['content_features']),
+                    max_chunks=48,
+                    random_seed=42
+                )
         except Exception as e:
             print(f"    ✗ Failed to create env for {video_name}: {e}")
             return None
@@ -164,7 +195,7 @@ class ComprehensiveEvaluator:
                         buffer_level=info['buffer_level'],
                         last_throughput=last_throughput
                     )
-                else:  # PPO models
+                else:  # PPO models (including Pensieve)
                     action, _ = model.predict(obs, deterministic=True)
                 
                 # Track switches
@@ -294,11 +325,11 @@ class ComprehensiveEvaluator:
             
             video_df = df[df['video'] == video].sort_values('reward_mean', ascending=False)
             
-            print(f"{'Method':<12} | {'Reward':>12} | {'Rebuffer':>12} | {'Quality':>10} | {'Switches':>10}")
+            print(f"{'Method':<15} | {'Reward':>12} | {'Rebuffer':>12} | {'Quality':>10} | {'Switches':>10}")
             print(f"{'─'*80}")
             
             for _, row in video_df.iterrows():
-                print(f"{row['method']:<12} | "
+                print(f"{row['method']:<15} | "
                       f"{row['reward_mean']:6.2f} ± {row['reward_std']:4.2f} | "
                       f"{row['rebuffer_mean']:5.2f} ± {row['rebuffer_std']:4.2f}s | "
                       f"{row['quality_mean']:5.3f} ± {row['quality_std']:4.3f} | "
@@ -395,59 +426,67 @@ class ComprehensiveEvaluator:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"  ✓ Saved plot: {save_path}")
         
-        # Create individual comparison for PPO versions
-        if any('PPO' in m for m in df['method'].unique()):
-            self._plot_ppo_progression(df)
+        # Create DRL methods comparison (PPO variants + Pensieve)
+        if any('PPO' in m or 'Pensieve' in m for m in df['method'].unique()):
+            self._plot_drl_progression(df)
     
-    def _plot_ppo_progression(self, df: pd.DataFrame):
-        """Plot PPO version progression."""
+    def _plot_drl_progression(self, df: pd.DataFrame):
+        """Plot DRL method progression."""
         
-        ppo_df = df[df['method'].str.contains('PPO')]
+        # Filter DRL methods
+        drl_df = df[df['method'].str.contains('PPO|Pensieve')]
         
-        if ppo_df.empty:
+        if drl_df.empty:
             return
         
         fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-        fig.suptitle('PPO Version Progression (V1 → V2 → V3 → V4)', fontsize=14, fontweight='bold')
+        fig.suptitle('DRL-Based ABR Evolution: Pensieve → Our PPO (V1→V2→V3→V4)', 
+                     fontsize=14, fontweight='bold')
         
-        ppo_summary = ppo_df.groupby('method').agg({
+        drl_summary = drl_df.groupby('method').agg({
             'reward_mean': 'mean',
             'rebuffer_mean': 'mean',
             'quality_mean': 'mean'
         }).reset_index()
         
-        # Sort by version
-        version_order = ['PPO_V1', 'PPO_V2', 'PPO_V3', 'PPO_V4']
-        ppo_summary['method'] = pd.Categorical(
-            ppo_summary['method'],
-            categories=[v for v in version_order if v in ppo_summary['method'].values],
+        # Sort by logical progression: Pensieve, then V1→V2→V3→V4
+        method_order = ['Pensieve', 'PPO_V1', 'PPO_V2', 'PPO_V3', 'PPO_V4']
+        drl_summary['method'] = pd.Categorical(
+            drl_summary['method'],
+            categories=[v for v in method_order if v in drl_summary['method'].values],
             ordered=True
         )
-        ppo_summary = ppo_summary.sort_values('method')
+        drl_summary = drl_summary.sort_values('method')
         
         # Reward progression
-        axes[0].plot(ppo_summary['method'], ppo_summary['reward_mean'], 'o-', linewidth=2, markersize=8)
+        axes[0].plot(drl_summary['method'], drl_summary['reward_mean'], 
+                    'o-', linewidth=2, markersize=8, color='steelblue')
         axes[0].set_ylabel('Reward')
-        axes[0].set_title('Reward Improvement')
+        axes[0].set_title('QoE Evolution')
+        axes[0].tick_params(axis='x', rotation=45)
         axes[0].grid(True, alpha=0.3)
         
         # Rebuffering progression
-        axes[1].plot(ppo_summary['method'], ppo_summary['rebuffer_mean'], 'o-', linewidth=2, markersize=8, color='orange')
+        axes[1].plot(drl_summary['method'], drl_summary['rebuffer_mean'], 
+                    'o-', linewidth=2, markersize=8, color='coral')
         axes[1].set_ylabel('Rebuffering (s)')
         axes[1].set_title('Rebuffering Reduction')
+        axes[1].tick_params(axis='x', rotation=45)
         axes[1].grid(True, alpha=0.3)
         
         # Quality progression
-        axes[2].plot(ppo_summary['method'], ppo_summary['quality_mean'], 'o-', linewidth=2, markersize=8, color='green')
+        axes[2].plot(drl_summary['method'], drl_summary['quality_mean'], 
+                    'o-', linewidth=2, markersize=8, color='seagreen')
         axes[2].set_ylabel('Quality')
         axes[2].set_title('Quality Evolution')
+        axes[2].tick_params(axis='x', rotation=45)
         axes[2].grid(True, alpha=0.3)
         
         plt.tight_layout()
         
-        save_path = PATHS['results'] / 'ppo_progression.png'
+        save_path = PATHS['results'] / 'drl_progression.png'
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"  ✓ Saved PPO progression: {save_path}")
+        print(f"  ✓ Saved DRL progression: {save_path}")
     
     def save_results(self, df: pd.DataFrame):
         """Save results to CSV."""
@@ -485,7 +524,8 @@ def main():
     args = parser.parse_args()
     
     print("\n" + "="*80)
-    print("🔬 Comprehensive ABR Method Comparison (Including V4)")
+    print("🔬 Comprehensive ABR Method Comparison")
+    print("   Including: V1, V2, V3, V4, Pensieve, BBA, MPC, Random")
     print("="*80)
     
     # Initialize evaluator
@@ -515,7 +555,7 @@ def main():
     print("  - comprehensive_results.csv")
     print("  - summary_statistics.csv")
     print("  - comprehensive_comparison.png")
-    print("  - ppo_progression.png (V1→V2→V3→V4)")
+    print("  - drl_progression.png (Pensieve→V1→V2→V3→V4)")
     print("="*80 + "\n")
 
 
