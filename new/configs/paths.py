@@ -8,7 +8,7 @@ from pathlib import Path
 # Project root directory (assumes this file is in new/configs/)
 # .. -> new/
 # .. -> ABR-Awareness-main/ (Root)
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent
 
 # Data directories
 DATA_DIR = PROJECT_ROOT / 'data'
