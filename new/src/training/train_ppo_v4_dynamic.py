@@ -8,6 +8,7 @@ from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback,
 from stable_baselines3.common.monitor import Monitor
 import torch
 import time
+import os
 
 from src.environment.abr_env import ABREnv
 from configs.paths import get_paths
@@ -20,7 +21,9 @@ class TrainingConfigV4:
     Optimized for stability and VMAF maximization.
     """
     
-    VIDEO_NAME = 'sample1'
+    # UPDATE: Changed video name to match new VMAF data
+    VIDEO_NAME = 'bigbuckbunny'
+    
     MAX_CHUNKS = 48
     NUM_ENVS = 8
     
@@ -29,7 +32,7 @@ class TrainingConfigV4:
     N_STEPS = 2048
     BATCH_SIZE = 64
     N_EPOCHS = 10
-    GAMMA = 0.98             # Slightly lower gamma for faster adaptation to network shifts
+    GAMMA = 0.98
     GAE_LAMBDA = 0.95
     CLIP_RANGE = 0.2
     ENT_COEF = 0.05
@@ -45,17 +48,14 @@ class TrainingConfigV4:
 def make_env(rank: int, seed: int = 0, is_eval: bool = False):
     """
     Create environment instance.
-    CRITICAL: Training uses FCC traces, Eval uses separate validation split.
     """
     def _init():
-        # Define trace directory based on mode
-        # Ensure 'fcc_cooked' contains only training traces
-        trace_path = PATHS['processed_traces'] if not is_eval else PATHS['processed_traces'] 
-        
-        # Note: In a real paper submission, you must physically separate folders:
-        # trace_dir='data/network_traces/fcc_train' for training
-        # trace_dir='data/network_traces/fcc_val' for validation inside training
-        
+        # Use Training traces for training, Test traces for evaluation callback
+        if is_eval:
+            trace_path = PATHS['test_traces']
+        else:
+            trace_path = PATHS['train_traces']
+            
         env = ABREnv(
             video_name=TrainingConfigV4.VIDEO_NAME,
             trace_dir=str(trace_path), 
@@ -69,15 +69,9 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
 
 def main():
     print("\n" + "="*70)
-    print("🚀 Training PPO V4: Lyapunov-Based Control")
+    print(f"🚀 Training PPO V4: Lyapunov-Based Control")
+    print(f"📹 Target Video: {TrainingConfigV4.VIDEO_NAME}")
     print("="*70 + "\n")
-    
-    print("🔬 Scientific Formulation:")
-    print("  Optimization Goal: min(Drift + V * Penalty)")
-    print("  - Drift: Buffer queue deviation squared")
-    print("  - Penalty: Inverse of VMAF (Quality)")
-    print("  - Mechanism: Dynamic risk factor exp(theta * deviation)")
-    print("")
     
     # Setup directories
     save_dir = PATHS['models'] / 'ppo_abr_v4_lyapunov'
@@ -88,9 +82,18 @@ def main():
     device = TrainingConfigV4.DEVICE
     num_envs = TrainingConfigV4.NUM_ENVS
     
+    # Check data availability
+    print(f"📂 Training Data: {len(list(PATHS['train_traces'].glob('*.json')))} traces")
+    
     # Create environments
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(num_envs)])
-    eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=True)])
+    
+    # Use only 1 env for evaluation to save resources, ensure test traces exist
+    if len(list(PATHS['test_traces'].glob('*.json'))) > 0:
+        eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=True)])
+    else:
+        print("⚠ No test traces found for EvalCallback, using training traces instead.")
+        eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=False)])
     
     # Create PPO model
     model = PPO(
@@ -130,14 +133,25 @@ def main():
     callbacks = CallbackList([checkpoint_cb, eval_cb])
     
     # Training
-    model.learn(
-        total_timesteps=TrainingConfigV4.TOTAL_TIMESTEPS,
-        callback=callbacks,
-        progress_bar=True
-    )
+    print("Starting training...")
+    try:
+        model.learn(
+            total_timesteps=TrainingConfigV4.TOTAL_TIMESTEPS,
+            callback=callbacks,
+            progress_bar=True
+        )
+        
+        model.save(save_dir / 'final_model')
+        print("✓ Training completed and model saved.")
+        
+    except KeyboardInterrupt:
+        print("\n⚠ Training interrupted manually.")
+        model.save(save_dir / 'interrupted_model')
+        print("✓ Saved interrupted model.")
     
-    model.save(save_dir / 'final_model')
-    print("✓ Training completed.")
+    finally:
+        train_env.close()
+        eval_env.close()
 
 if __name__ == '__main__':
     main()

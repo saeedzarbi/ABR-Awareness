@@ -21,7 +21,7 @@ class ABREnv(gym.Env):
     REBUF_PENALTY_BASE = 4.3
     SMOOTH_PENALTY_WEIGHT = 1.0 
     
-    def __init__(self, video_name='sample1', trace_dir='data/network_traces/processed', 
+    def __init__(self, video_name='bigbuckbunny', trace_dir='data/network_traces/processed', 
                  vmaf_dir='data/vmaf_scores', siti_dir='data/content_features', 
                  max_chunks=48, random_seed=None):
         super().__init__()
