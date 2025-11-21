@@ -28,14 +28,14 @@ class TrainingConfigV4:
     NUM_ENVS = 8
     
     # PPO hyperparameters - Tuned for stability
-    LEARNING_RATE = 2e-4
-    N_STEPS = 2048
-    BATCH_SIZE = 64
+    LEARNING_RATE = 4e-4
+    N_STEPS = 4096
+    BATCH_SIZE = 128
     N_EPOCHS = 10
     GAMMA = 0.98
     GAE_LAMBDA = 0.95
     CLIP_RANGE = 0.2
-    ENT_COEF = 0.05
+    ENT_COEF = 0.15
     VF_COEF = 0.5
     MAX_GRAD_NORM = 0.5
     

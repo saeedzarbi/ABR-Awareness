@@ -30,12 +30,10 @@ class ABREnv(gym.Env):
     #   If we lose 1 sec of video playback, how much VMAF is that worth?
     #   In standard literature (Pensieve), 1 sec stall ~= Max Bitrate Reward.
     #   Here Max VMAF is ~97. So Rebuffer penalty should be around 80-100.
-    REBUF_PENALTY_BASE = 50.0  
-    
+    REBUF_PENALTY_BASE = 85.0    
     # Smoothness:
     #   Penalty for switching from VMAF 90 to 60.
-    SMOOTH_PENALTY_WEIGHT = 0.2
-    
+    SMOOTH_PENALTY_WEIGHT = 0.0    
     def __init__(
         self,
         video_name: str = 'bigbuckbunny',
