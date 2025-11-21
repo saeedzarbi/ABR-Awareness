@@ -4,6 +4,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from stable_baselines3 import PPO
 from src.environment.abr_env import ABREnv
+from src.baselines.mpc_vmaf import RobustMPC  # <--- NEW IMPORT
 from configs.paths import get_paths
 import numpy as np
 import pandas as pd
@@ -19,7 +20,8 @@ class TCSVT_Evaluator:
         
     def load_methods(self):
         methods = {}
-        # Load models (same as before)...
+        
+        # 1. Proposed (Lyapunov)
         try:
             path = PATHS['models'] / 'ppo_abr_v4_lyapunov' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
@@ -27,7 +29,8 @@ class TCSVT_Evaluator:
             methods['Proposed (Lyapunov)'] = PPO.load(str(path))
             print("✓ Proposed model loaded.")
         except: print("⚠ Proposed missing.")
-
+        
+        # 2. Baseline: Pensieve*
         try:
             path = PATHS['models'] / 'pensieve_retrained_vmaf' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
@@ -35,6 +38,11 @@ class TCSVT_Evaluator:
             methods['Pensieve*'] = PPO.load(str(path))
             print("✓ Pensieve* model loaded.")
         except: print("⚠ Pensieve missing.")
+
+        # 3. Baseline: RobustMPC (VMAF-Aware)
+        # MPC needs the environment instance to initialize, we'll init it inside the loop
+        methods['RobustMPC'] = 'mpc_placeholder' 
+        print("✓ RobustMPC baseline ready.")
             
         return methods
 
@@ -45,9 +53,13 @@ class TCSVT_Evaluator:
             print("❌ No test traces found!")
             return
 
+        # Create a shared environment for initialization if needed
+        temp_env = ABREnv(video_name=video_name, trace_dir=str(self.test_trace_dir))
+
         for name, model in methods.items():
             print(f"   Running {name}...", end='', flush=True)
             
+            # Fresh env for each method
             env = ABREnv(
                 video_name=video_name,
                 trace_dir=str(self.test_trace_dir),
@@ -57,6 +69,11 @@ class TCSVT_Evaluator:
                 random_seed=12345
             )
             
+            # Initialize MPC if needed
+            active_model = model
+            if name == 'RobustMPC':
+                active_model = RobustMPC(env)
+            
             ep_rewards, ep_vmafs, ep_rebufs, ep_switches = [], [], [], []
             
             for _ in range(episodes):
@@ -64,31 +81,40 @@ class TCSVT_Evaluator:
                 done = False
                 last_br = 0
                 switches = 0
+                last_throughput = 2000.0 # Initial guess for MPC
                 
                 while not done:
-                    if 'Random' in name:
+                    if name == 'RobustMPC':
+                        # MPC logic
+                        action = active_model.select_bitrate(
+                            info['buffer_level'], 
+                            last_throughput,
+                            env.last_quality_metric # Passing current VMAF knowledge
+                        )
+                    elif 'Random' in name:
                         action = env.action_space.sample()
                     else:
+                        # RL Agents
                         if 'Pensieve' in name:
-                            obs[10:] = 0.0
-                        action, _ = model.predict(obs, deterministic=True)
+                            obs[10:] = 0.0 # Mask content features
+                        action, _ = active_model.predict(obs, deterministic=True)
                     
                     if action != last_br: switches += 1
                     last_br = action
                     
                     obs, reward, done, _, info = env.step(action)
+                    
+                    # Update throughput for MPC
+                    last_throughput = info.get('throughput', last_throughput)
                 
-                # Metrics Calculation (UPDATED for 0-100 scale)
-                # total_quality is now sum of 0-100 scores.
-                # QoE = VMAF_SUM - 85 * Rebuf_Time (Using our Env's logic)
-                # But for standard reporting, we can use the env's internal reward or recalculate.
+                # Calculate metrics
+                # Standard QoE = VMAF - 50*Rebuf - 0.2*Smooth (Using our updated weights)
+                qoe = info['total_quality'] \
+                      - (env.REBUF_PENALTY_BASE * info['total_rebuffer']) \
+                      - (env.SMOOTH_PENALTY_WEIGHT * info['total_smoothness'])
                 
-                # Let's use the sum of rewards for RL comparison
-                ep_rewards.append(info['total_quality'] - 85.0 * info['total_rebuffer'])
-                
-                # VMAF is already 0-100 in avg_quality
+                ep_rewards.append(qoe)
                 ep_vmafs.append(info['avg_quality']) 
-                
                 ep_rebufs.append(info['total_rebuffer'])
                 ep_switches.append(switches)
                 
@@ -108,15 +134,22 @@ class TCSVT_Evaluator:
         print(df.groupby('Method').mean())
         
         df.to_csv(PATHS['results'] / 'tcsvt_generalization_results.csv', index=False)
-        self.plot_metric(df, 'Avg VMAF', 'Average VMAF (0-100)', 'vmaf_comparison.png')
-        self.plot_metric(df, 'Rebuffering Ratio (%)', 'Rebuffering Ratio (%)', 'rebuffer_comparison.png')
+        
+        # Colors for plots
+        colors = sns.color_palette("viridis", n_colors=len(df['Method'].unique()))
+        
+        self.plot_metric(df, 'Standard QoE', 'QoE Score', 'qoe_comparison.png', colors)
+        self.plot_metric(df, 'Avg VMAF', 'Average VMAF (0-100)', 'vmaf_comparison.png', colors)
+        self.plot_metric(df, 'Rebuffering Ratio (%)', 'Rebuffering Ratio (%)', 'rebuffer_comparison.png', colors)
 
-    def plot_metric(self, df, metric, title, filename):
-        plt.figure(figsize=(8, 5))
-        sns.barplot(x='Method', y=metric, data=df, palette='viridis')
-        plt.title(title)
+    def plot_metric(self, df, metric, title, filename, colors):
+        plt.figure(figsize=(8, 6))
+        sns.barplot(x='Method', y=metric, data=df, palette=colors)
+        plt.title(title, fontweight='bold')
         plt.ylabel(metric)
+        plt.xticks(rotation=15)
         plt.grid(axis='y', alpha=0.3)
+        plt.tight_layout()
         plt.savefig(PATHS['results'] / filename, dpi=300)
 
 if __name__ == '__main__':
