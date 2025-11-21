@@ -7,8 +7,8 @@ from pathlib import Path
 # ================= CONFIGURATION =================
 # مسیرهایی که فایل‌های خام شما در آنجا هستند
 # (مسیرها را بر اساس ساختار فایل‌های آپلود شده شما تنظیم کردم)
-SOURCE_FCC_DIR = Path("data/fcc_traces")  # جایی که فایل‌های mixed هستند
-SOURCE_NORWAY_DIR = Path("data/network_traces/cooked_test_traces")
+SOURCE_FCC_DIR = Path("/home/saeedzarbi95/test/ABR-Awareness/data/fcc_traces")  # جایی که فایل‌های mixed هستند
+SOURCE_NORWAY_DIR = Path("/home/saeedzarbi95/test/ABR-Awareness/data/network_traces/cooked_test_traces")
 
 # مسیرهای خروجی استاندارد شده
 DEST_TRAIN = Path("data/standardized/train_traces")
