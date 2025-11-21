@@ -4,7 +4,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from stable_baselines3 import PPO
 from src.environment.abr_env import ABREnv
-from src.baselines.bba import BBA
+# from src.baselines.bba import BBA  # BBA removed
 from configs.paths import get_paths
 import numpy as np
 import pandas as pd
@@ -32,9 +32,9 @@ class TCSVT_Evaluator:
         except:
             print("⚠ Proposed model not found.")
 
-        # 2. Baseline: BBA
-        methods['BBA (Robust)'] = BBA(ABREnv.BITRATE_LEVELS)
-        print("✓ BBA baseline loaded.")
+        # 2. Baseline: BBA (REMOVED as per request)
+        # methods['BBA (Robust)'] = BBA(ABREnv.BITRATE_LEVELS)
+        # print("✓ BBA baseline loaded.")
         
         # 3. Baseline: Pensieve (Retrained)
         try:
@@ -48,7 +48,6 @@ class TCSVT_Evaluator:
             
         return methods
 
-    # UPDATE: Default video name changed to 'bigbuckbunny'
     def evaluate(self, methods, video_name='bigbuckbunny', episodes=50):
         print(f"\n🔬 Evaluating on Unseen Test Set - Video: {video_name}")
         
@@ -83,6 +82,7 @@ class TCSVT_Evaluator:
                 
                 while not done:
                     if 'BBA' in name:
+                        # This block is now unreachable but kept for safety
                         action = model.select_bitrate(info['buffer_level'])
                     elif 'Random' in name:
                         action = env.action_space.sample()
