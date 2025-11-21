@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 
 # مسیر فایل نتایج صحیح
-RESULTS_FILE = Path("new/results/tcsvt_generalization_results.csv")
-OUTPUT_DIR = Path("new/results/paper_plots")
+RESULTS_FILE = Path("/home/saeedzarbi95/test/ABR-Awareness/new/results/tcsvt_generalization_results.csv")
+OUTPUT_DIR = Path("/home/saeedzarbi95/test/ABR-Awareness/new/results/paper_plots")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def main():
