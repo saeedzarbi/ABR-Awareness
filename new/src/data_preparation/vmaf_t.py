@@ -15,10 +15,10 @@ VIDEO_NAME = "sample1"
 BITRATES = [300, 750, 1200, 1850, 2850, 6000]
 
 # Paths (Relative to this script)
-BASE_DIR = Path(__file__).parent
-RAW_DIR = "data/raw_videos"
-ENCODED_DIR = f"data/encoded_videos/{VIDEO_NAME}"
-OUTPUT_DIR = "data/vmaf_scores"
+BASE_DIR = Path(__file__)
+RAW_DIR = BASE_DIR / "data/raw_videos"
+ENCODED_DIR = BASE_DIR / f"data/encoded_videos/{VIDEO_NAME}"
+OUTPUT_DIR = BASE_DIR / "data/vmaf_scores"
 
 def check_ffmpeg():
     """Check if ffmpeg is installed."""
