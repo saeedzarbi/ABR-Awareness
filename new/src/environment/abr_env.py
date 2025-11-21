@@ -12,21 +12,22 @@ class ABREnv(gym.Env):
     BITRATE_LEVELS = np.array([300, 750, 1200, 1850, 2850, 6000])
     CHUNK_DURATION = 4.0
     
-    # --- Tuned Parameters for Stability & Exploration ---
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # 1. کاهش حساسیت نمایی (قبلاً 0.5 بود که خیلی تند بود)
+    # Lyapunov Gain
     LYAPUNOV_GAIN = 0.1  
     
-    # 2. کاهش جریمه پایه (قبلاً 85 بود)
-    # نسبت منطقی: 1 ثانیه قطعی = از دست دادن نیمی از کیفیت ماکسیمم
-    REBUF_PENALTY_BASE = 40.0 
+    # --- FINAL TUNING FOR TCSVT ---
+    # 85 was too strict (VMAF -> 35)
+    # 45 was too loose (Rebuffer -> 8.5%)
+    # 65 is the Sweet Spot
+    REBUF_PENALTY_BASE = 65.0 
     
-    # 3. بازگرداندن جریمه نرمی (خیلی کم) برای جلوگیری از نوسان بی‌دلیل
+    # Keep smooth penalty low to allow switching
     SMOOTH_PENALTY_WEIGHT = 0.1 
     
-    def __init__(self, video_name='sample1', trace_dir='data/network_traces/processed', 
+    def __init__(self, video_name='bigbuckbunny', trace_dir='data/network_traces/processed', 
                  vmaf_dir='data/vmaf_scores', siti_dir='data/content_features', 
                  max_chunks=48, random_seed=None):
         super().__init__()
@@ -120,18 +121,13 @@ class ABREnv(gym.Env):
         self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
         self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
         
-        # --- CORRECTED REWARD LOGIC ---
+        # --- REWARD ---
         current_vmaf = self.vmaf_scores.get(bitrate_kbps, 35.0)
         smooth_pen = abs(current_vmaf - self.last_vmaf)
         
-        # Calculated Risk: Slower growth
-        # buffer_dev=5 -> exp(0.1 * 5) = 1.6 (Manageable penalty increase)
-        # buffer_dev=10 -> exp(0.1 * 10) = 2.7 (Strong penalty)
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
-        
-        # Cap risk factor to avoid NaN or Infinity exploding gradients
-        risk_factor = min(risk_factor, 10.0) 
+        risk_factor = min(risk_factor, 6.0) # Increased cap slightly
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         
