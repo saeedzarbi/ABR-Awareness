@@ -5,6 +5,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from stable_baselines3 import PPO
 from src.environment.abr_env import ABREnv
 from src.baselines.mpc_vmaf import RobustMPC 
+from src.baselines.genie import Genie # <--- NEW
 from configs.paths import get_paths
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ class TCSVT_Evaluator:
     def load_methods(self):
         methods = {}
         
-        # 1. Proposed (Lyapunov)
+        # 1. Proposed
         try:
             path = PATHS['models'] / 'ppo_abr_v4_lyapunov' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
@@ -42,6 +43,10 @@ class TCSVT_Evaluator:
         # 3. Baseline: RobustMPC
         methods['RobustMPC'] = 'mpc_placeholder' 
         print("✓ RobustMPC baseline ready.")
+
+        # 4. Upper Bound: Genie
+        methods['Genie (Optimal)'] = 'genie_placeholder'
+        print("✓ Genie (Optimal) ready.")
             
         return methods
 
@@ -55,7 +60,6 @@ class TCSVT_Evaluator:
         for name, model in methods.items():
             print(f"   Running {name}...", end='', flush=True)
             
-            # Fresh env for each method
             env = ABREnv(
                 video_name=video_name,
                 trace_dir=str(self.test_trace_dir),
@@ -65,10 +69,12 @@ class TCSVT_Evaluator:
                 random_seed=12345
             )
             
-            # Initialize MPC if needed
+            # Initialize specific models
             active_model = model
             if name == 'RobustMPC':
                 active_model = RobustMPC(env)
+            elif name == 'Genie (Optimal)':
+                active_model = Genie(env)
             
             ep_rewards, ep_vmafs, ep_rebufs, ep_switches = [], [], [], []
             
@@ -79,33 +85,37 @@ class TCSVT_Evaluator:
                 switches = 0
                 last_throughput = 2000.0
                 
+                # For Genie to access trace
+                current_trace_tp = env.current_trace['throughput_kbps']
+                
                 while not done:
                     if name == 'RobustMPC':
-                        # FIX: Handle variable name mismatch (last_vmaf vs last_quality_metric)
-                        # This prevents AttributeError
-                        current_vmaf_state = getattr(env, 'last_vmaf', getattr(env, 'last_quality_metric', 35.0))
-                        
+                        current_vmaf_state = getattr(env, 'last_vmaf', 35.0)
                         action = active_model.select_bitrate(
                             info['buffer_level'], 
                             last_throughput,
                             current_vmaf_state
                         )
+                    elif name == 'Genie (Optimal)':
+                        # Genie cheats! It reads the trace directly
+                        action = active_model.select_bitrate(
+                            env.chunk_idx,
+                            env.buffer_level,
+                            current_trace_tp
+                        )
                     elif 'Random' in name:
                         action = env.action_space.sample()
                     else:
                         # RL Agents
-                        if 'Pensieve' in name:
-                            obs[10:] = 0.0 # Mask content features
+                        if 'Pensieve' in name: obs[10:] = 0.0
                         action, _ = active_model.predict(obs, deterministic=True)
                     
                     if action != last_br: switches += 1
                     last_br = action
                     
                     obs, reward, done, _, info = env.step(action)
-                    
                     last_throughput = info.get('throughput', last_throughput)
                 
-                # Calculate metrics
                 qoe = info['total_quality'] \
                       - (env.REBUF_PENALTY_BASE * info['total_rebuffer']) \
                       - (env.SMOOTH_PENALTY_WEIGHT * info['total_smoothness'])
@@ -132,9 +142,7 @@ class TCSVT_Evaluator:
         
         df.to_csv(PATHS['results'] / 'tcsvt_generalization_results.csv', index=False)
         
-        # Colors for plots
         colors = sns.color_palette("viridis", n_colors=len(df['Method'].unique()))
-        
         self.plot_metric(df, 'Standard QoE', 'QoE Score', 'qoe_comparison.png', colors)
         self.plot_metric(df, 'Avg VMAF', 'Average VMAF (0-100)', 'vmaf_comparison.png', colors)
         self.plot_metric(df, 'Rebuffering Ratio (%)', 'Rebuffering Ratio (%)', 'rebuffer_comparison.png', colors)
@@ -155,3 +163,5 @@ if __name__ == '__main__':
     if methods:
         evaluator.evaluate(methods, episodes=50)
         evaluator.save_and_plot()
+
+
