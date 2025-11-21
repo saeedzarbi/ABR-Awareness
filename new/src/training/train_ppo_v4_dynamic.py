@@ -1,157 +1,241 @@
-import sys
+"""
+ABR Gym Environment - Optimized for Training Stability.
+FIX: Scaled VMAF to 0-100 range to balance against rebuffer penalty.
+"""
+
+import gymnasium as gym
+from gymnasium import spaces
+import numpy as np
+import json
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent))
+from typing import Dict, Tuple, Optional
+import random
 
-from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, CallbackList
-from stable_baselines3.common.monitor import Monitor
-import torch
-import time
-import os
 
-from src.environment.abr_env import ABREnv
-from configs.paths import get_paths
-
-PATHS = get_paths()
-
-class TrainingConfigV4:
-    """
-    V4 Config: Lyapunov-based Control for ABR.
-    Optimized for stability and VMAF maximization.
-    """
+class ABREnv(gym.Env):
+    metadata = {'render_modes': ['human']}
     
-    # UPDATE: Changed video name to match new VMAF data
-    VIDEO_NAME = 'bigbuckbunny'
+    # Bitrate levels (Kbps)
+    BITRATE_LEVELS = np.array([300, 750, 1200, 1850, 2850, 6000])
+    CHUNK_DURATION = 4.0
     
-    MAX_CHUNKS = 48
-    NUM_ENVS = 8
+    # Lyapunov Control Params
+    BUFFER_TARGET = 15.0
+    BUFFER_MAX = 30.0
+    LYAPUNOV_GAIN = 0.5
     
-    # PPO hyperparameters - Tuned for stability
-    LEARNING_RATE = 2e-4
-    N_STEPS = 2048
-    BATCH_SIZE = 64
-    N_EPOCHS = 10
-    GAMMA = 0.98
-    GAE_LAMBDA = 0.95
-    CLIP_RANGE = 0.2
-    ENT_COEF = 0.05
-    VF_COEF = 0.5
-    MAX_GRAD_NORM = 0.5
+    # --- REWARD TUNING (CRITICAL FIX) ---
+    # We use VMAF on 0-100 scale now.
+    # Rebuffer Penalty: 
+    #   If we lose 1 sec of video playback, how much VMAF is that worth?
+    #   In standard literature (Pensieve), 1 sec stall ~= Max Bitrate Reward.
+    #   Here Max VMAF is ~97. So Rebuffer penalty should be around 80-100.
+    REBUF_PENALTY_BASE = 85.0  
     
-    TOTAL_TIMESTEPS = 600_000
-    EVAL_FREQ = 10_000
-    SAVE_FREQ = 20_000
+    # Smoothness:
+    #   Penalty for switching from VMAF 90 to 60.
+    SMOOTH_PENALTY_WEIGHT = 1.0 
     
-    DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-def make_env(rank: int, seed: int = 0, is_eval: bool = False):
-    """
-    Create environment instance.
-    """
-    def _init():
-        # Use Training traces for training, Test traces for evaluation callback
-        if is_eval:
-            trace_path = PATHS['test_traces']
+    def __init__(
+        self,
+        video_name: str = 'bigbuckbunny',
+        trace_dir: str = 'data/network_traces/processed',
+        vmaf_dir: str = 'data/vmaf_scores',
+        siti_dir: str = 'data/content_features',
+        max_chunks: int = 48,
+        random_seed: Optional[int] = None
+    ):
+        super().__init__()
+        
+        self.video_name = video_name
+        self.trace_dir = Path(trace_dir)
+        self.vmaf_dir = Path(vmaf_dir)
+        self.siti_dir = Path(siti_dir)
+        self.max_chunks = max_chunks
+        
+        if random_seed is not None:
+            random.seed(random_seed)
+            np.random.seed(random_seed)
+        
+        self._load_traces()
+        self._load_vmaf_scores()
+        self._load_siti_features()
+        
+        self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
+        
+        # State space (normalized 0-1 is better for Neural Nets)
+        obs_dim = 18
+        self.observation_space = spaces.Box(
+            low=0.0,
+            high=1.0,
+            shape=(obs_dim,),
+            dtype=np.float32
+        )
+        
+        self.current_trace = None
+        self.current_trace_idx = 0
+        self.chunk_idx = 0
+        self.buffer_level = 0.0
+        self.last_bitrate_idx = 0
+        self.last_vmaf = 0.0
+        self.throughput_history = []
+        
+        self.total_rebuffer = 0.0
+        self.total_quality = 0.0
+        self.total_smooth = 0.0
+    
+    def _load_traces(self):
+        trace_files = list(self.trace_dir.glob("*.json"))
+        if not trace_files:
+            # Fallback
+            self.traces = [{'throughput_kbps': [2000]*1000}]
         else:
-            trace_path = PATHS['train_traces']
+            self.traces = []
+            for trace_file in trace_files:
+                with open(trace_file, 'r') as f:
+                    self.traces.append(json.load(f))
+    
+    def _load_vmaf_scores(self):
+        vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
+        loaded = False
+        if vmaf_file.exists():
+            try:
+                import pandas as pd
+                df = pd.read_csv(vmaf_file)
+                if 'video' in df.columns:
+                    df = df[df['video'] == self.video_name]
+                
+                if not df.empty and set(df['bitrate_kbps'].values) == set(self.BITRATE_LEVELS):
+                    self.vmaf_scores = dict(zip(df['bitrate_kbps'], df['vmaf']))
+                    loaded = True
+            except: pass
+
+        if not loaded:
+            self._use_default_vmaf()
             
-        env = ABREnv(
-            video_name=TrainingConfigV4.VIDEO_NAME,
-            trace_dir=str(trace_path), 
-            vmaf_dir=str(PATHS['vmaf_scores']),
-            siti_dir=str(PATHS['content_features']),
-            max_chunks=TrainingConfigV4.MAX_CHUNKS,
-            random_seed=seed + rank
-        )
-        return Monitor(env)
-    return _init
+        # VMAF dict (0-100)
+        self.vmaf_dict = self.vmaf_scores
+        # Normalized for Observation only (0-1)
+        self.vmaf_norm = {k: v/100.0 for k, v in self.vmaf_scores.items()}
+    
+    def _use_default_vmaf(self):
+        self.vmaf_scores = {
+            300: 35.0, 750: 58.0, 1200: 74.0, 
+            1850: 84.0, 2850: 91.0, 6000: 97.0
+        }
+    
+    def _load_siti_features(self):
+        siti_file = self.siti_dir / f"{self.video_name}_siti.json"
+        if siti_file.exists():
+            with open(siti_file, 'r') as f:
+                data = json.load(f)
+                self.si = data.get('mean_si', 50.0)
+                self.ti = data.get('mean_ti', 10.0)
+        else:
+            self.si, self.ti = 50.0, 10.0
+        self.si_norm = np.clip(self.si / 100.0, 0, 1)
+        self.ti_norm = np.clip(self.ti / 50.0, 0, 1)
 
-def main():
-    print("\n" + "="*70)
-    print(f"🚀 Training PPO V4: Lyapunov-Based Control")
-    print(f"📹 Target Video: {TrainingConfigV4.VIDEO_NAME}")
-    print("="*70 + "\n")
-    
-    # Setup directories
-    save_dir = PATHS['models'] / 'ppo_abr_v4_lyapunov'
-    save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_v4_lyapunov'
-    log_dir.mkdir(parents=True, exist_ok=True)
-    
-    device = TrainingConfigV4.DEVICE
-    num_envs = TrainingConfigV4.NUM_ENVS
-    
-    # Check data availability
-    print(f"📂 Training Data: {len(list(PATHS['train_traces'].glob('*.json')))} traces")
-    
-    # Create environments
-    train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(num_envs)])
-    
-    # Use only 1 env for evaluation to save resources, ensure test traces exist
-    if len(list(PATHS['test_traces'].glob('*.json'))) > 0:
-        eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=True)])
-    else:
-        print("⚠ No test traces found for EvalCallback, using training traces instead.")
-        eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=False)])
-    
-    # Create PPO model
-    model = PPO(
-        'MlpPolicy',
-        train_env,
-        learning_rate=TrainingConfigV4.LEARNING_RATE,
-        n_steps=TrainingConfigV4.N_STEPS,
-        batch_size=TrainingConfigV4.BATCH_SIZE,
-        n_epochs=TrainingConfigV4.N_EPOCHS,
-        gamma=TrainingConfigV4.GAMMA,
-        gae_lambda=TrainingConfigV4.GAE_LAMBDA,
-        clip_range=TrainingConfigV4.CLIP_RANGE,
-        ent_coef=TrainingConfigV4.ENT_COEF,
-        verbose=1,
-        device=device,
-        tensorboard_log=str(log_dir)
-    )
-    
-    # Callbacks
-    checkpoint_cb = CheckpointCallback(
-        save_freq=TrainingConfigV4.SAVE_FREQ // num_envs,
-        save_path=str(save_dir / 'checkpoints'),
-        name_prefix='ppo_lyapunov',
-        save_replay_buffer=False
-    )
-    
-    eval_cb = EvalCallback(
-        eval_env,
-        best_model_save_path=str(save_dir / 'best_model'),
-        log_path=str(log_dir / 'eval'),
-        eval_freq=TrainingConfigV4.EVAL_FREQ // num_envs,
-        n_eval_episodes=10,
-        deterministic=True,
-        verbose=1
-    )
-    
-    callbacks = CallbackList([checkpoint_cb, eval_cb])
-    
-    # Training
-    print("Starting training...")
-    try:
-        model.learn(
-            total_timesteps=TrainingConfigV4.TOTAL_TIMESTEPS,
-            callback=callbacks,
-            progress_bar=True
-        )
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
+        self.current_trace_idx = random.randint(0, len(self.traces) - 1)
+        self.current_trace = self.traces[self.current_trace_idx]
         
-        model.save(save_dir / 'final_model')
-        print("✓ Training completed and model saved.")
+        self.chunk_idx = 0
+        self.buffer_level = 1.0
+        self.last_bitrate_idx = 0
+        self.last_vmaf = self.vmaf_scores[self.BITRATE_LEVELS[0]]
+        self.throughput_history = [1.0] * 8 
         
-    except KeyboardInterrupt:
-        print("\n⚠ Training interrupted manually.")
-        model.save(save_dir / 'interrupted_model')
-        print("✓ Saved interrupted model.")
+        self.total_rebuffer = 0.0
+        self.total_quality = 0.0
+        self.total_smooth = 0.0
+        
+        return self._get_observation(), self._get_info()
     
-    finally:
-        train_env.close()
-        eval_env.close()
+    def _get_observation(self):
+        tp_obs = np.array(self.throughput_history[-8:], dtype=np.float32)
+        buf_obs = np.clip(self.buffer_level / self.BUFFER_MAX, 0, 1)
+        last_br_obs = self.last_bitrate_idx / (len(self.BITRATE_LEVELS) - 1)
+        content_obs = np.array([self.si_norm, self.ti_norm], dtype=np.float32)
+        # Use Normalized VMAF for State input (0-1 is better for NN)
+        vmaf_obs = np.array([self.vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
+        
+        return np.concatenate([tp_obs, [buf_obs], [last_br_obs], content_obs, vmaf_obs]).astype(np.float32)
 
-if __name__ == '__main__':
-    main()
+    def step(self, action):
+        bitrate_kbps = self.BITRATE_LEVELS[action]
+        chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
+        
+        trace_tp = self.current_trace['throughput_kbps']
+        time_idx = int(self.chunk_idx * self.CHUNK_DURATION) % len(trace_tp)
+        avail_tp = trace_tp[time_idx]
+        
+        download_time = chunk_size_bits / (avail_tp * 1000.0 + 1e-6)
+        rebuffer_time = max(0, download_time - self.buffer_level)
+        
+        self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
+        self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
+        
+        # --- NEW REWARD CALCULATION (0-100 Scale) ---
+        # 1. Quality (Raw VMAF 0-100)
+        current_vmaf = self.vmaf_scores.get(bitrate_kbps, 35.0)
+        
+        # 2. Smoothness
+        smooth_pen = abs(current_vmaf - self.last_vmaf)
+        
+        # 3. Rebuffering with Risk
+        buffer_dev = self.BUFFER_TARGET - self.buffer_level
+        if buffer_dev > 0:
+            # Risk grows: 1.0 -> ~5.0
+            risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev * 0.5)
+        else:
+            risk_factor = 1.0
+            
+        # Penalty is roughly 85 * risk * rebuf_seconds
+        weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
+        
+        reward = current_vmaf \
+                 - weighted_rebuf \
+                 - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
+                 - (0.5 * max(0, buffer_dev)) # Linear drift penalty
+        
+        # Update state
+        self.throughput_history.append(np.clip(avail_tp / 6000.0, 0, 1))
+        self.last_bitrate_idx = action
+        self.last_vmaf = current_vmaf
+        self.chunk_idx += 1
+        
+        terminated = self.chunk_idx >= self.max_chunks
+        
+        # Update Logs
+        self.total_quality += current_vmaf
+        self.total_rebuffer += rebuffer_time
+        self.total_smooth += smooth_pen
+        
+        obs = self._get_observation()
+        info = self._get_info()
+        info.update({
+            'bitrate': bitrate_kbps, 
+            'throughput': avail_tp,
+            'buffer': self.buffer_level,
+            'buffer_level': self.buffer_level,
+            'rebuffer': rebuffer_time,
+            'reward': reward
+        })
+        
+        return obs, reward, terminated, False, info
+
+    def _get_info(self) -> Dict:
+        # Return metrics on standard scale
+        return {
+            'chunk_idx': self.chunk_idx,
+            'total_rebuffer': self.total_rebuffer,
+            'total_quality': self.total_quality, # Sum of VMAFs (e.g. 3000 for 48 chunks)
+            'avg_quality': self.total_quality / max(1, self.chunk_idx),
+            'total_smoothness': self.total_smooth,
+            'buffer_level': self.buffer_level
+        }
+
+    def render(self):
+        pass
