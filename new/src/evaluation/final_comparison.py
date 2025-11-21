@@ -4,7 +4,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from stable_baselines3 import PPO
 from src.environment.abr_env import ABREnv
-from src.baselines.mpc_vmaf import RobustMPC  # <--- NEW IMPORT
+from src.baselines.mpc_vmaf import RobustMPC 
 from configs.paths import get_paths
 import numpy as np
 import pandas as pd
@@ -39,8 +39,7 @@ class TCSVT_Evaluator:
             print("✓ Pensieve* model loaded.")
         except: print("⚠ Pensieve missing.")
 
-        # 3. Baseline: RobustMPC (VMAF-Aware)
-        # MPC needs the environment instance to initialize, we'll init it inside the loop
+        # 3. Baseline: RobustMPC
         methods['RobustMPC'] = 'mpc_placeholder' 
         print("✓ RobustMPC baseline ready.")
             
@@ -52,9 +51,6 @@ class TCSVT_Evaluator:
         if not list(self.test_trace_dir.glob("*.json")):
             print("❌ No test traces found!")
             return
-
-        # Create a shared environment for initialization if needed
-        temp_env = ABREnv(video_name=video_name, trace_dir=str(self.test_trace_dir))
 
         for name, model in methods.items():
             print(f"   Running {name}...", end='', flush=True)
@@ -81,15 +77,18 @@ class TCSVT_Evaluator:
                 done = False
                 last_br = 0
                 switches = 0
-                last_throughput = 2000.0 # Initial guess for MPC
+                last_throughput = 2000.0
                 
                 while not done:
                     if name == 'RobustMPC':
-                        # MPC logic
+                        # FIX: Handle variable name mismatch (last_vmaf vs last_quality_metric)
+                        # This prevents AttributeError
+                        current_vmaf_state = getattr(env, 'last_vmaf', getattr(env, 'last_quality_metric', 35.0))
+                        
                         action = active_model.select_bitrate(
                             info['buffer_level'], 
                             last_throughput,
-                            env.last_quality_metric # Passing current VMAF knowledge
+                            current_vmaf_state
                         )
                     elif 'Random' in name:
                         action = env.action_space.sample()
@@ -104,11 +103,9 @@ class TCSVT_Evaluator:
                     
                     obs, reward, done, _, info = env.step(action)
                     
-                    # Update throughput for MPC
                     last_throughput = info.get('throughput', last_throughput)
                 
                 # Calculate metrics
-                # Standard QoE = VMAF - 50*Rebuf - 0.2*Smooth (Using our updated weights)
                 qoe = info['total_quality'] \
                       - (env.REBUF_PENALTY_BASE * info['total_rebuffer']) \
                       - (env.SMOOTH_PENALTY_WEIGHT * info['total_smoothness'])
