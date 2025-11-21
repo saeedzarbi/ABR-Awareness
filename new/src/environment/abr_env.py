@@ -1,7 +1,11 @@
 """
 ABR (Adaptive Bitrate) Gym Environment for Deep Reinforcement Learning.
-Content-aware environment with VMAF, SI/TI features.
-V4: Buffer-aware dynamic reward.
+Scientific implementation based on Lyapunov Optimization for IEEE TCSVT.
+
+Key Improvements:
+1. Replaced heuristic reward weights with Lyapunov-based drift-plus-penalty formulation.
+2. Implemented continuous risk factor based on buffer deviation.
+3. Standardized smoothness penalty using VMAF metric difference.
 """
 
 import gymnasium as gym
@@ -9,7 +13,7 @@ from gymnasium import spaces
 import numpy as np
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Tuple, Optional
 import random
 
 
@@ -17,35 +21,37 @@ class ABREnv(gym.Env):
     """
     Custom Gym Environment for ABR streaming simulation.
     
-    State Space:
+    State Space (18 dims):
         - Throughput history: last 8 chunks (normalized)
-        - Buffer level: current buffer occupancy (seconds)
-        - Last bitrate: previous quality choice
-        - SI/TI: content complexity features
-        - VMAF predictions: quality for each bitrate level
+        - Buffer level: current buffer occupancy (normalized)
+        - Last bitrate: previous quality choice (normalized)
+        - SI/TI: content complexity features (normalized)
+        - VMAF predictions: predicted quality for next chunk at all 6 bitrate levels
     
     Action Space:
         - Discrete(6): Select bitrate level (0-5)
     
-    Reward:
-        QoE = quality - rebuffering_penalty - smoothness_penalty
-        V4: Dynamic reward weights based on buffer level
+    Reward Function (Lyapunov-Based):
+        Maximize: VMAF - (Risk_Factor * Rebuffering) - (Smooth_Penalty * |ΔVMAF|)
+        Where Risk_Factor is dynamically derived from buffer queue deviation.
     """
     
     metadata = {'render_modes': ['human']}
     
-    # Bitrate levels (Kbps)
+    # Bitrate levels (Kbps) - Standard DASH ladder
     BITRATE_LEVELS = np.array([300, 750, 1200, 1850, 2850, 6000])
     
-    # Chunk duration (seconds)
-    CHUNK_DURATION = 4.0
+    # Video configuration
+    CHUNK_DURATION = 4.0  # seconds
     
-    # Buffer parameters
-    BUFFER_TARGET = 15.0  # Target buffer level (seconds)
-    BUFFER_MAX = 30.0     # Maximum buffer size (seconds)
+    # Control Theory Parameters (Lyapunov)
+    BUFFER_TARGET = 15.0      # Q_ref: Reference buffer level (seconds)
+    BUFFER_MAX = 30.0         # B_max: Maximum buffer capacity
+    LYAPUNOV_GAIN = 0.5       # θ: Sensitivity to buffer deviation
     
-    # Reward parameters (V4: dynamic based on buffer)
-    SMOOTH_PENALTY = 0.25
+    # Standard QoE weights (Reference: Pensieve, Comyco)
+    REBUF_PENALTY_BASE = 4.3  # Base penalty weight (μ)
+    SMOOTH_PENALTY_WEIGHT = 1.0 
     
     def __init__(
         self,
@@ -53,7 +59,7 @@ class ABREnv(gym.Env):
         trace_dir: str = 'data/network_traces/processed',
         vmaf_dir: str = 'data/vmaf_scores',
         siti_dir: str = 'data/content_features',
-        max_chunks: int = 48,  # 48 chunks * 4s = 192s video
+        max_chunks: int = 48,
         random_seed: Optional[int] = None
     ):
         super().__init__()
@@ -68,23 +74,16 @@ class ABREnv(gym.Env):
             random.seed(random_seed)
             np.random.seed(random_seed)
         
-        # Load data
+        # Load external data
         self._load_traces()
         self._load_vmaf_scores()
         self._load_siti_features()
         
-        # Define action and observation space
+        # Define spaces
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
         
-        # Observation space dimensions
-        obs_dim = (
-            8 +   # Throughput history (8 past chunks)
-            1 +   # Buffer level
-            1 +   # Last bitrate index
-            2 +   # SI, TI
-            6     # VMAF predictions for 6 bitrate levels
-        )  # Total: 18 dimensions
-        
+        # Observation: [Throughput(8), Buffer(1), LastBitrate(1), SI(1), TI(1), VMAF_Preds(6)]
+        obs_dim = 8 + 1 + 1 + 2 + 6 
         self.observation_space = spaces.Box(
             low=0.0,
             high=1.0,
@@ -92,315 +91,247 @@ class ABREnv(gym.Env):
             dtype=np.float32
         )
         
-        # Episode state
+        # Initialize state variables
         self.current_trace = None
         self.current_trace_idx = 0
         self.chunk_idx = 0
         self.buffer_level = 0.0
         self.last_bitrate_idx = 0
+        self.last_quality_metric = 0.0  # Track last VMAF for smoothness
         self.throughput_history = []
+        
+        # Logging metrics
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
         self.total_smooth = 0.0
     
     def _load_traces(self):
-        """Load all network traces."""
+        """Load network traces from JSON files."""
         trace_files = list(self.trace_dir.glob("*.json"))
-        
         if not trace_files:
-            raise ValueError(f"No traces found in {self.trace_dir}")
-        
-        self.traces = []
-        for trace_file in trace_files:
-            with open(trace_file, 'r') as f:
-                trace = json.load(f)
-                self.traces.append(trace)
-        
-        print(f"✓ Loaded {len(self.traces)} network traces")
+            # Fallback for testing without data
+            print(f"⚠ No traces found in {self.trace_dir}. Using dummy trace.")
+            self.traces = [{'throughput_kbps': [2000]*1000}]
+        else:
+            self.traces = []
+            for trace_file in trace_files:
+                with open(trace_file, 'r') as f:
+                    self.traces.append(json.load(f))
+            print(f"✓ Loaded {len(self.traces)} network traces")
     
     def _load_vmaf_scores(self):
-        """Load VMAF scores for the video."""
+        """Load pre-computed VMAF scores."""
         vmaf_file = self.vmaf_dir / self.video_name / "vmaf_summary.csv"
-        
-        # Try alternative path
         if not vmaf_file.exists():
             vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
-        
-        if not vmaf_file.exists():
-            # Use default VMAF scores if file not found
-            print(f"⚠ VMAF file not found, using defaults")
+            
+        if vmaf_file.exists():
+            import pandas as pd
+            df = pd.read_csv(vmaf_file)
+            # Filter for current video if file contains multiple
+            if 'video' in df.columns:
+                df = df[df['video'] == self.video_name]
+            self.vmaf_scores = dict(zip(df['bitrate_kbps'], df['vmaf']))
+        else:
+            print(f"⚠ VMAF file not found. Using default estimates.")
             self.vmaf_scores = {
                 300: 40.0, 750: 65.0, 1200: 78.0,
                 1850: 85.0, 2850: 90.0, 6000: 95.0
             }
-        else:
-            import pandas as pd
-            df = pd.read_csv(vmaf_file)
-            df = df[df['video'] == self.video_name]
-            self.vmaf_scores = dict(zip(df['bitrate_kbps'], df['vmaf']))
-        
-        # Normalize VMAF scores to [0, 1]
-        self.vmaf_normalized = {
-            br: vmaf / 100.0 for br, vmaf in self.vmaf_scores.items()
-        }
-        
-        print(f"✓ Loaded VMAF scores for {self.video_name}")
+            
+        # Normalize VMAF to [0, 1] range for NN input
+        self.vmaf_normalized = {k: v/100.0 for k, v in self.vmaf_scores.items()}
     
     def _load_siti_features(self):
-        """Load SI/TI features for the video."""
+        """Load SI/TI complexity features."""
         siti_file = self.siti_dir / f"{self.video_name}_siti.json"
-        
-        if not siti_file.exists():
-            # Use default values
-            print(f"⚠ SI/TI file not found, using defaults")
-            self.si = 50.0
-            self.ti = 10.0
-        else:
+        if siti_file.exists():
             with open(siti_file, 'r') as f:
-                siti_data = json.load(f)
-                self.si = siti_data['mean_si']
-                self.ti = siti_data['mean_ti']
-        
-        # Normalize SI/TI (typical ranges: SI 0-100, TI 0-50)
-        self.si_normalized = np.clip(self.si / 100.0, 0, 1)
-        self.ti_normalized = np.clip(self.ti / 50.0, 0, 1)
-        
-        print(f"✓ Loaded SI/TI features: SI={self.si:.1f}, TI={self.ti:.1f}")
-    
+                data = json.load(f)
+                self.si = data.get('mean_si', 50.0)
+                self.ti = data.get('mean_ti', 10.0)
+        else:
+            self.si, self.ti = 50.0, 10.0
+            
+        self.si_norm = np.clip(self.si / 100.0, 0, 1)
+        self.ti_norm = np.clip(self.ti / 50.0, 0, 1)
+
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
-        """Reset environment to initial state."""
+        """Reset environment for new episode."""
         super().reset(seed=seed)
         
-        # Select random trace
+        # Randomly select a trace
         self.current_trace_idx = random.randint(0, len(self.traces) - 1)
         self.current_trace = self.traces[self.current_trace_idx]
         
-        # Reset episode state
+        # Reset state
         self.chunk_idx = 0
-        self.buffer_level = 0.0
+        self.buffer_level = 1.0  # Start with small buffer
         self.last_bitrate_idx = 0
-        self.throughput_history = [1.0] * 8  # Initialize with neutral value
+        self.last_quality_metric = self.vmaf_scores[self.BITRATE_LEVELS[0]] / 100.0
+        
+        # Reset history with neutral values
+        self.throughput_history = [1.0] * 8 
+        
+        # Reset metrics
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
         self.total_smooth = 0.0
         
-        obs = self._get_observation()
-        info = self._get_info()
-        
-        return obs, info
+        return self._get_observation(), self._get_info()
     
     def _get_observation(self) -> np.ndarray:
-        """Construct observation vector."""
-        # Throughput history (last 8 chunks)
-        throughput_obs = np.array(self.throughput_history[-8:], dtype=np.float32)
+        """Construct the state vector."""
+        # 1. Throughput History (Normalized)
+        # Assuming 6000 Kbps is max scale
+        tp_obs = np.array(self.throughput_history[-8:], dtype=np.float32)
         
-        # Buffer level (normalized)
-        buffer_obs = np.clip(self.buffer_level / self.BUFFER_MAX, 0, 1)
+        # 2. Buffer Level (Normalized)
+        buf_obs = np.clip(self.buffer_level / self.BUFFER_MAX, 0, 1)
         
-        # Last bitrate (normalized index)
-        last_bitrate_obs = self.last_bitrate_idx / (len(self.BITRATE_LEVELS) - 1)
+        # 3. Last Bitrate (Normalized Index)
+        last_br_obs = self.last_bitrate_idx / (len(self.BITRATE_LEVELS) - 1)
         
-        # SI/TI features
-        si_obs = self.si_normalized
-        ti_obs = self.ti_normalized
+        # 4. Content Features (SI/TI)
+        content_obs = np.array([self.si_norm, self.ti_norm], dtype=np.float32)
         
-        # VMAF predictions for all bitrate levels
-        vmaf_obs = np.array([
-            self.vmaf_normalized.get(br, 0.5)
-            for br in self.BITRATE_LEVELS
-        ], dtype=np.float32)
+        # 5. VMAF Predictions (Normalized) for next chunk
+        vmaf_obs = np.array([self.vmaf_normalized[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
-        # Concatenate all features
-        obs = np.concatenate([
-            throughput_obs,
-            [buffer_obs],
-            [last_bitrate_obs],
-            [si_obs, ti_obs],
+        return np.concatenate([
+            tp_obs, 
+            [buf_obs], 
+            [last_br_obs], 
+            content_obs, 
             vmaf_obs
         ]).astype(np.float32)
-        
-        return obs
-    
+
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
-        """Execute one step in the environment."""
-        # Get selected bitrate
-        bitrate_kbps = self.BITRATE_LEVELS[action]
+        """Apply action (bitrate selection) and simulate network environment."""
         
-        # Calculate chunk size (bits)
+        # 1. Get chosen bitrate
+        bitrate_kbps = self.BITRATE_LEVELS[action]
         chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
         
-        # Get current throughput (Kbps)
-        time_idx = int(self.chunk_idx * self.CHUNK_DURATION)
-        if time_idx < len(self.current_trace['throughput_kbps']):
-            throughput_kbps = self.current_trace['throughput_kbps'][time_idx]
-        else:
-            # Loop trace if we exceed its length
-            time_idx = time_idx % len(self.current_trace['throughput_kbps'])
-            throughput_kbps = self.current_trace['throughput_kbps'][time_idx]
+        # 2. Simulate Network Throughput
+        # Get throughput at current time
+        trace_throughput = self.current_trace['throughput_kbps']
+        trace_len = len(trace_throughput)
+        current_time_idx = int(self.chunk_idx * self.CHUNK_DURATION) % trace_len
         
-        # Calculate download time
-        download_time = chunk_size_bits / (throughput_kbps * 1000)
+        # Simple simulation: assume constant throughput for chunk duration
+        # (For higher accuracy, one would integrate over the duration)
+        available_throughput = trace_throughput[current_time_idx]
         
-        # Calculate rebuffering
+        # 3. Calculate delays
+        download_time = chunk_size_bits / (available_throughput * 1000.0 + 1e-6)
         rebuffer_time = max(0, download_time - self.buffer_level)
         
-        # Update buffer level
+        # 4. Update Buffer
         self.buffer_level = max(0, self.buffer_level - download_time)
-        self.buffer_level = min(self.buffer_level + self.CHUNK_DURATION, self.BUFFER_MAX)
+        self.buffer_level += self.CHUNK_DURATION
+        self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
         
-        # ========== DYNAMIC BUFFER-AWARE REWARD (V4) ==========
+        # =================================================================
+        #                   SCIENTIFIC REWARD FORMULATION
+        #             Based on Lyapunov Drift-plus-Penalty Theory
+        # =================================================================
         
-        # Get base quality score
-        base_quality = self.vmaf_scores.get(bitrate_kbps, 50.0) / 100.0
+        # Metric 1: Quality (VMAF Normalized 0-1)
+        current_vmaf = self.vmaf_scores.get(bitrate_kbps, 50.0) / 100.0
         
-        # Dynamic weights based on buffer safety level
-        if self.buffer_level > 15.0:
-            # SAFE ZONE: High buffer = can afford to be aggressive
-            quality_weight = 3.5
-            rebuffer_penalty_weight = 3.0
-        elif self.buffer_level > 10.0:
-            # GOOD ZONE: Balanced approach
-            quality_weight = 3.0
-            rebuffer_penalty_weight = 4.5
-        elif self.buffer_level > 5.0:
-            # MEDIUM ZONE: Slightly cautious
-            quality_weight = 2.5
-            rebuffer_penalty_weight = 5.5
+        # Metric 2: Smoothness (Difference in VMAF)
+        # Scientific standard: |q_t - q_{t-1}|
+        smoothness_penalty = abs(current_vmaf - self.last_quality_metric)
+        
+        # Metric 3: Rebuffering with Dynamic Risk Factor
+        # We define a virtual queue deviation: Q_dev = Q_target - Q_current
+        # Risk grows exponentially as buffer depletes below target.
+        
+        buffer_deviation = self.BUFFER_TARGET - self.buffer_level
+        
+        if buffer_deviation > 0:
+            # Buffer is below target -> Risk zone
+            # Formula: 1 + exp(θ * deviation)
+            # This approximates the gradient of a Lyapunov potential function
+            risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_deviation * 0.5)
         else:
-            # DANGER ZONE: Very conservative
-            quality_weight = 2.0
-            rebuffer_penalty_weight = 7.0
+            # Buffer is healthy -> Standard penalty
+            risk_factor = 1.0
+            
+        # Weighted Rebuffering Penalty
+        # When buffer is low, risk_factor becomes large (e.g., >5.0), effectively
+        # forcing the agent to prioritize buffer safety over quality.
+        weighted_rebuffer = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         
-        # Weighted quality
-        quality_weighted = base_quality * quality_weight
+        # Total Reward Calculation
+        reward = current_vmaf \
+                 - weighted_rebuffer \
+                 - (self.SMOOTH_PENALTY_WEIGHT * smoothness_penalty) \
+                 - (0.05 * max(0, buffer_deviation)) # Small linear drift term
         
-        # Rebuffering penalty
-        rebuffer_penalty = rebuffer_penalty_weight * rebuffer_time
+        # =================================================================
         
-        # Smoothness penalty - only for large jumps
-        bitrate_change = abs(action - self.last_bitrate_idx)
-        if bitrate_change > 2:
-            smooth_penalty = self.SMOOTH_PENALTY * bitrate_change / (len(self.BITRATE_LEVELS) - 1)
-        else:
-            smooth_penalty = 0.0
-        
-        # Buffer bonus/penalty
-        if self.buffer_level < 3.0:
-            # Critical low buffer - extra penalty
-            buffer_penalty = 2.0 * (3.0 - self.buffer_level)
-        elif self.buffer_level > 20.0:
-            # Very healthy buffer - small bonus
-            buffer_penalty = -0.2
-        else:
-            buffer_penalty = 0.0
-        
-        # Total reward
-        reward = quality_weighted - rebuffer_penalty - smooth_penalty - buffer_penalty
-        
-        # Update metrics
-        self.total_quality += base_quality
-        self.total_rebuffer += rebuffer_time
-        self.total_smooth += smooth_penalty
-        
-        # Update throughput history (normalized)
-        throughput_normalized = np.clip(throughput_kbps / 6000.0, 0, 1)
-        self.throughput_history.append(throughput_normalized)
-        
-        # Update state
+        # Update State
+        self.throughput_history.append(np.clip(available_throughput / 6000.0, 0, 1))
         self.last_bitrate_idx = action
+        self.last_quality_metric = current_vmaf
         self.chunk_idx += 1
         
-        # Check if episode is done
+        # Check Termination
         terminated = self.chunk_idx >= self.max_chunks
         truncated = False
         
-        # Get next observation
+        # Update Logs
+        self.total_quality += current_vmaf
+        self.total_rebuffer += rebuffer_time
+        self.total_smooth += smoothness_penalty
+        
         obs = self._get_observation()
         info = self._get_info()
         info.update({
             'bitrate': bitrate_kbps,
-            'throughput': throughput_kbps,
+            'throughput': available_throughput,
             'buffer': self.buffer_level,
             'rebuffer': rebuffer_time,
-            'quality': base_quality,
+            'risk_factor': risk_factor,
             'reward': reward
         })
         
         return obs, reward, terminated, truncated, info
-    
+
     def _get_info(self) -> Dict:
-        """Get episode information."""
         return {
             'chunk_idx': self.chunk_idx,
-            'trace_idx': self.current_trace_idx,
             'total_rebuffer': self.total_rebuffer,
-            'total_quality': self.total_quality,
             'avg_quality': self.total_quality / max(1, self.chunk_idx),
-            'buffer_level': self.buffer_level
+            'total_smoothness': self.total_smooth
         }
-    
+
     def render(self):
-        """Render environment (optional)."""
-        if self.chunk_idx > 0:
-            print(f"Chunk {self.chunk_idx}/{self.max_chunks} | "
-                  f"Buffer: {self.buffer_level:.1f}s | "
-                  f"Rebuffer: {self.total_rebuffer:.2f}s | "
-                  f"Avg Quality: {self.total_quality/self.chunk_idx:.2f}")
+        pass
 
 
-def test_environment():
-    """Test the ABR environment."""
-    print("\n🎮 Testing ABR Environment\n")
+# --- Testing Block ---
+if __name__ == '__main__':
+    print("🔬 Testing Scientific ABR Environment...")
+    env = ABREnv(max_chunks=20)
+    obs, _ = env.reset()
     
-    # Create environment
-    env = ABREnv(
-        video_name='sample1',
-        trace_dir='data/network_traces/processed',
-        vmaf_dir='data/vmaf_scores',
-        siti_dir='data/content_features',
-        max_chunks=10,
-        random_seed=42
-    )
+    print(f"Observation Shape: {obs.shape}")
+    print(f"Action Space: {env.action_space}")
     
-    print(f"\n✓ Environment created")
-    print(f"  Action space: {env.action_space}")
-    print(f"  Observation space: {env.observation_space.shape}")
-    
-    # Test episode
-    print(f"\n{'='*60}")
-    print("Running test episode with random actions")
-    print(f"{'='*60}\n")
-    
-    obs, info = env.reset()
     total_reward = 0
-    
-    for step in range(10):
-        # Random action
+    for i in range(10):
         action = env.action_space.sample()
-        
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, reward, done, _, info = env.step(action)
         total_reward += reward
         
-        print(f"Step {step+1}: "
-              f"Action={action} ({env.BITRATE_LEVELS[action]} Kbps), "
-              f"Reward={reward:.2f}, "
-              f"Buffer={info['buffer']:.1f}s, "
-              f"Rebuffer={info['rebuffer']:.2f}s")
+        print(f"Step {i}: Buf={info['buffer']:.1f}s | "
+              f"Risk={info['risk_factor']:.1f} | "
+              f"Rebuf={info['rebuffer']:.2f}s | "
+              f"Rew={reward:.2f}")
         
-        if terminated or truncated:
-            break
+        if done: break
     
-    print(f"\n{'='*60}")
-    print(f"Episode finished!")
-    print(f"  Total reward: {total_reward:.2f}")
-    print(f"  Total rebuffering: {info['total_rebuffer']:.2f}s")
-    print(f"  Average quality: {info['avg_quality']:.2f}")
-    print(f"{'='*60}\n")
-    
-    print("✓ Environment test completed successfully!")
-    print("\nNext step: Train PPO V4 agent")
-    print("  python src/training/train_ppo_v4_dynamic.py")
-
-
-if __name__ == '__main__':
-    test_environment()
+    print("✓ Test Complete.")
