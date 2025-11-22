@@ -1,13 +1,3 @@
-"""
-Final Evaluation Script for IEEE TCSVT Submission.
-Compares 5 Methods:
-1. Proposed (Lyapunov-Based Content-Aware RL)
-2. Pensieve* (Retrained Content-Blind RL)
-3. RobustMPC (VMAF-Aware Control Theory)
-4. BBA (Buffer-Based Heuristic - Industry Standard)
-5. Genie (Offline Optimal - Theoretical Upper Bound)
-"""
-
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -16,7 +6,7 @@ from stable_baselines3 import PPO
 from src.environment.abr_env import ABREnv
 from src.baselines.mpc_vmaf import RobustMPC 
 from src.baselines.genie import Genie
-from src.baselines.bba import BBA  # <--- BBA Re-enabled
+from src.baselines.bba import BBA
 from configs.paths import get_paths
 import numpy as np
 import pandas as pd
@@ -28,18 +18,17 @@ PATHS = get_paths()
 class TCSVT_Evaluator:
     def __init__(self):
         self.test_trace_dir = PATHS['test_traces']
-        self.results = []
+        self.results_detailed = [] # Store every episode
         
     def load_methods(self):
         methods = {}
         
-        # 1. Proposed (Lyapunov)
+        # 1. Proposed
         try:
             path = PATHS['models'] / 'ppo_abr_v4_lyapunov' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
                 path = PATHS['models'] / 'ppo_abr_v4_lyapunov' / 'final_model'
-            methods['Proposed (Lyapunov)'] = PPO.load(str(path))
-            print("✓ Proposed model loaded.")
+            methods['Proposed'] = PPO.load(str(path))
         except: print("⚠ Proposed missing.")
         
         # 2. Baseline: Pensieve*
@@ -47,35 +36,30 @@ class TCSVT_Evaluator:
             path = PATHS['models'] / 'pensieve_retrained_vmaf' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
                  path = PATHS['models'] / 'pensieve_retrained_vmaf' / 'final_model'
-            methods['Pensieve*'] = PPO.load(str(path))
-            print("✓ Pensieve* model loaded.")
+            methods['Pensieve'] = PPO.load(str(path))
         except: print("⚠ Pensieve missing.")
 
-        # 3. Baseline: RobustMPC
+        # 3. RobustMPC
         methods['RobustMPC'] = 'mpc_placeholder' 
-        print("✓ RobustMPC baseline ready.")
-
-        # 4. Upper Bound: Genie
-        methods['Genie (Optimal)'] = 'genie_placeholder'
-        print("✓ Genie (Optimal) ready.")
         
-        # 5. Baseline: BBA (Industry Standard)
+        # 4. Genie
+        methods['Genie'] = 'genie_placeholder'
+        
+        # 5. BBA
         methods['BBA'] = BBA(ABREnv.BITRATE_LEVELS)
-        print("✓ BBA baseline ready.")
             
         return methods
 
     def evaluate(self, methods, video_name='bigbuckbunny', episodes=50):
-        print(f"\n🔬 Evaluating on Unseen Test Set - Video: {video_name}")
+        print(f"\n🔬 Running Statistical Evaluation (N={episodes})...")
         
         if not list(self.test_trace_dir.glob("*.json")):
-            print("❌ No test traces found!")
+            print("❌ No traces found.")
             return
 
         for name, model in methods.items():
             print(f"   Running {name}...", end='', flush=True)
             
-            # Fresh env for each method
             env = ABREnv(
                 video_name=video_name,
                 trace_dir=str(self.test_trace_dir),
@@ -85,101 +69,67 @@ class TCSVT_Evaluator:
                 random_seed=12345
             )
             
-            # Initialize specific models if needed
+            # Init specific models
             active_model = model
-            if name == 'RobustMPC':
-                active_model = RobustMPC(env)
-            elif name == 'Genie (Optimal)':
-                active_model = Genie(env)
+            if name == 'RobustMPC': active_model = RobustMPC(env)
+            elif name == 'Genie': active_model = Genie(env)
             
-            ep_rewards, ep_vmafs, ep_rebufs, ep_switches = [], [], [], []
-            
-            for _ in range(episodes):
+            for ep in range(episodes):
                 obs, info = env.reset()
                 done = False
                 last_br = 0
                 switches = 0
-                last_throughput = 2000.0
-                
-                # For Genie
-                current_trace_tp = env.current_trace['throughput_kbps']
+                last_tp = 2000.0
+                trace_tp = env.current_trace['throughput_kbps']
                 
                 while not done:
                     if name == 'RobustMPC':
-                        current_vmaf_state = getattr(env, 'last_vmaf', 35.0)
-                        action = active_model.select_bitrate(
-                            info['buffer_level'], 
-                            last_throughput,
-                            current_vmaf_state
-                        )
-                    elif name == 'Genie (Optimal)':
-                        action = active_model.select_bitrate(
-                            env.chunk_idx,
-                            env.buffer_level,
-                            current_trace_tp
-                        )
+                        cur_vmaf = getattr(env, 'last_vmaf', 35.0)
+                        action = active_model.select_bitrate(info['buffer_level'], last_tp, cur_vmaf)
+                    elif name == 'Genie':
+                        action = active_model.select_bitrate(env.chunk_idx, env.buffer_level, trace_tp)
                     elif name == 'BBA':
-                        # BBA uses buffer level only
                         action = active_model.select_bitrate(info['buffer_level'])
-                    elif 'Random' in name:
-                        action = env.action_space.sample()
                     else:
-                        # RL Agents (Proposed & Pensieve)
-                        if 'Pensieve' in name:
-                            obs[10:] = 0.0 # Mask content features
+                        if name == 'Pensieve': obs[10:] = 0.0
                         action, _ = active_model.predict(obs, deterministic=True)
                     
                     if action != last_br: switches += 1
                     last_br = action
                     
                     obs, reward, done, _, info = env.step(action)
-                    last_throughput = info.get('throughput', last_throughput)
+                    last_tp = info.get('throughput', last_tp)
                 
-                # Metrics
-                qoe = info['total_quality'] \
-                      - (env.REBUF_PENALTY_BASE * info['total_rebuffer']) \
-                      - (env.SMOOTH_PENALTY_WEIGHT * info['total_smoothness'])
+                # Save PER EPISODE metrics
+                qoe = info['total_quality'] - (env.REBUF_PENALTY_BASE * info['total_rebuffer']) - (env.SMOOTH_PENALTY_WEIGHT * info['total_smoothness'])
                 
-                ep_rewards.append(qoe)
-                ep_vmafs.append(info['avg_quality']) 
-                ep_rebufs.append(info['total_rebuffer'])
-                ep_switches.append(switches)
-                
-            self.results.append({
-                'Method': name,
-                'Avg VMAF': np.mean(ep_vmafs),
-                'Rebuffering Ratio (%)': (np.mean(ep_rebufs) / (48*4)) * 100,
-                'Switch Freq': np.mean(ep_switches),
-                'Standard QoE': np.mean(ep_rewards)
-            })
+                self.results_detailed.append({
+                    'Method': name,
+                    'Episode': ep,
+                    'VMAF': info['avg_quality'],
+                    'Rebuffer': (info['total_rebuffer'] / (48*4)) * 100,
+                    'QoE': qoe,
+                    'Switch': switches
+                })
             print(" Done.")
 
-    def save_and_plot(self):
-        if not self.results: return
-        df = pd.DataFrame(self.results)
-        print("\n🏆 Final Results:")
-        print(df.groupby('Method').mean())
+    def save_statistics(self):
+        if not self.results_detailed: return
         
-        df.to_csv(PATHS['results'] / 'tcsvt_generalization_results.csv', index=False)
+        df = pd.DataFrame(self.results_detailed)
+        df.to_csv(PATHS['results'] / 'detailed_stats.csv', index=False)
+        print(f"\n✓ Detailed statistics saved to: detailed_stats.csv")
         
-        colors = sns.color_palette("viridis", n_colors=len(df['Method'].unique()))
-        self.plot_metric(df, 'Standard QoE', 'QoE Score', 'qoe_comparison.png', colors)
-        self.plot_metric(df, 'Avg VMAF', 'Average VMAF (0-100)', 'vmaf_comparison.png', colors)
-        self.plot_metric(df, 'Rebuffering Ratio (%)', 'Rebuffering Ratio (%)', 'rebuffer_comparison.png', colors)
-
-    def plot_metric(self, df, metric, title, filename, colors):
-        plt.figure(figsize=(9, 6)) # Slightly wider for 5 bars
-        sns.barplot(x='Method', y=metric, data=df, palette=colors)
-        plt.title(title, fontweight='bold')
-        plt.ylabel(metric)
-        plt.xticks(rotation=15)
-        plt.grid(axis='y', alpha=0.3)
-        plt.tight_layout()
-        plt.savefig(PATHS['results'] / filename, dpi=300)
+        # Calculate Mean +/- Std
+        summary = df.groupby('Method').agg(['mean', 'std']).round(2)
+        print("\n🏆 Statistical Summary:")
+        print(summary[['QoE', 'VMAF', 'Rebuffer']])
+        
+        return df
 
 if __name__ == '__main__':
     evaluator = TCSVT_Evaluator()
     methods = evaluator.load_methods()
     if methods:
-        evaluator.evaluate(methods, episodes=50)
-        evaluator.save_and_plot()
+        evaluator.evaluate(methods, episodes=50) # Run 50 episodes for stats
+        evaluator.save_statistics()
