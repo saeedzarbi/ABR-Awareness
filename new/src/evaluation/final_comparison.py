@@ -1,3 +1,13 @@
+"""
+Final Evaluation Script for IEEE TCSVT Submission.
+Compares 5 Methods:
+1. Proposed (Lyapunov-Based Content-Aware RL)
+2. Pensieve* (Retrained Content-Blind RL)
+3. RobustMPC (VMAF-Aware Control Theory)
+4. BBA (Buffer-Based Heuristic - Industry Standard)
+5. Genie (Offline Optimal - Theoretical Upper Bound)
+"""
+
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -5,7 +15,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from stable_baselines3 import PPO
 from src.environment.abr_env import ABREnv
 from src.baselines.mpc_vmaf import RobustMPC 
-from src.baselines.genie import Genie # <--- NEW
+from src.baselines.genie import Genie
+from src.baselines.bba import BBA  # <--- BBA Re-enabled
 from configs.paths import get_paths
 import numpy as np
 import pandas as pd
@@ -22,7 +33,7 @@ class TCSVT_Evaluator:
     def load_methods(self):
         methods = {}
         
-        # 1. Proposed
+        # 1. Proposed (Lyapunov)
         try:
             path = PATHS['models'] / 'ppo_abr_v4_lyapunov' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
@@ -47,6 +58,10 @@ class TCSVT_Evaluator:
         # 4. Upper Bound: Genie
         methods['Genie (Optimal)'] = 'genie_placeholder'
         print("✓ Genie (Optimal) ready.")
+        
+        # 5. Baseline: BBA (Industry Standard)
+        methods['BBA'] = BBA(ABREnv.BITRATE_LEVELS)
+        print("✓ BBA baseline ready.")
             
         return methods
 
@@ -60,6 +75,7 @@ class TCSVT_Evaluator:
         for name, model in methods.items():
             print(f"   Running {name}...", end='', flush=True)
             
+            # Fresh env for each method
             env = ABREnv(
                 video_name=video_name,
                 trace_dir=str(self.test_trace_dir),
@@ -69,7 +85,7 @@ class TCSVT_Evaluator:
                 random_seed=12345
             )
             
-            # Initialize specific models
+            # Initialize specific models if needed
             active_model = model
             if name == 'RobustMPC':
                 active_model = RobustMPC(env)
@@ -85,7 +101,7 @@ class TCSVT_Evaluator:
                 switches = 0
                 last_throughput = 2000.0
                 
-                # For Genie to access trace
+                # For Genie
                 current_trace_tp = env.current_trace['throughput_kbps']
                 
                 while not done:
@@ -97,17 +113,20 @@ class TCSVT_Evaluator:
                             current_vmaf_state
                         )
                     elif name == 'Genie (Optimal)':
-                        # Genie cheats! It reads the trace directly
                         action = active_model.select_bitrate(
                             env.chunk_idx,
                             env.buffer_level,
                             current_trace_tp
                         )
+                    elif name == 'BBA':
+                        # BBA uses buffer level only
+                        action = active_model.select_bitrate(info['buffer_level'])
                     elif 'Random' in name:
                         action = env.action_space.sample()
                     else:
-                        # RL Agents
-                        if 'Pensieve' in name: obs[10:] = 0.0
+                        # RL Agents (Proposed & Pensieve)
+                        if 'Pensieve' in name:
+                            obs[10:] = 0.0 # Mask content features
                         action, _ = active_model.predict(obs, deterministic=True)
                     
                     if action != last_br: switches += 1
@@ -116,6 +135,7 @@ class TCSVT_Evaluator:
                     obs, reward, done, _, info = env.step(action)
                     last_throughput = info.get('throughput', last_throughput)
                 
+                # Metrics
                 qoe = info['total_quality'] \
                       - (env.REBUF_PENALTY_BASE * info['total_rebuffer']) \
                       - (env.SMOOTH_PENALTY_WEIGHT * info['total_smoothness'])
@@ -148,7 +168,7 @@ class TCSVT_Evaluator:
         self.plot_metric(df, 'Rebuffering Ratio (%)', 'Rebuffering Ratio (%)', 'rebuffer_comparison.png', colors)
 
     def plot_metric(self, df, metric, title, filename, colors):
-        plt.figure(figsize=(8, 6))
+        plt.figure(figsize=(9, 6)) # Slightly wider for 5 bars
         sns.barplot(x='Method', y=metric, data=df, palette=colors)
         plt.title(title, fontweight='bold')
         plt.ylabel(metric)
@@ -163,5 +183,3 @@ if __name__ == '__main__':
     if methods:
         evaluator.evaluate(methods, episodes=50)
         evaluator.save_and_plot()
-
-
