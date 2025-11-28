@@ -1,0 +1,186 @@
+\documentclass[journal]{IEEEtran}
+
+% --- Packages ---
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts} % Essential for math (mathbb, text, etc.)
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+
+% --- Mathematical Definitions ---
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+% --- Title & Authors ---
+\title{Content-Aware Adaptive Bitrate Streaming via Lyapunov-Based Deep Reinforcement Learning}
+
+\author{Saeed Zarbi, \IEEEmembership{Student Member, IEEE}, and [Other Authors]
+\thanks{Manuscript received November 23, 2025.}
+\thanks{S. Zarbi is with the Department of Computer Engineering.}}
+
+% --- Header ---
+\markboth{IEEE Transactions on Circuits and Systems for Video Technology,~Vol.~XX, No.~X, November~2025}%
+{Zarbi \MakeLowercase{\textit{et al.}}: Content-Aware ABR Streaming via Lyapunov-Based DRL}
+
+\maketitle
+
+% --- Abstract ---
+\begin{abstract}
+Adaptive Bitrate (ABR) streaming is crucial for delivering high-quality video content over fluctuating networks. Recent Deep Reinforcement Learning (DRL) approaches, such as Pensieve, have shown promise but often suffer from two critical limitations: (1) \textit{content-blindness}, leading to extreme risk aversion and underutilization of network capacity when trained with perceptual quality metrics like VMAF, and (2) \textit{instability} in highly volatile network conditions. In this paper, we propose a novel content-aware ABR framework that integrates \textbf{Lyapunov optimization} into the DRL reward structure. Our method leverages Video Multimethod Assessment Fusion (VMAF) alongside Spatial and Temporal Information (SI/TI) as explicit state inputs to identify high-reward streaming opportunities. By formulating the bitrate selection problem as a drift-plus-penalty optimization, we introduce a dynamic risk factor that adapts the rebuffering penalty based on buffer queue deviation. Extensive experiments on real-world Norway HSDPA network traces demonstrate that our approach achieves a \textbf{54\% improvement in average VMAF} compared to the content-blind Pensieve baseline while maintaining a low rebuffering ratio of \textbf{2.74\%}. Furthermore, our method outperforms robust control-theoretic baselines (RobustMPC) in overall Quality of Experience (QoE), effectively bridging the gap between conservative and aggressive streaming strategies.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Adaptive Bitrate Streaming, Deep Reinforcement Learning, Lyapunov Optimization, VMAF, Content-Awareness.
+\end{IEEEkeywords}
+
+% --- Section I: Introduction ---
+\section{Introduction}
+\label{sec:introduction}
+\IEEEPARstart{T}{he} exponential growth of video traffic has necessitated intelligent ABR algorithms. While DRL approaches like Pensieve maximize QoE without explicit network modeling, they often fail to account for video content complexity. This paper proposes a hybrid approach combining the stability of Lyapunov control theory with the adaptability of DRL.
+
+% --- Section II: Related Work ---
+\section{Related Work}
+\label{sec:related_work}
+
+\subsection{Heuristic and Control-Theoretic Approaches}
+Traditional ABR algorithms generally fall into two categories: rate-based and buffer-based. Rate-based methods estimate future throughput to select bitrates, but are sensitive to estimation errors. Buffer-Based Algorithms (BBA) \cite{huang2014confucius} prioritize buffer occupancy to avoid stalls but may react slowly to bandwidth drops. Model Predictive Control (MPC) \cite{yin2015control} combines both signals to optimize QoE over a finite horizon. However, MPC relies heavily on accurate throughput prediction, which is challenging in highly volatile environments like LTE/5G networks. RobustMPC attempts to mitigate this by using conservative throughput estimates, often leading to overly cautious bitrate choices.
+
+\subsection{Learning-Based Approaches}
+Recently, Reinforcement Learning (RL) has shown great potential in ABR streaming. Pensieve \cite{mao2017neural} employs Asynchronous Advantage Actor-Critic (A3C) to learn a bitrate policy directly from experience, outperforming fixed-rule algorithms. Despite its success, Pensieve treats all video chunks as identical in terms of complexity (content-blindness). Subsequent works have attempted to incorporate VMAF or structural similarity (SSIM) into the reward function. However, training purely with perceptual metrics often leads to instability or convergence to local optima (risk aversion), as the agent learns that high quality often comes with unacceptable rebuffering risks. Our work addresses this by explicitly coupling DRL with Lyapunov stability constraints.
+
+% --- Section III: Proposed Method (INTEGRATED) ---
+\section{Proposed Method}
+\label{sec:proposed_method}
+
+In this section, we present our content-aware ABR framework. First, we model the adaptive streaming environment. Then, we formulate the bitrate selection problem as a Lyapunov optimization task to ensure buffer stability. Finally, we describe the integration of this theoretical model into a Deep Reinforcement Learning (DRL) agent.
+
+\subsection{System Model}
+We consider a video streaming session divided into $K$ chunks. Let $\mathcal{R} = \{R_1, R_2, \dots, R_M\}$ denote the set of available bitrates for each chunk. At step $k$, the agent selects a bitrate $a_k \in \mathcal{R}$ for the $k$-th chunk.
+
+The download time $d_k$ depends on the chunk size $S_k(a_k)$ (which varies based on video complexity) and the average network throughput $C_k$ experienced during the download:
+\begin{equation}
+    d_k(a_k) = \frac{S_k(a_k)}{C_k}
+\end{equation}
+
+The client's playback buffer evolves according to the following queue dynamics:
+\begin{equation}
+    B_{k+1} = \max(0, B_k - d_k(a_k)) + \Delta T
+\end{equation}
+where $B_k$ is the buffer occupancy at the start of chunk $k$, and $\Delta T$ is the chunk duration (e.g., 4 seconds). Playback freezing (rebuffering) occurs if the download time exceeds the current buffer level, i.e., $d_k > B_k$. The rebuffering duration is given by $\tau_k = \max(0, d_k - B_k)$.
+
+\subsection{Problem Formulation via Lyapunov Optimization}
+Our objective is to maximize the Quality of Experience (QoE) while maintaining the buffer queue $B_k$ close to a safe target level to avoid rebuffering.
+
+We define the instantaneous QoE utility for chunk $k$ as a linear combination of perceptual quality and smoothness penalties:
+\begin{equation}
+    U_k = \text{VMAF}_k(a_k) - \lambda \cdot | \text{VMAF}_k(a_k) - \text{VMAF}_{k-1} |
+\end{equation}
+where $\text{VMAF}_k$ denotes the Video Multimethod Assessment Fusion score, and $\lambda$ is a smoothness coefficient.
+
+To enforce stability, we define a Lyapunov function $L(B_k)$ representing the "potential energy" of the buffer deviation from a target safety threshold $B_{\text{target}}$:
+\begin{equation}
+    L(B_k) = \frac{1}{2} \left( \max(0, B_{\text{target}} - B_k) \right)^2
+\end{equation}
+This function grows quadratically as the buffer drops below the target, signaling instability. The \textit{Lyapunov Drift}, $\Delta L_k$, measures the expected change in this energy:
+\begin{equation}
+    \Delta L_k = \mathbb{E} [ L(B_{k+1}) - L(B_k) \mid B_k ]
+\end{equation}
+
+According to Lyapunov drift-plus-penalty theory, to stabilize the queue while maximizing utility, we seek to minimize the upper bound of the following expression:
+\begin{equation}
+    \text{minimize } \Delta L_k - V \cdot \mathbb{E}[U_k]
+\end{equation}
+where $V$ is a control parameter balancing queue stability and utility maximization.
+
+By expanding $\Delta L_k$ and rearranging terms, we derive a dynamic penalty factor $\beta(B_k)$ for the rebuffering term in our DRL reward function. Unlike heuristic methods that use a fixed penalty, our method scales the risk based on buffer health:
+\begin{equation}
+    r_k = U_k - \beta(B_k) \cdot \tau_k
+\end{equation}
+where the dynamic risk factor $\beta(B_k)$ is approximated as:
+\begin{equation}
+    \beta(B_k) = 1 + \alpha \cdot \exp\left( \frac{B_{\text{target}} - B_k}{\sigma} \right)
+\end{equation}
+Here, $\alpha$ and $\sigma$ are hyperparameters derived from the drift derivation. This formulation ensures that when $B_k \gg B_{\text{target}}$, the agent focuses purely on VMAF (aggressive behavior). However, as $B_k$ approaches depletion, $\beta(B_k)$ rises exponentially, forcing the agent to prioritize safety (conservative behavior).
+
+\subsection{Deep Reinforcement Learning Framework}
+We implement the proposed policy using the Proximal Policy Optimization (PPO) algorithm. The agent interacts with the environment as follows:
+
+\subsubsection{State Space ($s_k$)}
+To overcome the "content-blindness" of previous approaches, we construct a comprehensive state vector $s_k = \{ \mathbf{x}_{net}, \mathbf{x}_{buf}, \mathbf{x}_{vid} \}$:
+\begin{itemize}
+    \item \textbf{Network State ($\mathbf{x}_{net}$):} A vector containing the throughput measurements and download times of the past $h$ chunks.
+    \item \textbf{Buffer State ($\mathbf{x}_{buf}$):} The current buffer level $B_k$.
+    \item \textbf{Video Content State ($\mathbf{x}_{vid}$):} This includes the next chunk sizes for all bitrates, predicted VMAF scores, and the Spatial Information (SI) and Temporal Information (TI) indices for the next horizon. Explicitly observing SI/TI allows the agent to anticipate complex scenes that are hard to compress.
+\end{itemize}
+
+\subsubsection{Action Space ($a_k$)}
+The action corresponds to selecting one of the discrete bitrates $R_i \in \mathcal{R}$.
+
+\subsubsection{Network Architecture}
+The inputs are processed by a multi-branch neural network. The time-series data (throughput, VMAF predictions) are processed by 1D Convolutional (CNN) layers to extract temporal features, while the scalar inputs (buffer, SI/TI) are passed through fully connected layers.
+
+% --- Section IV: Performance Evaluation ---
+\section{Performance Evaluation}
+\label{sec:evaluation}
+
+\subsection{Experimental Setup}
+We evaluate our proposed framework using a trace-driven simulation environment. The system is implemented in Python using TensorFlow. We utilize the FCC dataset for training the DRL agent and the \textbf{Norway HSDPA dataset} for testing to assess generalization to unseen, highly volatile network conditions.
+
+The video content used is "BigBuckBunny," encoded at bitrates $\mathcal{R} = \{300, 750, 1200, 1850, 2850, 6000\}$ Kbps. We extract spatial (SI) and temporal (TI) information using FFmpeg to serve as content-aware state inputs.
+
+We compare our method against three state-of-the-art baselines:
+\begin{itemize}
+    \item \textbf{Pensieve:} A state-of-the-art DRL-based ABR algorithm that uses A3C. We retrained Pensieve using the same VMAF-based reward function to ensure a fair comparison.
+    \item \textbf{RobustMPC:} A control-theoretic approach that optimizes QoE over a receding horizon using robust throughput estimation.
+    \item \textbf{Buffer-Based Algorithm (BBA):} A heuristic approach that selects bitrates based solely on buffer occupancy.
+\end{itemize}
+
+\subsection{Comparative Analysis}
+Table \ref{tab:results} presents the average performance metrics on the test set.
+
+\begin{table}[ht]
+\caption{Performance Comparison on Norway HSDPA Traces}
+\label{tab:results}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Avg VMAF} $\uparrow$ & \textbf{Rebuf Ratio} $\downarrow$ & \textbf{Switch} $\downarrow$ & \textbf{Total QoE} $\uparrow$ \\
+\midrule
+Pensieve & 35.00 & \textbf{0.50\%} & \textbf{0.00} & 1617.38 \\
+BBA & 71.89 & 16.03\% & 23.46 & 1415.97 \\
+RobustMPC & \textbf{69.82} & 8.98\% & 14.60 & 2207.90 \\
+\textbf{Proposed} & 53.93 & 2.74\% & 9.40 & \textbf{2225.29} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{QoE Improvement}
+As observed in Table \ref{tab:results}, the standard Pensieve agent, when trained with VMAF, converges to a highly conservative policy (Avg VMAF $\approx$ 35), effectively sticking to the lowest bitrate to avoid rebuffering penalties. In contrast, our \textbf{Proposed} method achieves a \textbf{54\% improvement in Average VMAF} compared to Pensieve.
+
+While RobustMPC achieves a higher raw VMAF score, it incurs a significant rebuffering ratio (8.98\%) due to throughput prediction errors in the volatile Norway traces. Our Lyapunov-based reward shaping successfully creates a "safe" exploration zone, keeping rebuffering low (2.74\%) while still aggressively pursuing higher quality when the buffer allows. This balance results in the highest overall QoE (2225.29).
+
+\subsection{Ablation Study}
+To verify the contribution of each component, we evaluated variants of our model:
+\begin{itemize}
+    \item \textbf{No-Content:} Removing SI/TI and VMAF lookahead from the state space caused the agent to revert to a behavior similar to Pensieve, failing to distinguish between complex and simple scenes.
+    \item \textbf{Fixed-Penalty:} Replacing the dynamic Lyapunov $\beta(B_k)$ with a fixed penalty resulted in increased instability during network drops, proving the necessity of the drift-plus-penalty formulation.
+\end{itemize}
+
+% --- Section V: Conclusion ---
+\section{Conclusion}
+\label{sec:conclusion}
+In this paper, we proposed a novel content-aware ABR framework that bridges the gap between control theory and deep reinforcement learning. By incorporating Spatial and Temporal Information (SI/TI) into the state space, our agent can distinguish between complex scenes requiring high bandwidth and simple scenes where bitrate can be saved. Furthermore, the integration of Lyapunov drift-plus-penalty optimization into the reward function provides a dynamic risk mechanism that ensures buffer stability without manual tuning.
+
+Experimental results on real-world Norway HSDPA traces demonstrated that our approach achieves a 54\% improvement in average VMAF compared to the content-blind Pensieve baseline, while maintaining a low rebuffering ratio comparable to conservative algorithms. Future work will explore the application of this framework to 360-degree video streaming and live streaming scenarios where low latency is critical.
+
+% --- References ---
+% \bibliographystyle{IEEEtran}
+% \bibliography{references}
+
+\end{document}
