@@ -25,14 +25,8 @@ class MultiVideoEvaluator:
         
         # Default video list (can be overridden)
         if video_list is None:
-            # Common videos used in training
-            self.video_list = [
-                'bigbuckbunny',
-                'crowd_run',
-                'ducks_take_off',
-                'into_tree',
-                'park_joy'
-            ]
+            # Default: only park_joy for evaluation
+            self.video_list = ['park_joy']
         else:
             self.video_list = video_list if isinstance(video_list, list) else [video_list]
         
@@ -42,9 +36,9 @@ class MultiVideoEvaluator:
         
         # 1. Proposed
         try:
-            path = PATHS['models'] / 'ppo_abr_v4_lyapunov' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_v4_lyapunov' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print("✓ Loaded Proposed model")
         except Exception as e: 
@@ -52,9 +46,9 @@ class MultiVideoEvaluator:
         
         # 2. Baseline: Pensieve*
         try:
-            path = PATHS['models'] / 'pensieve_retrained_vmaf' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'pensieve_multi_vmaf' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_retrained_vmaf' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
             print("✓ Loaded Pensieve model")
         except Exception as e: 
@@ -313,11 +307,7 @@ class MultiVideoEvaluator:
 if __name__ == '__main__':
     # Configuration
     VIDEO_LIST = [
-        'bigbuckbunny',
-        'crowd_run',
-        'ducks_take_off',
-        'into_tree',
-        'park_joy'
+        'park_joy'  # Only evaluate park_joy video
     ]
     
     EPISODES_PER_VIDEO = 50
