@@ -199,10 +199,23 @@ class MultiVideoEvaluator:
             per_video_path = PATHS['results'] / 'per_video_summary.csv'
             per_video_list = []
             for video, summary in self.results_per_video.items():
-                summary_flat = summary.stack().reset_index()
-                summary_flat.columns = ['Method', 'Metric', 'Value']
-                summary_flat['Video'] = video
-                per_video_list.append(summary_flat)
+                # Reset index to get Method as a column
+                summary_reset = summary.reset_index()
+                
+                # Convert MultiIndex columns to flat format
+                summary_reset.columns = [
+                    f"{col[0]}_{col[1]}" if isinstance(col, tuple) and len(col) == 2 else str(col)
+                    for col in summary_reset.columns
+                ]
+                
+                # Melt to convert wide format to long format
+                summary_melted = summary_reset.melt(
+                    id_vars=['Method'],
+                    var_name='Metric',
+                    value_name='Value'
+                )
+                summary_melted['Video'] = video
+                per_video_list.append(summary_melted)
             
             per_video_df = pd.concat(per_video_list, ignore_index=True)
             per_video_df.to_csv(per_video_path, index=False)
