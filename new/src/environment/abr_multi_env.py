@@ -19,7 +19,7 @@ class ABREnv(gym.Env):
     LYAPUNOV_GAIN = 0.1  
     
     # --- FINAL TUNING FOR TCSVT ---
-    REBUF_PENALTY_BASE = 65.0 
+    REBUF_PENALTY_BASE = 25.0 
     SMOOTH_PENALTY_WEIGHT = 0.1 
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 

@@ -34,18 +34,18 @@ class TCSVT_Evaluator:
         
         # 1. Proposed
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_new' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_new' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✓ Loaded Proposed from: {path}")
         except: print("⚠ Proposed missing.")
         
         # 2. Pensieve
         try:
-            path = PATHS['models'] / 'pensieve_multi_vmaf' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'pensieve_multi_vmaf_new' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_multi_vmaf' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf_new' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
             print(f"✓ Loaded Pensieve from: {path}")
         except: print("⚠ Pensieve missing.")

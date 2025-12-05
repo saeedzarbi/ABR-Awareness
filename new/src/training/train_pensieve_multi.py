@@ -99,9 +99,9 @@ def main():
     print(f"🧪 Evaluation Video: {PensieveConfig.TEST_VIDEOS}")
     print("="*70 + "\n")
     
-    save_dir = PATHS['models'] / 'pensieve_multi_vmaf'
+    save_dir = PATHS['models'] / 'pensieve_multi_vmaf_new'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'pensieve_multi_vmaf'
+    log_dir = PATHS['logs'] / 'pensieve_multi_vmaf_new'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(PensieveConfig.NUM_ENVS)])
@@ -130,7 +130,7 @@ def main():
         CheckpointCallback(
             save_freq=PensieveConfig.SAVE_FREQ // PensieveConfig.NUM_ENVS,
             save_path=str(save_dir / 'checkpoints'),
-            name_prefix='pensieve_multi_vmaf'
+            name_prefix='pensieve_multi_vmaf_new'
         ),
         EvalCallback(
             eval_env,
