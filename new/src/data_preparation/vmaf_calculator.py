@@ -5,6 +5,7 @@ VMAF: Video Multimethod Assessment Fusion - perceptual video quality metric
 
 import subprocess
 import json
+import argparse
 from pathlib import Path
 from typing import Dict, List, Optional
 import pandas as pd
@@ -52,7 +53,8 @@ class VMAFCalculator:
         self,
         reference_video: Path,
         distorted_video: Path,
-        output_json: Path
+        output_json: Path,
+        timeout: int = 900  # 15 minutes default (increased from 5)
     ) -> Optional[float]:
         """
         Calculate VMAF score between reference and distorted video.
@@ -62,6 +64,7 @@ class VMAFCalculator:
             reference_video: Original high-quality video
             distorted_video: Encoded video to evaluate
             output_json: Path to save detailed VMAF output
+            timeout: Timeout in seconds (default: 900 = 15 minutes)
             
         Returns:
             Mean VMAF score (0-100) or None if failed
@@ -95,7 +98,7 @@ class VMAFCalculator:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                timeout=300  # 5 minute timeout
+                timeout=timeout
             )
             
             if result.returncode != 0:
@@ -122,7 +125,8 @@ class VMAFCalculator:
             return None
             
         except subprocess.TimeoutExpired:
-            print(f"    ✗ Timeout after 5 minutes")
+            timeout_min = timeout // 60
+            print(f"    ✗ Timeout after {timeout_min} minutes")
             return None
         except Exception as e:
             print(f"    ✗ Error: {str(e)[:100]}")
@@ -130,7 +134,8 @@ class VMAFCalculator:
     def calculate_for_video(
         self,
         video_name: str,
-        bitrate_levels: List[int]
+        bitrate_levels: List[int],
+        timeout: int = 900  # 15 minutes per bitrate
     ) -> Dict[int, float]:
         """
         Calculate VMAF for all bitrate levels of a video.
@@ -187,7 +192,8 @@ class VMAFCalculator:
             vmaf_score = self.calculate_vmaf(
                 reference_video=reference_video,
                 distorted_video=encoded_video,
-                output_json=output_json
+                output_json=output_json,
+                timeout=timeout
             )
             
             if vmaf_score is not None:
@@ -201,7 +207,8 @@ class VMAFCalculator:
     def calculate_all_videos(
         self,
         bitrate_levels: List[int] = [300, 750, 1200, 1850, 2850, 6000],
-        parallel: bool = False
+        parallel: bool = False,
+        timeout: int = 900  # 15 minutes per bitrate
     ) -> pd.DataFrame:
         """
         Calculate VMAF for all videos and bitrates.
@@ -236,7 +243,8 @@ class VMAFCalculator:
                     executor.submit(
                         self.calculate_for_video,
                         video_dir.name,
-                        bitrate_levels
+                        bitrate_levels,
+                        timeout
                     ): video_dir.name
                     for video_dir in video_dirs
                 }
@@ -257,7 +265,7 @@ class VMAFCalculator:
             # Sequential processing (easier to debug)
             for video_dir in video_dirs:
                 video_name = video_dir.name
-                vmaf_scores = self.calculate_for_video(video_name, bitrate_levels)
+                vmaf_scores = self.calculate_for_video(video_name, bitrate_levels, timeout)
                 
                 for bitrate, score in vmaf_scores.items():
                     all_results.append({
@@ -324,6 +332,35 @@ class VMAFCalculator:
 
 def main():
     """Main VMAF calculation script."""
+    parser = argparse.ArgumentParser(
+        description='Calculate VMAF scores for encoded videos',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Sequential processing (default, easier to debug)
+  python vmaf_calculator.py
+  
+  # Parallel processing (faster, uses more CPU)
+  python vmaf_calculator.py --parallel
+  
+  # Custom timeout (in seconds)
+  python vmaf_calculator.py --timeout 1800
+        """
+    )
+    parser.add_argument(
+        '--parallel',
+        action='store_true',
+        help='Enable parallel processing (faster but uses more CPU)'
+    )
+    parser.add_argument(
+        '--timeout',
+        type=int,
+        default=900,
+        help='Timeout per bitrate in seconds (default: 900 = 15 minutes)'
+    )
+    
+    args = parser.parse_args()
+    
     print("\n📊 VMAF Calculator for ABR Research\n")
     
     calculator = VMAFCalculator(
@@ -333,7 +370,11 @@ def main():
     )
     
     # Calculate VMAF for all videos
-    df = calculator.calculate_all_videos(parallel=False)
+    print(f"⚙️  Settings: Parallel={args.parallel}, Timeout={args.timeout}s ({args.timeout//60} min)")
+    df = calculator.calculate_all_videos(
+        parallel=args.parallel,
+        timeout=args.timeout
+    )
     
     if not df.empty:
         calculator.print_summary(df)
