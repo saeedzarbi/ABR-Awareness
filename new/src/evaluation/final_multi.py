@@ -155,13 +155,22 @@ class MultiVideoEvaluator:
         # Aggregate per video
         if video_results:
             df_video = pd.DataFrame(video_results)
-            self.results_per_video[video_name] = df_video.groupby('Method').agg({
+            summary = df_video.groupby('Method').agg({
                 'QoE': ['mean', 'std'],
                 'VMAF': ['mean', 'std'],
                 'Rebuffer': ['mean', 'std'],
                 'Switch': ['mean', 'std'],
                 'AvgBitrate': ['mean', 'std']
             }).round(2)
+            # Reset index to get Method as column
+            summary = summary.reset_index()
+            # Flatten MultiIndex columns
+            summary.columns = [
+                f"{col[0]}_{col[1]}" if isinstance(col, tuple) and len(col) == 2 else str(col)
+                for col in summary.columns
+            ]
+            # Store summary
+            self.results_per_video[video_name] = summary
 
     def evaluate_all_videos(self, methods, episodes_per_video=50):
         """Evaluate all methods on all videos"""
@@ -199,18 +208,13 @@ class MultiVideoEvaluator:
             per_video_path = PATHS['results'] / 'per_video_summary.csv'
             per_video_list = []
             for video, summary in self.results_per_video.items():
-                # Reset index to get Method as a column
-                summary_reset = summary.reset_index()
-                
-                # Convert MultiIndex columns to flat format
-                summary_reset.columns = [
-                    f"{col[0]}_{col[1]}" if isinstance(col, tuple) and len(col) == 2 else str(col)
-                    for col in summary_reset.columns
-                ]
-                
+                # summary already has Method as column and flattened columns
                 # Melt to convert wide format to long format
-                summary_melted = summary_reset.melt(
+                # Get all columns except 'Method' as value_vars
+                value_vars = [col for col in summary.columns if col != 'Method']
+                summary_melted = summary.melt(
                     id_vars=['Method'],
+                    value_vars=value_vars,
                     var_name='Metric',
                     value_name='Value'
                 )
