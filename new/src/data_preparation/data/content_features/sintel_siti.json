@@ -1,0 +1,12 @@
+{
+  "mean_si": 60.76,
+  "mean_ti": 52.13,
+  "max_si": 264.66,
+  "max_ti": 114.44,
+  "std_si": 56.31,
+  "std_ti": 25.74,
+  "fps": 24.0,
+  "resolution": "1280x544",
+  "total_frames": 21312,
+  "processed_frames": 300
+}
