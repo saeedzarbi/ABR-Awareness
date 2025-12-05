@@ -54,7 +54,8 @@ class VMAFCalculator:
         reference_video: Path,
         distorted_video: Path,
         output_json: Path,
-        timeout: int = 900  # 15 minutes default (increased from 5)
+        timeout: int = 900,  # 15 minutes default (increased from 5)
+        fast_mode: bool = False  # Use faster settings (lower resolution, subsampling)
     ) -> Optional[float]:
         """
         Calculate VMAF score between reference and distorted video.
@@ -65,12 +66,21 @@ class VMAFCalculator:
             distorted_video: Encoded video to evaluate
             output_json: Path to save detailed VMAF output
             timeout: Timeout in seconds (default: 900 = 15 minutes)
+            fast_mode: Use faster settings (720p, subsampling) - less accurate but 3-5x faster
             
         Returns:
             Mean VMAF score (0-100) or None if failed
         """
-        # Scale both videos to 1080p for fair comparison
-        target_resolution = "1920:1080"
+        # Adaptive resolution: Use 720p for fast mode (3-5x faster)
+        # For bitrate < 1200, 720p is usually sufficient
+        if fast_mode:
+            target_resolution = "1280:720"  # 720p - much faster
+            subsample = "2"  # Process every 2nd frame (2x faster)
+            n_threads = 8  # Use more threads
+        else:
+            target_resolution = "1920:1080"  # 1080p - standard
+            subsample = "1"  # Process all frames
+            n_threads = 8  # Increased from 4
         
         vmaf_filter = (
             f"[0:v]scale={target_resolution}:flags=bicubic,setpts=PTS-STARTPTS[dist];"
@@ -78,7 +88,8 @@ class VMAFCalculator:
             f"[dist][ref]libvmaf="
             f"log_fmt=json:"
             f"log_path={output_json}:"
-            f"n_threads=4"
+            f"n_threads={n_threads}:"
+            f"n_subsample={subsample}"  # Skip frames for speed
         )
         
         cmd = [
@@ -135,7 +146,8 @@ class VMAFCalculator:
         self,
         video_name: str,
         bitrate_levels: List[int],
-        timeout: int = 900  # 15 minutes per bitrate
+        timeout: int = 900,  # 15 minutes per bitrate
+        fast_mode: bool = False  # Use fast mode for low bitrates
     ) -> Dict[int, float]:
         """
         Calculate VMAF for all bitrate levels of a video.
@@ -189,11 +201,15 @@ class VMAFCalculator:
             
             print(f"  [{idx}/{len(bitrate_levels)}] {bitrate} Kbps - Calculating...", end=' ')
             
+            # Use fast mode for low bitrates (< 1200 kbps) - they don't need 1080p precision
+            use_fast = fast_mode or (bitrate < 1200)
+            
             vmaf_score = self.calculate_vmaf(
                 reference_video=reference_video,
                 distorted_video=encoded_video,
                 output_json=output_json,
-                timeout=timeout
+                timeout=timeout,
+                fast_mode=use_fast
             )
             
             if vmaf_score is not None:
@@ -208,7 +224,8 @@ class VMAFCalculator:
         self,
         bitrate_levels: List[int] = [300, 750, 1200, 1850, 2850, 6000],
         parallel: bool = False,
-        timeout: int = 900  # 15 minutes per bitrate
+        timeout: int = 900,  # 15 minutes per bitrate
+        fast_mode: bool = False  # Use fast mode (720p, subsampling) for speed
     ) -> pd.DataFrame:
         """
         Calculate VMAF for all videos and bitrates.
@@ -232,6 +249,7 @@ class VMAFCalculator:
         print(f"Videos: {len(video_dirs)}")
         print(f"Bitrate levels: {bitrate_levels}")
         print(f"Parallel processing: {parallel}")
+        print(f"Fast mode: {fast_mode} (720p + subsampling for low bitrates)")
         print(f"{'='*60}")
         
         all_results = []
@@ -244,7 +262,8 @@ class VMAFCalculator:
                         self.calculate_for_video,
                         video_dir.name,
                         bitrate_levels,
-                        timeout
+                        timeout,
+                        fast_mode
                     ): video_dir.name
                     for video_dir in video_dirs
                 }
@@ -265,7 +284,7 @@ class VMAFCalculator:
             # Sequential processing (easier to debug)
             for video_dir in video_dirs:
                 video_name = video_dir.name
-                vmaf_scores = self.calculate_for_video(video_name, bitrate_levels, timeout)
+                vmaf_scores = self.calculate_for_video(video_name, bitrate_levels, timeout, fast_mode)
                 
                 for bitrate, score in vmaf_scores.items():
                     all_results.append({
@@ -340,8 +359,14 @@ Examples:
   # Sequential processing (default, easier to debug)
   python vmaf_calculator.py
   
+  # Fast mode (3-5x faster, 720p + subsampling)
+  python vmaf_calculator.py --fast
+  
   # Parallel processing (faster, uses more CPU)
   python vmaf_calculator.py --parallel
+  
+  # Fast + Parallel (fastest option)
+  python vmaf_calculator.py --fast --parallel
   
   # Custom timeout (in seconds)
   python vmaf_calculator.py --timeout 1800
@@ -358,6 +383,11 @@ Examples:
         default=900,
         help='Timeout per bitrate in seconds (default: 900 = 15 minutes)'
     )
+    parser.add_argument(
+        '--fast',
+        action='store_true',
+        help='Use fast mode: 720p resolution + frame subsampling (3-5x faster, slightly less accurate)'
+    )
     
     args = parser.parse_args()
     
@@ -370,10 +400,11 @@ Examples:
     )
     
     # Calculate VMAF for all videos
-    print(f"⚙️  Settings: Parallel={args.parallel}, Timeout={args.timeout}s ({args.timeout//60} min)")
+    print(f"⚙️  Settings: Parallel={args.parallel}, Fast={args.fast}, Timeout={args.timeout}s ({args.timeout//60} min)")
     df = calculator.calculate_all_videos(
         parallel=args.parallel,
-        timeout=args.timeout
+        timeout=args.timeout,
+        fast_mode=args.fast
     )
     
     if not df.empty:
