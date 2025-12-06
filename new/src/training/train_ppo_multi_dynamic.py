@@ -185,7 +185,7 @@ class ActionLogCallback(BaseCallback):
             
         return True
 
-class TrainingConfigV4:
+class TrainingConfigV5:
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
         'crowd_run',       
@@ -218,10 +218,10 @@ class TrainingConfigV4:
 def make_env(rank: int, seed: int = 0, is_eval: bool = False):
     def _init():
         if is_eval:
-            video_list = TrainingConfigV4.TEST_VIDEOS
+            video_list = TrainingConfigV5.TEST_VIDEOS
             trace_path = PATHS['test_traces']
         else:
-            video_list = TrainingConfigV4.TRAIN_VIDEOS
+            video_list = TrainingConfigV5.TRAIN_VIDEOS
             trace_path = PATHS['train_traces']
             
         if not video_list: video_list = ['bigbuckbunny']
@@ -231,7 +231,7 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
             trace_dir=str(trace_path), 
             vmaf_dir=str(PATHS['vmaf_scores']),
             siti_dir=str(PATHS['content_features']),
-            max_chunks=TrainingConfigV4.MAX_CHUNKS,
+            max_chunks=TrainingConfigV5.MAX_CHUNKS,
             random_seed=seed + rank
         )
         
@@ -244,11 +244,11 @@ def main():
     print(f"🚀 Training PPO with Detailed Action Logging")
     print("="*70)
     
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_final'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_5'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_final'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_5'
     
-    train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV4.NUM_ENVS)])
+    train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV5.NUM_ENVS)])
     
     if len(list(PATHS['test_traces'].glob('*.json'))) > 0:
         eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=True)])
@@ -258,30 +258,30 @@ def main():
     model = PPO(
         'MlpPolicy',
         train_env,
-        learning_rate=TrainingConfigV4.LEARNING_RATE,
-        n_steps=TrainingConfigV4.N_STEPS,
-        batch_size=TrainingConfigV4.BATCH_SIZE,
-        n_epochs=TrainingConfigV4.N_EPOCHS,
-        gamma=TrainingConfigV4.GAMMA,
-        gae_lambda=TrainingConfigV4.GAE_LAMBDA,
-        clip_range=TrainingConfigV4.CLIP_RANGE,
-        ent_coef=TrainingConfigV4.ENT_COEF,
+        learning_rate=TrainingConfigV5.LEARNING_RATE,
+        n_steps=TrainingConfigV5.N_STEPS,
+        batch_size=TrainingConfigV5.BATCH_SIZE,
+        n_epochs=TrainingConfigV5.N_EPOCHS,
+        gamma=TrainingConfigV5.GAMMA,
+        gae_lambda=TrainingConfigV5.GAE_LAMBDA,
+        clip_range=TrainingConfigV5.CLIP_RANGE,
+        ent_coef=TrainingConfigV5.ENT_COEF,
         verbose=1,
-        device=TrainingConfigV4.DEVICE,
+        device=TrainingConfigV5.DEVICE,
         tensorboard_log=str(log_dir)
     )
     
     callbacks = CallbackList([
         CheckpointCallback(
-            save_freq=TrainingConfigV4.SAVE_FREQ // TrainingConfigV4.NUM_ENVS, 
+            save_freq=TrainingConfigV5.SAVE_FREQ // TrainingConfigV5.NUM_ENVS, 
             save_path=str(save_dir / 'checkpoints'), 
-            name_prefix='ppo_final'
+            name_prefix='ppo_multi_dynamic_5'
         ),
         EvalCallback(
             eval_env, 
             best_model_save_path=str(save_dir / 'best_model'), 
             log_path=str(log_dir / 'eval'), 
-            eval_freq=TrainingConfigV4.EVAL_FREQ // TrainingConfigV4.NUM_ENVS, 
+            eval_freq=TrainingConfigV5.EVAL_FREQ // TrainingConfigV5.NUM_ENVS, 
             n_eval_episodes=20,
             deterministic=True
         ),
@@ -289,7 +289,7 @@ def main():
     ])
     
     print("Starting training...")
-    model.learn(total_timesteps=TrainingConfigV4.TOTAL_TIMESTEPS, callback=callbacks, progress_bar=True)
+    model.learn(total_timesteps=TrainingConfigV5.TOTAL_TIMESTEPS, callback=callbacks, progress_bar=True)
     model.save(save_dir / 'final_model')
     print("✓ Training completed. Check 'logs/actions_history.txt' for details.")
 
