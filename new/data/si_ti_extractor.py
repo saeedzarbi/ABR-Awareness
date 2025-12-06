@@ -280,8 +280,8 @@ def main():
     print("\n📊 SI/TI Extractor for ABR Research\n")
     
     extractor = SITIExtractor(
-        video_dir='data/raw_videos',
-        output_dir='data/content_features'
+        video_dir='raw_videos',
+        output_dir='content_features'
     )
     
     # Extract SI/TI for all videos
