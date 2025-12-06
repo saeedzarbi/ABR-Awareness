@@ -16,13 +16,13 @@ class ABREnv(gym.Env):
     BUFFER_MAX = 30.0
     
     # Lyapunov Gain
-    LYAPUNOV_GAIN = 0.1  
+    LYAPUNOV_GAIN = 0.2
     
     # --- FINAL OPTIMIZED TUNING ---
     # 65.0 was too conservative (Agent stuck at lowest quality).
     # 25.0 was too aggressive (High rebuffering).
     # 35.0 is the Goldilocks zone.
-    REBUF_PENALTY_BASE = 35.0
+    REBUF_PENALTY_BASE = 45.0
     
     SMOOTH_PENALTY_WEIGHT = 0.1 
     
