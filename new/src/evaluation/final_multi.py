@@ -20,10 +20,10 @@ class TCSVT_Evaluator:
         self.results_detailed = [] 
 
         self.test_videos = [
-            'bigbuckbunny',    # استاندارد
-            'crowd_run',       # تست پایداری بافر (TI بالا)
-            'parkjoy',        # تست کیفیت VMAF (SI بالا)
-            'tearsofsteel_short' # تست اکشن سریع
+            'bigbuckbunny',    
+            'crowd_run',    
+            'parkjoy',       
+            'tearsofsteel_short' 
         ]
 
     def load_methods(self):
@@ -31,18 +31,18 @@ class TCSVT_Evaluator:
         
         # 1. Proposed
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_2' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_2' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✓ Loaded Proposed from: {path}")
         except: print("⚠ Proposed missing.")
         
         # 2. Pensieve
         try:
-            path = PATHS['models'] / 'pensieve_multi_vmaf_new' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'pensieve_multi_vmaf_2' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_multi_vmaf_new' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf_2' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
             print(f"✓ Loaded Pensieve from: {path}")
         except: print("⚠ Pensieve missing.")
@@ -110,16 +110,14 @@ class TCSVT_Evaluator:
                         obs, _, done, _, info = env.step(action)
                         last_tp = info.get('throughput', last_tp)
                     
-                    # محاسبه متریک‌ها
                     qoe = info['total_quality'] - (env.REBUF_PENALTY_BASE * info['total_rebuffer']) - (env.SMOOTH_PENALTY_WEIGHT * info['total_smoothness'])
                     
-                    # محاسبه دقیق زمان ویدیو برای درصدگیری
                     video_duration = env.chunk_idx * 4.0
                     rebuf_ratio = (info['total_rebuffer'] / video_duration) * 100 if video_duration > 0 else 0
 
                     self.results_detailed.append({
                         'Method': name,
-                        'Video': video_name,  # اضافه کردن نام ویدیو
+                        'Video': video_name, 
                         'Episode': ep,
                         'VMAF': info['avg_quality'],
                         'Rebuffer': rebuf_ratio,
@@ -132,7 +130,7 @@ class TCSVT_Evaluator:
         if not self.results_detailed: return
         
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_multi_video.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_2.csv'
         df.to_csv(path, index=False)
         print(f"\n✓ Saved results to: {path}")
         

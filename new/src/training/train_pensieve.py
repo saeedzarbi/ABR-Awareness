@@ -75,9 +75,9 @@ def main():
     print(f"📹 Target Video: {PensieveConfig.VIDEO_NAME}")
     print("="*70 + "\n")
     
-    save_dir = PATHS['models'] / 'pensieve_retrained_vmaf_new'
+    save_dir = PATHS['models'] / 'pensieve_retrained_vmaf_2'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'pensieve_retrained_vmaf_new'
+    log_dir = PATHS['logs'] / 'pensieve_retrained_vmaf_2'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     num_envs = PensieveConfig.NUM_ENVS
@@ -106,7 +106,7 @@ def main():
     checkpoint_cb = CheckpointCallback(
         save_freq=PensieveConfig.SAVE_FREQ // num_envs,
         save_path=str(save_dir / 'checkpoints'),
-        name_prefix='pensieve_vmaf_new',
+        name_prefix='pensieve_vmaf_2',
         save_replay_buffer=False
     )
     
