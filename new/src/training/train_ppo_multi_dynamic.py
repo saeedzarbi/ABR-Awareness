@@ -19,14 +19,14 @@ class TrainingConfigV4:
     TRAIN_VIDEOS = [
         'bigbuckbunny',    # Standard Baseline
         'crowd_run',       # High Motion (High TI) -> Tests Buffer Stability
-        'ducks_take_off',  # Complex Texture -> Tests VMAF Efficiency
-        'into_tree'        # Zoom/Pan -> Tests Prediction Robustness
+        'sintel',  # Complex Texture -> Tests VMAF Efficiency
+        'tearsofsteel_short'        # Zoom/Pan -> Tests Prediction Robustness
     ]
     
     # Validation Set: Unseen video to test "Generalization"
     # Ideally, 'park_joy' (High Detail) is good here.
     # If you haven't downloaded it, use 'bigbuckbunny' or one from the train list.
-    TEST_VIDEOS = ['park_joy'] 
+    TEST_VIDEOS = ['parkoy'] 
     
     MAX_CHUNKS = 48
     NUM_ENVS = 8
@@ -92,9 +92,9 @@ def main():
     print(f"🧪 Evaluation Video: {TrainingConfigV4.TEST_VIDEOS}")
     print("="*70)
     
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_new'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_new'
     
     # Create Training Environments (8 parallel envs)
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV4.NUM_ENVS)])

@@ -41,12 +41,12 @@ class PensieveConfig:
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
         'crowd_run',       # High Motion
-        'ducks_take_off',  # Texture
-        'into_tree'        # Zoom
+        'sintel',  # Texture
+        'tearsofsteel_short'        # Zoom
     ]
     
     # Unseen video for fair generalization test
-    TEST_VIDEOS = ['park_joy'] 
+    TEST_VIDEOS = ['parkjoy'] 
     
     MAX_CHUNKS = 48
     NUM_ENVS = 8
