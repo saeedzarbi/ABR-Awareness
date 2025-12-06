@@ -4,6 +4,7 @@ Encode videos at multiple bitrate levels for ABR simulation.
 
 import subprocess
 import json
+import argparse
 from pathlib import Path
 from typing import List, Dict, Tuple
 import shutil
@@ -27,8 +28,8 @@ class VideoEncoder:
     
     def __init__(
         self, 
-        input_dir: str = 'data/raw_videos',
-        output_dir: str = 'data/encoded_videos'
+        input_dir: str = 'raw_videos',
+        output_dir: str = 'encoded_videos'
     ):
         self.input_dir = Path(input_dir)
         self.output_dir = Path(output_dir)
@@ -283,30 +284,87 @@ class VideoEncoder:
 
 def main():
     """Main encoding script."""
+    parser = argparse.ArgumentParser(
+        description='Encode videos at multiple bitrate levels for ABR simulation',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Encode all videos (default)
+  python video_encoder.py
+  
+  # Encode a specific video
+  python video_encoder.py --video bigbuckbunny
+  
+  # Encode a specific video with custom directories
+  python video_encoder.py --video sintel --input-dir raw_videos --output-dir encoded_videos
+        """
+    )
+    parser.add_argument(
+        '--video',
+        type=str,
+        default=None,
+        help='Encode a specific video only (e.g., "bigbuckbunny")'
+    )
+    parser.add_argument(
+        '--input-dir',
+        type=str,
+        default='data/raw_videos',
+        help='Input directory containing raw videos (default: data/raw_videos)'
+    )
+    parser.add_argument(
+        '--output-dir',
+        type=str,
+        default='data/encoded_videos',
+        help='Output directory for encoded videos (default: data/encoded_videos)'
+    )
+    
+    args = parser.parse_args()
+    
     print("\n🎬 Video Encoder for ABR Research\n")
     
     encoder = VideoEncoder(
-        input_dir='data/raw_videos',
-        output_dir='data/encoded_videos'
+        input_dir=args.input_dir,
+        output_dir=args.output_dir
     )
     
-    # Encode all videos
-    encoded = encoder.encode_all_videos()
-    
-    if encoded:
-        print("\n✓ Encoding complete!")
-        print("\nSummary:")
+    # Encode specific video or all videos
+    if args.video:
+        # Encode specific video
+        print(f"⚙️  Encoding video: {args.video}")
+        encoded_files = encoder.encode_all_bitrates(args.video)
         
-        summary = encoder.get_encoding_summary()
-        for item in summary:
-            print(f"\n  📹 {item['video']}")
-            print(f"     Encoded: {len(item['bitrates'])} bitrates")
-            print(f"     Total size: {item['total_size_mb']:.1f} MB")
-        
-        print("\nNext step: Calculate VMAF scores")
-        print("  python src/data_preparation/vmaf_calculator.py")
+        if encoded_files:
+            print(f"\n✓ Encoding complete for: {args.video}")
+            print(f"  Encoded: {len(encoded_files)} bitrate levels")
+            
+            total_size_mb = sum(
+                path.stat().st_size / (1024 * 1024) 
+                for path in encoded_files.values()
+            )
+            print(f"  Total size: {total_size_mb:.1f} MB")
+            
+            print("\nNext step: Calculate VMAF scores")
+            print(f"  python vmaf_calculator.py --video {args.video}")
+        else:
+            print(f"\n✗ Failed to encode video: {args.video}")
     else:
-        print("\n✗ No videos were encoded")
+        # Encode all videos
+        encoded = encoder.encode_all_videos()
+        
+        if encoded:
+            print("\n✓ Encoding complete!")
+            print("\nSummary:")
+            
+            summary = encoder.get_encoding_summary()
+            for item in summary:
+                print(f"\n  📹 {item['video']}")
+                print(f"     Encoded: {len(item['bitrates'])} bitrates")
+                print(f"     Total size: {item['total_size_mb']:.1f} MB")
+            
+            print("\nNext step: Calculate VMAF scores")
+            print("  python vmaf_calculator.py")
+        else:
+            print("\n✗ No videos were encoded")
 
 
 if __name__ == '__main__':
