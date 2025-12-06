@@ -18,9 +18,9 @@ class VMAFCalculator:
     
     def __init__(
         self,
-        reference_dir: str = 'data/raw_videos',
-        encoded_dir: str = 'data/encoded_videos',
-        output_dir: str = 'data/vmaf_scores'
+        reference_dir: str = 'raw_videos',
+        encoded_dir: str = 'encoded_videos',
+        output_dir: str = 'vmaf_scores'
     ):
         self.reference_dir = Path(reference_dir)
         self.encoded_dir = Path(encoded_dir)
@@ -359,6 +359,9 @@ Examples:
   # Sequential processing (default, easier to debug)
   python vmaf_calculator.py
   
+  # Calculate VMAF for a specific video
+  python vmaf_calculator.py --video bigbuckbunny
+  
   # Fast mode (3-5x faster, 720p + subsampling)
   python vmaf_calculator.py --fast
   
@@ -367,6 +370,9 @@ Examples:
   
   # Fast + Parallel (fastest option)
   python vmaf_calculator.py --fast --parallel
+  
+  # Specific video with fast mode
+  python vmaf_calculator.py --video sintel --fast
   
   # Custom timeout (in seconds)
   python vmaf_calculator.py --timeout 1800
@@ -388,33 +394,82 @@ Examples:
         action='store_true',
         help='Use fast mode: 720p resolution + frame subsampling (3-5x faster, slightly less accurate)'
     )
+    parser.add_argument(
+        '--video',
+        type=str,
+        default=None,
+        help='Calculate VMAF for a specific video only (e.g., "bigbuckbunny")'
+    )
     
     args = parser.parse_args()
     
     print("\n📊 VMAF Calculator for ABR Research\n")
     
     calculator = VMAFCalculator(
-        reference_dir='data/raw_videos',
-        encoded_dir='data/encoded_videos',
-        output_dir='data/vmaf_scores'
+        reference_dir='raw_videos',
+        encoded_dir='encoded_videos',
+        output_dir='vmaf_scores'
     )
     
-    # Calculate VMAF for all videos
-    print(f"⚙️  Settings: Parallel={args.parallel}, Fast={args.fast}, Timeout={args.timeout}s ({args.timeout//60} min)")
-    df = calculator.calculate_all_videos(
-        parallel=args.parallel,
-        timeout=args.timeout,
-        fast_mode=args.fast
-    )
-    
-    if not df.empty:
-        calculator.print_summary(df)
+    # Calculate VMAF for specific video or all videos
+    if args.video:
+        # Calculate for specific video
+        print(f"⚙️  Settings: Video={args.video}, Fast={args.fast}, Timeout={args.timeout}s ({args.timeout//60} min)")
+        bitrate_levels = [300, 750, 1200, 1850, 2850, 6000]
+        vmaf_scores = calculator.calculate_for_video(
+            video_name=args.video,
+            bitrate_levels=bitrate_levels,
+            timeout=args.timeout,
+            fast_mode=args.fast
+        )
         
-        print("\n✓ VMAF calculation complete!")
-        print("\nNext step: Extract SI/TI features")
-        print("  python src/data_preparation/si_ti_extractor.py")
+        if vmaf_scores:
+            # Create DataFrame from results
+            all_results = []
+            for bitrate, score in vmaf_scores.items():
+                all_results.append({
+                    'video': args.video,
+                    'bitrate_kbps': bitrate,
+                    'vmaf': score
+                })
+            df = pd.DataFrame(all_results)
+            df = df.sort_values(['video', 'bitrate_kbps']).reset_index(drop=True)
+            
+            # Update CSV file (load existing, update, save)
+            csv_path = calculator.output_dir / 'vmaf_summary.csv'
+            if csv_path.exists():
+                existing_df = pd.read_csv(csv_path)
+                # Remove old entries for this video
+                existing_df = existing_df[existing_df['video'] != args.video]
+                # Append new results
+                df = pd.concat([existing_df, df], ignore_index=True)
+                df = df.sort_values(['video', 'bitrate_kbps']).reset_index(drop=True)
+            
+            df.to_csv(csv_path, index=False)
+            print(f"\n✓ VMAF summary saved to: {csv_path}")
+            
+            calculator.print_summary(df[df['video'] == args.video])
+            
+            print("\n✓ VMAF calculation complete!")
+        else:
+            print("\n✗ No VMAF scores calculated")
     else:
-        print("\n✗ No VMAF scores calculated")
+        # Calculate for all videos
+        print(f"⚙️  Settings: Parallel={args.parallel}, Fast={args.fast}, Timeout={args.timeout}s ({args.timeout//60} min)")
+        df = calculator.calculate_all_videos(
+            parallel=args.parallel,
+            timeout=args.timeout,
+            fast_mode=args.fast
+        )
+        
+        if not df.empty:
+            calculator.print_summary(df)
+            
+            print("\n✓ VMAF calculation complete!")
+            print("\nNext step: Extract SI/TI features")
+            print("  python src/data_preparation/si_ti_extractor.py")
+        else:
+            print("\n✗ No VMAF scores calculated")
 
 
 if __name__ == '__main__':
