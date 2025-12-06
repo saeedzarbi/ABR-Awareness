@@ -22,8 +22,8 @@ class TCSVT_Evaluator:
         self.test_videos = [
             'bigbuckbunny',    # استاندارد
             'crowd_run',       # تست پایداری بافر (TI بالا)
-            'park_joy',        # تست کیفیت VMAF (SI بالا)
-            'ducks_take_off',  # تست بافت
+            'parkjoy',        # تست کیفیت VMAF (SI بالا)
+            'sintel',  # تست بافت
             'tearsofsteel_short' # تست اکشن سریع
         ]
 

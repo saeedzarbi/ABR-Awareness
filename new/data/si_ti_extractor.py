@@ -18,8 +18,8 @@ class SITIExtractor:
     
     def __init__(
         self,
-        video_dir: str = 'data/raw_videos',
-        output_dir: str = 'data/content_features'
+        video_dir: str = 'raw_videos',
+        output_dir: str = 'content_features'
     ):
         self.video_dir = Path(video_dir)
         self.output_dir = Path(output_dir)
