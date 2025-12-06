@@ -40,9 +40,9 @@ class TCSVT_Evaluator:
         
         # 2. Pensieve
         try:
-            path = PATHS['models'] / 'pensieve_retrained_vmaf_2' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'pensieve_multi_vmaf_new' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_retrained_vmaf_2' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf_new' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
             print(f"✓ Loaded Pensieve from: {path}")
         except: print("⚠ Pensieve missing.")
