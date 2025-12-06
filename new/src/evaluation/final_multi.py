@@ -23,7 +23,6 @@ class TCSVT_Evaluator:
             'bigbuckbunny',    # استاندارد
             'crowd_run',       # تست پایداری بافر (TI بالا)
             'parkjoy',        # تست کیفیت VMAF (SI بالا)
-            'sintel',  # تست بافت
             'tearsofsteel_short' # تست اکشن سریع
         ]
 

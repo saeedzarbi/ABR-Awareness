@@ -19,7 +19,6 @@ class TrainingConfigV4:
     TRAIN_VIDEOS = [
         'bigbuckbunny',    # Standard Baseline
         'crowd_run',       # High Motion (High TI) -> Tests Buffer Stability
-        'sintel',  # Complex Texture -> Tests VMAF Efficiency
         'tearsofsteel_short'        # Zoom/Pan -> Tests Prediction Robustness
     ]
     

@@ -41,7 +41,6 @@ class PensieveConfig:
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
         'crowd_run',       # High Motion
-        'sintel',  # Texture
         'tearsofsteel_short'        # Zoom
     ]
     
