@@ -198,23 +198,25 @@ class TrainingConfigV5:
     NUM_ENVS = 8
     
     # --- HYPERPARAMETERS ---
-    LEARNING_RATE = 3e-4    
+    LEARNING_RATE = 5e-5    
+    
     N_STEPS = 4096          
-    BATCH_SIZE = 128
-    N_EPOCHS = 10
-    GAMMA = 0.98
+    BATCH_SIZE = 256        
+    N_EPOCHS = 4            
+    CLIP_RANGE = 0.1        
+    GAMMA = 0.99            
     GAE_LAMBDA = 0.95
-    CLIP_RANGE = 0.2
-    ENT_COEF = 0.10         
+    
+    ENT_COEF = 0.05         
     VF_COEF = 0.5
     MAX_GRAD_NORM = 0.5
     
-    TOTAL_TIMESTEPS = 800_000
-    EVAL_FREQ = 10_000
-    SAVE_FREQ = 20_000
+    TOTAL_TIMESTEPS = 1_000_000 
+    EVAL_FREQ = 20_000
+    SAVE_FREQ = 50_000
     
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+    
 def make_env(rank: int, seed: int = 0, is_eval: bool = False):
     def _init():
         if is_eval:
