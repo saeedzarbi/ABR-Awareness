@@ -3,7 +3,7 @@ from gymnasium import spaces
 import numpy as np
 import json
 from pathlib import Path
-from typing import Dict, List, Union, Optional
+from typing import Dict, Tuple, Optional, Union, List
 import random
 
 class ABREnv(gym.Env):
@@ -18,8 +18,12 @@ class ABREnv(gym.Env):
     # Lyapunov Gain
     LYAPUNOV_GAIN = 0.1  
     
-    # --- FINAL TUNING FOR TCSVT ---
-    REBUF_PENALTY_BASE = 60.0 
+    # --- FINAL OPTIMIZED TUNING ---
+    # 65.0 was too conservative (Agent stuck at lowest quality).
+    # 25.0 was too aggressive (High rebuffering).
+    # 35.0 is the Goldilocks zone.
+    REBUF_PENALTY_BASE = 35.0
+    
     SMOOTH_PENALTY_WEIGHT = 0.1 
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
@@ -43,10 +47,8 @@ class ABREnv(gym.Env):
             random.seed(random_seed)
             np.random.seed(random_seed)
         
-        # Initialize storage for all videos
+        # Initialize storage
         self.video_assets = {}
-        
-        # Load data for ALL videos
         self._load_traces()
         self._load_all_video_data()
         
@@ -61,7 +63,6 @@ class ABREnv(gym.Env):
         self.current_si_norm = 0.0
         self.current_ti_norm = 0.0
         
-        # Initialize other variables
         self.current_trace = None
         self.current_trace_idx = 0
         self.chunk_idx = 0
@@ -81,23 +82,20 @@ class ABREnv(gym.Env):
             self.traces = [json.load(open(f)) for f in trace_files]
     
     def _load_all_video_data(self):
-        """Pre-load VMAF and SI/TI for all videos to avoid I/O during training."""
+        """Loads VMAF and SI/TI for all videos."""
         import pandas as pd
         
-        # 1. Load VMAF Data
         vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
         all_vmaf_data = pd.DataFrame()
         if vmaf_file.exists():
-            try:
-                all_vmaf_data = pd.read_csv(vmaf_file)
-            except:
-                pass
+            try: all_vmaf_data = pd.read_csv(vmaf_file)
+            except: pass
 
         for vid in self.video_names:
             self.video_assets[vid] = {}
             
             # --- VMAF ---
-            vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97} # Default
+            vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97}
             if not all_vmaf_data.empty and 'video' in all_vmaf_data.columns:
                 df = all_vmaf_data[all_vmaf_data['video'] == vid]
                 if not df.empty:
@@ -108,7 +106,7 @@ class ABREnv(gym.Env):
 
             # --- SI/TI ---
             siti_file = self.siti_dir / f"{vid}_siti.json"
-            si, ti = 50, 10 # Default
+            si, ti = 50, 10
             if siti_file.exists():
                 try:
                     data = json.load(open(siti_file))
@@ -116,27 +114,26 @@ class ABREnv(gym.Env):
                     ti = data.get('mean_ti', 10)
                 except: pass
             
-            self.video_assets[vid]['si_norm'] = np.clip(si/100.0, 0, 1)
-            self.video_assets[vid]['ti_norm'] = np.clip(ti/50.0, 0, 1)
+            # --- CRITICAL FIX FOR NORMALIZATION ---
+            # Old: clip(si/100, 0, 1) -> Saturated for Bunny(295) and CrowdRun(102)
+            # New: clip(si/300, 0, 1) -> Preserves the difference
+            self.video_assets[vid]['si_norm'] = np.clip(si / 300.0, 0, 1) 
+            self.video_assets[vid]['ti_norm'] = np.clip(ti / 120.0, 0, 1) 
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         
-        # 1. Randomly select a video for this episode
         self.current_video_name = random.choice(self.video_names)
         assets = self.video_assets[self.current_video_name]
         
-        # 2. Update environment properties for the selected video
         self.current_vmaf_scores = assets['vmaf']
         self.current_vmaf_norm = assets['vmaf_norm']
         self.current_si_norm = assets['si_norm']
         self.current_ti_norm = assets['ti_norm']
         
-        # 3. Randomly select a network trace
         self.current_trace_idx = random.randint(0, len(self.traces) - 1)
         self.current_trace = self.traces[self.current_trace_idx]
         
-        # 4. Reset state
         self.chunk_idx = 0
         self.buffer_level = 1.0
         self.last_bitrate_idx = 0
@@ -153,18 +150,13 @@ class ABREnv(gym.Env):
         buf_obs = np.clip(self.buffer_level / self.BUFFER_MAX, 0, 1)
         last_br_obs = self.last_bitrate_idx / (len(self.BITRATE_LEVELS) - 1)
         
-        # Content obs comes from current video
         content_obs = np.array([self.current_si_norm, self.current_ti_norm], dtype=np.float32)
-        
-        # VMAF obs comes from current video
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
         return np.concatenate([tp_obs, [buf_obs], [last_br_obs], content_obs, vmaf_obs]).astype(np.float32)
 
     def step(self, action):
         bitrate_kbps = self.BITRATE_LEVELS[action]
-        # Note: Ideally, chunk sizes should also be loaded per video if available.
-        # Currently using CBR assumption:
         chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
         
         trace_tp = self.current_trace['throughput_kbps']
@@ -175,8 +167,6 @@ class ABREnv(gym.Env):
         self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
         self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
         
-        # --- REWARD ---
-        # Use VMAF of the CURRENT video
         current_vmaf = self.current_vmaf_scores.get(bitrate_kbps, 35.0)
         smooth_pen = abs(current_vmaf - self.last_vmaf)
         
@@ -207,7 +197,7 @@ class ABREnv(gym.Env):
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'buffer_level': self.buffer_level,
             'rebuffer': rebuffer_time, 'reward': reward,
-            'video_name': self.current_video_name  # Useful for logging
+            'video_name': self.current_video_name
         })
         return obs, reward, terminated, False, info
 

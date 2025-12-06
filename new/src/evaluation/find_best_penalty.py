@@ -169,6 +169,11 @@ def run_grid_search():
     print("="*60)
     print(df)
     
+    # محاسبه آمار کلی
+    best_vmaf_idx = df['VMAF'].idxmax()
+    best_qoe_idx = df['QoE'].idxmax()
+    lowest_rebuf_idx = df['Rebuffer (%)'].idxmin()
+    
     # پیدا کردن بهترین مقدار
     # شرط: بیشترین QoE به شرطی که ریبافر زیر 3% باشد
     valid_configs = df[df['Rebuffer (%)'] < 3.0]
@@ -181,7 +186,7 @@ def run_grid_search():
         warning_msg = "No config satisfied Rebuffer < 3%. Manual selection required."
         print(f"\n⚠ {warning_msg}")
         send_slack_message("warning", "No Valid Config", warning_msg)
-
+    
     # ذخیره نمودار
     _, ax1 = plt.subplots(figsize=(8, 5))
     
@@ -204,9 +209,36 @@ def run_grid_search():
     plt.close()
     print(f"\n✓ Plot saved to: {plot_path}")
     
-    # Send final summary
-    summary_msg = f"Grid Search Completed!\n\nResults Summary:\n{df.to_string(index=False)}\n\nPlot saved to: {plot_path}"
-    send_slack_message("success", "Grid Search Completed", summary_msg)
+    # ساخت پیام جزئیات کامل برای Slack
+    details_msg = "📊 *Detailed Results Summary*\n\n"
+    
+    # جدول کامل نتایج
+    details_msg += "*All Configurations:*\n"
+    for _, row in df.iterrows():
+        details_msg += f"• Penalty {row['Penalty']:.1f}: VMAF={row['VMAF']:.2f}, Rebuf={row['Rebuffer (%)']:.2f}%, QoE={row['QoE']:.1f}\n"
+    
+    # آمار کلی
+    details_msg += f"\n*Statistics:*\n"
+    details_msg += f"• Best VMAF: {df.loc[best_vmaf_idx, 'VMAF']:.2f} (Penalty: {df.loc[best_vmaf_idx, 'Penalty']:.1f})\n"
+    details_msg += f"• Best QoE: {df.loc[best_qoe_idx, 'QoE']:.1f} (Penalty: {df.loc[best_qoe_idx, 'Penalty']:.1f})\n"
+    details_msg += f"• Lowest Rebuffer: {df.loc[lowest_rebuf_idx, 'Rebuffer (%)']:.2f}% (Penalty: {df.loc[lowest_rebuf_idx, 'Penalty']:.1f})\n"
+    
+    # بهترین انتخاب
+    if not valid_configs.empty:
+        details_msg += f"\n*✅ Recommended Penalty:* {best_cfg['Penalty']:.1f}\n"
+        details_msg += f"  - QoE: {best_cfg['QoE']:.1f}\n"
+        details_msg += f"  - VMAF: {best_cfg['VMAF']:.2f}\n"
+        details_msg += f"  - Rebuffer: {best_cfg['Rebuffer (%)']:.2f}%\n"
+    
+    # اطلاعات اضافی
+    details_msg += f"\n*Test Configuration:*\n"
+    details_msg += f"• Test Video: {TEST_VIDEO}\n"
+    details_msg += f"• Training Steps: {TRAIN_STEPS_PER_TRIAL:,}\n"
+    details_msg += f"• Total Trials: {len(CANDIDATE_PENALTIES)}\n"
+    details_msg += f"\n📈 Plot saved to: `{plot_path}`"
+    
+    # ارسال پیام جزئیات
+    send_slack_message("success", "Grid Search Completed - Full Details", details_msg)
 
 if __name__ == '__main__':
     run_grid_search()
