@@ -58,7 +58,7 @@ class PensieveConfig:
     GAMMA = 0.99
     ENT_COEF = 0.05
     
-    TOTAL_TIMESTEPS = 600_000
+    TOTAL_TIMESTEPS = 800_000
     SAVE_FREQ = 20_000
     EVAL_FREQ = 10_000
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
