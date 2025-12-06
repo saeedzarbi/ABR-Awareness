@@ -17,11 +17,6 @@ SLACK_WEBHOOK="${SLACK_WEBHOOK_URL:-}"
 
 # Function to send message to Slack
 send_slack_message() {
-    # Skip if webhook URL is not set
-    if [ -z "$SLACK_WEBHOOK" ]; then
-        return 0
-    fi
-    
     local status=$1
     local step=$2
     local message=$3
