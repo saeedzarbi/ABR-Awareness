@@ -18,9 +18,7 @@ class TCSVT_Evaluator:
     def __init__(self):
         self.test_trace_dir = PATHS['test_traces']
         self.results_detailed = [] 
-        
-        # --- لیست ویدیوهای تست برای مقاله ---
-        # این لیست تضمین می‌کند که همه سناریوها (اکشن، زوم، بافت) تست شوند
+
         self.test_videos = [
             'bigbuckbunny',    # استاندارد
             'crowd_run',       # تست پایداری بافر (TI بالا)
@@ -34,9 +32,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_new' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_new' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✓ Loaded Proposed from: {path}")
         except: print("⚠ Proposed missing.")
@@ -64,11 +62,9 @@ class TCSVT_Evaluator:
             print("❌ No traces found.")
             return
 
-        # --- حلقه روی تمام ویدیوها ---
         for video_name in self.test_videos:
             print(f"\n📹 Testing on Video: {video_name}")
             
-            # چک کردن وجود فایل‌های داده ویدیو
             if not (PATHS['content_features'] / f"{video_name}_siti.json").exists():
                 print(f"   ⚠ Skipping {video_name}: Data not found.")
                 continue
