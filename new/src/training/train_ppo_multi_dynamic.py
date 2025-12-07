@@ -246,9 +246,9 @@ def main():
     print(f"🚀 Training PPO with Detailed Action Logging")
     print("="*70)
     
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_6'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_7'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_6'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_7'
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV5.NUM_ENVS)])
     
@@ -277,7 +277,7 @@ def main():
         CheckpointCallback(
             save_freq=TrainingConfigV5.SAVE_FREQ // TrainingConfigV5.NUM_ENVS, 
             save_path=str(save_dir / 'checkpoints'), 
-            name_prefix='ppo_multi_dynamic_6'
+            name_prefix='ppo_multi_dynamic_7'
         ),
         EvalCallback(
             eval_env, 

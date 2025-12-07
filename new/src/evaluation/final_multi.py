@@ -77,18 +77,18 @@ class TCSVT_Evaluator:
         
         # 1. Proposed
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_6' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_7' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_6' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_7' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✓ Loaded Proposed from: {path}")
         except: print("⚠ Proposed missing.")
         
         # 2. Pensieve
         try:
-            path = PATHS['models'] / 'pensieve_multi_vmaf_new_6' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'pensieve_multi_vmaf_new_7' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_6' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_7' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
             print(f"✓ Loaded Pensieve from: {path}")
         except: print("⚠ Pensieve missing.")
@@ -202,7 +202,7 @@ class TCSVT_Evaluator:
             return
         
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_multi_video_6.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_7.csv'
         df.to_csv(path, index=False)
         print(f"\n✓ Saved results to: {path}")
         
