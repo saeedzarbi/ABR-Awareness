@@ -77,9 +77,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed
         try:
-            path = PATHS['models'] / 'final_model_curriculum' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_curriculum' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'final_model_curriculum' / 'final_model'
+                path = PATHS['models'] / 'ppo_curriculum' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✓ Loaded Proposed from: {path}")
         except: print("⚠ Proposed missing.")
