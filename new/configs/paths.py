@@ -54,7 +54,6 @@ def get_paths():
         'train_traces': TRAIN_TRACES_DIR,  # Use this for training loop
         'test_traces': TEST_TRACES_DIR,    # Use this for final evaluation
         
-        'network_traces': NETWORK_TRACES_DIR,
         'results': RESULTS_DIR,
         'models': MODELS_DIR,
         'logs': LOGS_DIR,
