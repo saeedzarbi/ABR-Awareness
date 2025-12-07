@@ -6,7 +6,7 @@ import urllib.request
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from stable_baselines3 import PPO
-from src.environment.abr_env import ABREnv
+from src.environment.abr_multi_env import ABREnv
 from src.baselines.mpc_vmaf import RobustMPC 
 from src.baselines.genie import Genie
 from src.baselines.bba import BBA
