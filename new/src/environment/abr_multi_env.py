@@ -15,7 +15,7 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    LYAPUNOV_GAIN = 0.2
+    LYAPUNOV_GAIN = 0.05
     
     REBUF_PENALTY_BASE = 35.0  
     
