@@ -235,7 +235,7 @@ class TCSVT_Evaluator:
                 continue
 
             env = ABREnv(
-                video_name=video_name,
+                video_names=video_name,  # Changed from video_name to video_names (accepts single string)
                 trace_dir=str(self.test_trace_dir),
                 vmaf_dir=str(PATHS['vmaf_scores']),
                 siti_dir=str(PATHS['content_features']),
