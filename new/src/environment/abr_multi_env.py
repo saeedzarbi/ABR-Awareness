@@ -15,14 +15,9 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # Lyapunov Gain
     LYAPUNOV_GAIN = 0.2
     
-    # --- FINAL OPTIMIZED TUNING ---
-    # 65.0 was too conservative (Agent stuck at lowest quality).
-    # 25.0 was too aggressive (High rebuffering).
-    # 35.0 is the Goldilocks zone.
-    REBUF_PENALTY_BASE = 45.0
+    REBUF_PENALTY_BASE = 35.0  
     
     SMOOTH_PENALTY_WEIGHT = 0.1 
     
@@ -32,7 +27,6 @@ class ABREnv(gym.Env):
                  max_chunks=48, random_seed=None):
         super().__init__()
         
-        # Handle single string or list of videos
         if isinstance(video_names, str):
             self.video_names = [video_names]
         else:
@@ -47,7 +41,6 @@ class ABREnv(gym.Env):
             random.seed(random_seed)
             np.random.seed(random_seed)
         
-        # Initialize storage
         self.video_assets = {}
         self._load_traces()
         self._load_all_video_data()
@@ -56,7 +49,6 @@ class ABREnv(gym.Env):
         obs_dim = 18
         self.observation_space = spaces.Box(low=0.0, high=1.0, shape=(obs_dim,), dtype=np.float32)
         
-        # State variables
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
@@ -82,7 +74,6 @@ class ABREnv(gym.Env):
             self.traces = [json.load(open(f)) for f in trace_files]
     
     def _load_all_video_data(self):
-        """Loads VMAF and SI/TI for all videos."""
         import pandas as pd
         
         vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
@@ -114,9 +105,7 @@ class ABREnv(gym.Env):
                     ti = data.get('mean_ti', 10)
                 except: pass
             
-            # --- CRITICAL FIX FOR NORMALIZATION ---
-            # Old: clip(si/100, 0, 1) -> Saturated for Bunny(295) and CrowdRun(102)
-            # New: clip(si/300, 0, 1) -> Preserves the difference
+            # --- NORMALIZATION FIX (Already applied correctly) ---
             self.video_assets[vid]['si_norm'] = np.clip(si / 300.0, 0, 1) 
             self.video_assets[vid]['ti_norm'] = np.clip(ti / 120.0, 0, 1) 
 
@@ -143,6 +132,22 @@ class ABREnv(gym.Env):
         self.total_quality = 0.0
         self.total_smooth = 0.0
         
+        if random.random() < 0.01:
+            si_raw = self.current_si_norm * 300.0 
+            
+            log_message = (
+                f"\n🔍 [Environment Debug] Video: {self.current_video_name}\n"
+                f"   SI Input: {self.current_si_norm:.2f} (Raw ~{si_raw:.0f})\n"
+                f"   Penalty Used: {self.REBUF_PENALTY_BASE}\n"
+                f"{'-' * 40}\n"
+            )
+            
+            try:
+                with open("env_debug_log.txt", "a") as f:
+                    f.write(log_message)
+            except Exception as e:
+                print(f"Error writing to log file: {e}")
+            
         return self._get_observation(), self._get_info()
     
     def _get_observation(self):
