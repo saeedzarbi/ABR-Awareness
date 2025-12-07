@@ -105,7 +105,6 @@ class ABREnv(gym.Env):
                     ti = data.get('mean_ti', 10)
                 except: pass
             
-            # --- NORMALIZATION FIX (Already applied correctly) ---
             self.video_assets[vid]['si_norm'] = np.clip(si / 150.0, 0, 1) 
             self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1) 
 
@@ -177,7 +176,7 @@ class ABREnv(gym.Env):
         
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
-        risk_factor = min(risk_factor, 6.0)
+        risk_factor = min(risk_factor, 15.0)
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         

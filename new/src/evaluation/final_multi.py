@@ -77,7 +77,7 @@ class TCSVT_Evaluator:
         
         # 1. Proposed
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_8' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_9' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
                 path = PATHS['models'] / 'ppo_abr_multi_dynamic_8' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
@@ -86,9 +86,9 @@ class TCSVT_Evaluator:
         
         # 2. Pensieve
         try:
-            path = PATHS['models'] / 'pensieve_multi_vmaf_new_8' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'pensieve_multi_vmaf_new_9' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_8' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_9' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
             print(f"✓ Loaded Pensieve from: {path}")
         except: print("⚠ Pensieve missing.")
@@ -202,7 +202,7 @@ class TCSVT_Evaluator:
             return
         
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_multi_video_8.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_9.csv'
         df.to_csv(path, index=False)
         print(f"\n✓ Saved results to: {path}")
         

@@ -51,14 +51,14 @@ class PensieveConfig:
     NUM_ENVS = 8
     
     # Pensieve original hyperparameters
-    LEARNING_RATE = 2.5e-4
+    LEARNING_RATE = 3e-4
     N_STEPS = 2048
-    BATCH_SIZE = 64
+    BATCH_SIZE = 128
     N_EPOCHS = 10
     GAMMA = 0.99
     ENT_COEF = 0.05
     
-    TOTAL_TIMESTEPS = 800_000
+    TOTAL_TIMESTEPS = 1_000_000
     SAVE_FREQ = 20_000
     EVAL_FREQ = 10_000
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -98,9 +98,9 @@ def main():
     print(f"🧪 Evaluation Video: {PensieveConfig.TEST_VIDEOS}")
     print("="*70 + "\n")
     
-    save_dir = PATHS['models'] / 'pensieve_multi_vmaf_new_8'
+    save_dir = PATHS['models'] / 'pensieve_multi_vmaf_new_9'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'pensieve_multi_vmaf_new_8'
+    log_dir = PATHS['logs'] / 'pensieve_multi_vmaf_new_9'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(PensieveConfig.NUM_ENVS)])
@@ -129,7 +129,7 @@ def main():
         CheckpointCallback(
             save_freq=PensieveConfig.SAVE_FREQ // PensieveConfig.NUM_ENVS,
             save_path=str(save_dir / 'checkpoints'),
-            name_prefix='pensieve_multi_vmaf_new_8'
+            name_prefix='pensieve_multi_vmaf_new_9'
         ),
         EvalCallback(
             eval_env,

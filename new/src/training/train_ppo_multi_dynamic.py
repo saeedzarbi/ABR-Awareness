@@ -175,7 +175,7 @@ class ActionLogCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         if self.n_calls % self.log_freq == 0:
-            actions = self.locals['actions'] # آرایه‌ای از اکشن‌ها (مثلاً 8 محیط)
+            actions = self.locals['actions']
             mean_action = np.mean(actions)
             
             with open(self.log_path, "a") as f:
@@ -198,12 +198,11 @@ class TrainingConfigV5:
     NUM_ENVS = 8
     
     # --- HYPERPARAMETERS ---
-    LEARNING_RATE = 5e-5    
-    
+    LEARNING_RATE = 3e-4
+    BATCH_SIZE = 128
+    N_EPOCHS = 10
+    CLIP_RANGE = 0.2    
     N_STEPS = 4096          
-    BATCH_SIZE = 256        
-    N_EPOCHS = 4            
-    CLIP_RANGE = 0.1        
     GAMMA = 0.99            
     GAE_LAMBDA = 0.95
     
@@ -246,9 +245,9 @@ def main():
     print(f"🚀 Training PPO with Detailed Action Logging")
     print("="*70)
     
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_8'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_9'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_8'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_9'
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV5.NUM_ENVS)])
     
@@ -277,7 +276,7 @@ def main():
         CheckpointCallback(
             save_freq=TrainingConfigV5.SAVE_FREQ // TrainingConfigV5.NUM_ENVS, 
             save_path=str(save_dir / 'checkpoints'), 
-            name_prefix='ppo_multi_dynamic_8'
+            name_prefix='ppo_multi_dynamic_9'
         ),
         EvalCallback(
             eval_env, 
