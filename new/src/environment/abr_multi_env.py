@@ -7,6 +7,13 @@ from typing import Dict, Tuple, Optional, Union, List
 import random
 
 class ABREnv(gym.Env):
+    """
+    Multi-Video ABR Environment (V10)
+    
+    Compatible with both multi-video training and single-video evaluation.
+    Includes compatibility properties for baselines (RobustMPC, Genie, BBA).
+    """
+    
     metadata = {'render_modes': ['human']}
     
     BITRATE_LEVELS = np.array([300, 750, 1200, 1850, 2850, 6000])
@@ -15,13 +22,9 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # ✅ FIX 1: Lyapunov Gain (unchanged from previous)
+    # ✅ V10 OPTIMIZED PARAMETERS
     LYAPUNOV_GAIN = 0.15
-    
-    # ✅ FIX 2: Increased Rebuffer Penalty (from 60 to 75)
     REBUF_PENALTY_BASE = 75.0
-    
-    # ✅ FIX 3: Smoothness Penalty (unchanged)
     SMOOTH_PENALTY_WEIGHT = 1.0
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
@@ -30,6 +33,7 @@ class ABREnv(gym.Env):
                  max_chunks=48, random_seed=None):
         super().__init__()
         
+        # Handle both single video (str) and multiple videos (list)
         if isinstance(video_names, str):
             self.video_names = [video_names]
         else:
@@ -52,6 +56,7 @@ class ABREnv(gym.Env):
         obs_dim = 18
         self.observation_space = spaces.Box(low=0.0, high=1.0, shape=(obs_dim,), dtype=np.float32)
         
+        # Current episode state
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
@@ -82,8 +87,10 @@ class ABREnv(gym.Env):
         vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
         all_vmaf_data = pd.DataFrame()
         if vmaf_file.exists():
-            try: all_vmaf_data = pd.read_csv(vmaf_file)
-            except: pass
+            try: 
+                all_vmaf_data = pd.read_csv(vmaf_file)
+            except: 
+                pass
 
         for vid in self.video_names:
             self.video_assets[vid] = {}
@@ -106,15 +113,17 @@ class ABREnv(gym.Env):
                     data = json.load(open(siti_file))
                     si = data.get('mean_si', 50)
                     ti = data.get('mean_ti', 10)
-                except: pass
+                except: 
+                    pass
             
-            # ✅ FIX 4: Improved SI/TI Normalization (150, 70 instead of 300, 120)
+            # ✅ V10 IMPROVED NORMALIZATION
             self.video_assets[vid]['si_norm'] = np.clip(si / 150.0, 0, 1) 
             self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1) 
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         
+        # Select video (random if multiple, or the single video)
         self.current_video_name = random.choice(self.video_names)
         assets = self.video_assets[self.current_video_name]
         
@@ -135,8 +144,9 @@ class ABREnv(gym.Env):
         self.total_quality = 0.0
         self.total_smooth = 0.0
         
+        # Debug logging (1% of resets)
         if random.random() < 0.01:
-            si_raw = self.current_si_norm * 150.0  # Updated from 300
+            si_raw = self.current_si_norm * 150.0
             
             log_message = (
                 f"\n🎬 [Environment Debug] Video: {self.current_video_name}\n"
@@ -182,8 +192,7 @@ class ABREnv(gym.Env):
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
         
-        # ✅ FIX 5: Reduced Risk Factor Cap (from 15.0 to 8.0)
-        # This prevents over-conservative behavior
+        # ✅ V10 OPTIMIZED RISK FACTOR CAP
         risk_factor = min(risk_factor, 8.0)
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
@@ -206,12 +215,15 @@ class ABREnv(gym.Env):
         obs = self._get_observation()
         info = self._get_info()
         info.update({
-            'bitrate': bitrate_kbps, 'throughput': avail_tp,
-            'buffer': self.buffer_level, 'buffer_level': self.buffer_level,
-            'rebuffer': rebuffer_time, 'reward': reward,
+            'bitrate': bitrate_kbps, 
+            'throughput': avail_tp,
+            'buffer': self.buffer_level, 
+            'buffer_level': self.buffer_level,
+            'rebuffer': rebuffer_time, 
+            'reward': reward,
             'video_name': self.current_video_name,
-            'risk_factor': risk_factor,  # Added for logging
-            'weighted_rebuf_penalty': weighted_rebuf  # Added for logging
+            'risk_factor': risk_factor,
+            'weighted_rebuf_penalty': weighted_rebuf
         })
         return obs, reward, terminated, False, info
 
@@ -225,4 +237,33 @@ class ABREnv(gym.Env):
             'buffer_level': self.buffer_level
         }
 
-    def render(self): pass
+    def render(self): 
+        pass
+    
+    # ============================================================================
+    # Compatibility properties for baselines (Genie, RobustMPC, BBA)
+    # ============================================================================
+    
+    @property
+    def vmaf_scores(self):
+        """
+        Compatibility property for baselines that expect env.vmaf_scores
+        Returns VMAF scores for current video
+        """
+        return self.current_vmaf_scores
+    
+    @property
+    def video_name(self):
+        """
+        Compatibility property for baselines that expect env.video_name
+        Returns current video name (single string)
+        """
+        return self.current_video_name
+    
+    @property
+    def trace(self):
+        """
+        Compatibility property for baselines that expect env.trace
+        Returns current trace
+        """
+        return self.current_trace
