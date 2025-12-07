@@ -17,7 +17,7 @@ class ABREnv(gym.Env):
     
     LYAPUNOV_GAIN = 0.15
     
-    REBUF_PENALTY_BASE = 100.0  
+    REBUF_PENALTY_BASE = 60.0  
     
     SMOOTH_PENALTY_WEIGHT = 1.0
     
