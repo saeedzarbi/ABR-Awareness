@@ -23,7 +23,7 @@ TRAIN_TRACES_DIR = STANDARDIZED_DIR / 'train_traces'  # For Training (FCC)
 TEST_TRACES_DIR = STANDARDIZED_DIR / 'test_traces'    # For Evaluation (Norway + Test FCC)
 
 # Fallback for legacy scripts (optional)
-NETWORK_TRACES_DIR = DATA_DIR / 'network_traces'
+# NETWORK_TRACES_DIR = DATA_DIR / 'network_traces'
 
 # Results directories
 RESULTS_DIR = PROJECT_ROOT / 'results'
