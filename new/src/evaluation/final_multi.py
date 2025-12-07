@@ -20,6 +20,115 @@ PATHS = get_paths()
 # Slack webhook URL (from environment variable)
 SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK_URL', '')
 
+# ============================================================================
+# Evaluation Logger
+# ============================================================================
+
+class EvaluationLogger:
+    """
+    Detailed logger for evaluation phase
+    Tracks chunk-level and episode-level metrics
+    """
+    
+    def __init__(self, log_dir: Path):
+        self.log_dir = Path(log_dir)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.chunk_logs = []
+        self.episode_logs = []
+    
+    def log_chunk(self, env, action, info, episode_num):
+        """Log each chunk during evaluation"""
+        chunk_data = {
+            'episode': episode_num,
+            'chunk': env.chunk_idx - 1,
+            'video': env.current_video_name,
+            'action': int(action),
+            'bitrate': int(env.BITRATE_LEVELS[action]),
+            'buffer': float(info['buffer_level']),
+            'throughput': float(info['throughput']),
+            'rebuffer': float(info.get('rebuffer', 0)),
+            'vmaf': float(env.last_vmaf),
+            'reward': float(info.get('reward', 0)),
+            'risk_factor': float(info.get('risk_factor', 1.0)),
+            'weighted_penalty': float(info.get('weighted_rebuf_penalty', 0))
+        }
+        self.chunk_logs.append(chunk_data)
+    
+    def log_episode(self, env, total_reward, switches, episode_num):
+        """Log complete episode statistics"""
+        rebuffer_rate = (env.total_rebuffer / (env.chunk_idx * 4.0)) * 100 if env.chunk_idx > 0 else 0
+        
+        episode_data = {
+            'episode': episode_num,
+            'video': env.current_video_name,
+            'trace_idx': env.current_trace_idx,
+            'total_reward': float(total_reward),
+            'avg_vmaf': float(env.total_quality / env.chunk_idx),
+            'total_rebuffer': float(env.total_rebuffer),
+            'rebuffer_rate': float(rebuffer_rate),
+            'total_smooth': float(env.total_smooth),
+            'switches': int(switches),
+            'chunks': int(env.chunk_idx)
+        }
+        self.episode_logs.append(episode_data)
+    
+    def save_logs(self, method_name='method'):
+        """Save all logs to CSV files"""
+        
+        # Chunk-level logs
+        if self.chunk_logs:
+            df_chunks = pd.DataFrame(self.chunk_logs)
+            chunk_path = self.log_dir / f'{method_name}_chunks.csv'
+            df_chunks.to_csv(chunk_path, index=False)
+            print(f"   ✅ Saved chunk logs: {chunk_path} ({len(self.chunk_logs)} chunks)")
+        
+        # Episode-level logs
+        if self.episode_logs:
+            df_episodes = pd.DataFrame(self.episode_logs)
+            episode_path = self.log_dir / f'{method_name}_episodes.csv'
+            df_episodes.to_csv(episode_path, index=False)
+            print(f"   ✅ Saved episode logs: {episode_path} ({len(self.episode_logs)} episodes)")
+    
+    def analyze_logs(self, method_name='method'):
+        """Quick analysis of logs"""
+        if not self.episode_logs:
+            return
+        
+        df = pd.DataFrame(self.episode_logs)
+        
+        print(f"\n📊 {method_name} - Performance Analysis:")
+        print("="*60)
+        
+        # Overall stats
+        print(f"   Avg VMAF:      {df['avg_vmaf'].mean():.2f} ± {df['avg_vmaf'].std():.2f}")
+        print(f"   Avg Rebuffer:  {df['rebuffer_rate'].mean():.2f}% ± {df['rebuffer_rate'].std():.2f}%")
+        print(f"   Avg QoE:       {df['total_reward'].mean():.1f} ± {df['total_reward'].std():.1f}")
+        print(f"   Avg Switches:  {df['switches'].mean():.1f}")
+        
+        # Per-video breakdown
+        if 'video' in df.columns and df['video'].nunique() > 1:
+            print(f"\n   Per-Video Breakdown:")
+            video_stats = df.groupby('video').agg({
+                'avg_vmaf': 'mean',
+                'rebuffer_rate': 'mean',
+                'total_reward': 'mean'
+            }).round(2)
+            for video, row in video_stats.iterrows():
+                print(f"      {video:20s}: VMAF={row['avg_vmaf']:5.1f}, "
+                      f"Rebuf={row['rebuffer_rate']:5.2f}%, QoE={row['total_reward']:7.1f}")
+        
+        # Rebuffer analysis
+        high_rebuf = df[df['rebuffer_rate'] > 5.0]
+        if len(high_rebuf) > 0:
+            print(f"\n   ⚠️ High rebuffer episodes (>5%): {len(high_rebuf)}/{len(df)}")
+        
+        print("="*60)
+
+# ============================================================================
+# Slack Integration
+# ============================================================================
+
 def send_slack_message(status, step, message):
     """Send message to Slack"""
     if not SLACK_WEBHOOK:
@@ -43,7 +152,7 @@ def send_slack_message(status, step, message):
                 "color": color,
                 "title": f"{emoji} {step}",
                 "text": message,
-                "footer": "Final Evaluation",
+                "footer": "Final Evaluation V10",
                 "ts": int(pd.Timestamp.now().timestamp())
             }
         ]
@@ -60,6 +169,10 @@ def send_slack_message(status, step, message):
     except Exception as e:
         print(f"⚠️ Failed to send Slack notification: {e}")
 
+# ============================================================================
+# Main Evaluator
+# ============================================================================
+
 class TCSVT_Evaluator:
     def __init__(self):
         self.test_trace_dir = PATHS['test_traces']
@@ -75,14 +188,15 @@ class TCSVT_Evaluator:
     def load_methods(self):
         methods = {}
         
-        # 1. Proposed
+        # 1. Proposed (V10)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_9' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_10' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_8' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_10' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
-            print(f"✓ Loaded Proposed from: {path}")
-        except: print("⚠ Proposed missing.")
+            print(f"✅ Loaded Proposed from: {path}")
+        except Exception as e:
+            print(f"⚠️ Proposed missing: {e}")
         
         # 2. Pensieve
         try:
@@ -90,8 +204,9 @@ class TCSVT_Evaluator:
             if not path.with_suffix('.zip').exists():
                  path = PATHS['models'] / 'pensieve_multi_vmaf_new_9' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
-            print(f"✓ Loaded Pensieve from: {path}")
-        except: print("⚠ Pensieve missing.")
+            print(f"✅ Loaded Pensieve from: {path}")
+        except Exception as e:
+            print(f"⚠️ Pensieve missing: {e}")
 
         # Baselines
         methods['RobustMPC'] = 'mpc_placeholder' 
@@ -100,26 +215,23 @@ class TCSVT_Evaluator:
             
         return methods
 
-    def evaluate(self, methods, episodes_per_video=20):
-        print(f"\n🔬 Running Statistical Evaluation (N={episodes_per_video} per video)...")
+    def evaluate(self, methods, episodes_per_video=20, enable_logging=True):
+        print(f"\n🔬 Running Evaluation V10 (N={episodes_per_video} per video)...")
+        print(f"   Enhanced logging: {'Enabled' if enable_logging else 'Disabled'}")
         
         send_slack_message("info", "Evaluation Started", 
-                          f"Starting evaluation on {len(self.test_videos)} videos with {episodes_per_video} episodes each")
+                          f"Starting V10 evaluation on {len(self.test_videos)} videos")
         
         if not list(self.test_trace_dir.glob("*.json")):
             print("❌ No traces found.")
-            send_slack_message("error", "Evaluation Failed", "No traces found in test directory")
+            send_slack_message("error", "Evaluation Failed", "No traces found")
             return
 
         for video_idx, video_name in enumerate(self.test_videos, 1):
             print(f"\n📹 Testing on Video: {video_name} ({video_idx}/{len(self.test_videos)})")
             
-            send_slack_message("info", f"Testing Video {video_idx}/{len(self.test_videos)}", 
-                            f"Evaluating on video: {video_name}")
-            
             if not (PATHS['content_features'] / f"{video_name}_siti.json").exists():
-                print(f"   ⚠ Skipping {video_name}: Data not found.")
-                send_slack_message("warning", f"Video Skipped", f"{video_name}: Data not found")
+                print(f"   ⚠️ Skipping {video_name}: Data not found.")
                 continue
 
             env = ABREnv(
@@ -134,9 +246,15 @@ class TCSVT_Evaluator:
             for name, model in methods.items():
                 print(f"   > Running {name}...", end='\r')
                 
+                # Create logger for this method
+                if enable_logging:
+                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v10')
+                
                 active_model = model
-                if name == 'RobustMPC': active_model = RobustMPC(env)
-                elif name == 'Genie': active_model = Genie(env)
+                if name == 'RobustMPC': 
+                    active_model = RobustMPC(env)
+                elif name == 'Genie': 
+                    active_model = Genie(env)
                 
                 for ep in range(episodes_per_video):
                     obs, info = env.reset()
@@ -145,6 +263,7 @@ class TCSVT_Evaluator:
                     switches = 0
                     last_tp = 2000.0
                     trace_tp = env.current_trace['throughput_kbps']
+                    total_reward = 0
                     
                     while not done:
                         if name == 'RobustMPC':
@@ -155,15 +274,23 @@ class TCSVT_Evaluator:
                         elif name == 'BBA':
                             action = active_model.select_bitrate(info['buffer_level'])
                         else:
-                            if name == 'Pensieve': obs[10:] = 0.0
+                            if name == 'Pensieve': 
+                                obs[10:] = 0.0
                             action, _ = active_model.predict(obs, deterministic=True)
                         
-                        if action != last_br: switches += 1
+                        if action != last_br: 
+                            switches += 1
                         last_br = action
                         
-                        obs, _, done, _, info = env.step(action)
+                        obs, reward, done, _, info = env.step(action)
+                        total_reward += reward
                         last_tp = info.get('throughput', last_tp)
+                        
+                        # Log chunk
+                        if enable_logging and name == 'Proposed':
+                            logger.log_chunk(env, action, info, ep)
                     
+                    # Calculate QoE
                     qoe = info['total_quality'] - (env.REBUF_PENALTY_BASE * info['total_rebuffer']) - (env.SMOOTH_PENALTY_WEIGHT * info['total_smoothness'])
                     
                     video_duration = env.chunk_idx * 4.0
@@ -178,23 +305,17 @@ class TCSVT_Evaluator:
                         'QoE': qoe,
                         'Switch': switches
                     })
-            print(f"   ✓ {video_name} Done.        ")
-            
-            # Send progress update
-            video_results = [r for r in self.results_detailed if r['Video'] == video_name]
-            if video_results:
-                video_df = pd.DataFrame(video_results)
-                video_summary = video_df.groupby('Method').agg({
-                    'VMAF': 'mean',
-                    'Rebuffer': 'mean',
-                    'QoE': 'mean'
-                }).round(2)
+                    
+                    # Log episode
+                    if enable_logging and name == 'Proposed':
+                        logger.log_episode(env, total_reward, switches, ep)
                 
-                summary_text = f"*{video_name} Results:*\n"
-                for method, row in video_summary.iterrows():
-                    summary_text += f"• {method}: VMAF={row['VMAF']:.2f}, Rebuf={row['Rebuffer']:.2f}%, QoE={row['QoE']:.1f}\n"
+                # Save logs for this method
+                if enable_logging and name == 'Proposed':
+                    logger.save_logs(f'{name}_{video_name}')
+                    logger.analyze_logs(f'{name}_{video_name}')
                 
-                send_slack_message("success", f"{video_name} Completed", summary_text)
+            print(f"   ✅ {video_name} Done.        ")
 
     def save_statistics(self):
         if not self.results_detailed: 
@@ -202,9 +323,11 @@ class TCSVT_Evaluator:
             return
         
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_multi_video_9.csv'
+        
+        # ✅ Changed filename to _10
+        path = PATHS['results'] / 'detailed_stats_multi_video_10.csv'
         df.to_csv(path, index=False)
-        print(f"\n✓ Saved results to: {path}")
+        print(f"\n✅ Saved results to: {path}")
         
         send_slack_message("info", "Results Saved", f"Results saved to: {path}")
         
@@ -231,61 +354,28 @@ class TCSVT_Evaluator:
         print("\n🏆 Overall Statistical Summary:")
         print(summary)
         
-        # Send detailed results to Slack
-        details_msg = "📊 *Final Evaluation Results*\n\n"
+        # Send to Slack
+        details_msg = "📊 *Final Evaluation Results V10*\n\n"
         
-        # Overall statistics per method
-        details_msg += "*Overall Performance (All Videos):*\n"
+        details_msg += "*Overall Performance:*\n"
         for method in summary.index:
             qoe_mean = summary.loc[method, ('QoE', 'mean')]
-            qoe_std = summary.loc[method, ('QoE', 'std')]
             vmaf_mean = summary.loc[method, ('VMAF', 'mean')]
-            vmaf_std = summary.loc[method, ('VMAF', 'std')]
             rebuf_mean = summary.loc[method, ('Rebuffer', 'mean')]
-            rebuf_std = summary.loc[method, ('Rebuffer', 'std')]
             
-            details_msg += f"• *{method}:*\n"
-            details_msg += f"  - QoE: {qoe_mean:.1f} ± {qoe_std:.1f}\n"
-            details_msg += f"  - VMAF: {vmaf_mean:.2f} ± {vmaf_std:.2f}\n"
-            details_msg += f"  - Rebuffer: {rebuf_mean:.2f}% ± {rebuf_std:.2f}%\n\n"
-        
-        # Per-video breakdown
-        if 'Video' in df.columns:
-            details_msg += "*Per-Video Breakdown:*\n"
-            for video in df['Video'].unique():
-                video_df = df[df['Video'] == video]
-                video_summary = video_df.groupby('Method').agg({
-                    'VMAF': 'mean',
-                    'Rebuffer': 'mean',
-                    'QoE': 'mean'
-                }).round(2)
-                
-                details_msg += f"\n*{video}:*\n"
-                for method, row in video_summary.iterrows():
-                    details_msg += f"  • {method}: VMAF={row['VMAF']:.2f}, Rebuf={row['Rebuffer']:.2f}%, QoE={row['QoE']:.1f}\n"
-        
-        # Best performer
-        best_qoe_method = summary[('QoE', 'mean')].idxmax()
-        best_vmaf_method = summary[('VMAF', 'mean')].idxmax()
-        lowest_rebuf_method = summary[('Rebuffer', 'mean')].idxmin()
-        
-        details_msg += f"\n*Best Performers:*\n"
-        details_msg += f"• Best QoE: {best_qoe_method} ({summary.loc[best_qoe_method, ('QoE', 'mean')]:.1f})\n"
-        details_msg += f"• Best VMAF: {best_vmaf_method} ({summary.loc[best_vmaf_method, ('VMAF', 'mean')]:.2f})\n"
-        details_msg += f"• Lowest Rebuffer: {lowest_rebuf_method} ({summary.loc[lowest_rebuf_method, ('Rebuffer', 'mean')]:.2f}%)\n"
-        
-        # Test configuration
-        details_msg += f"\n*Test Configuration:*\n"
-        details_msg += f"• Videos: {', '.join(df['Video'].unique()) if 'Video' in df.columns else 'N/A'}\n"
-        details_msg += f"• Total Episodes: {len(df)}\n"
-        details_msg += f"• Methods Tested: {len(summary)}\n"
+            details_msg += f"• *{method}:* QoE={qoe_mean:.1f}, VMAF={vmaf_mean:.2f}, Rebuf={rebuf_mean:.2f}%\n"
         
         send_slack_message("success", "Evaluation Completed", details_msg)
+
+# ============================================================================
+# Main
+# ============================================================================
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', type=str, help='Load existing CSV')
     parser.add_argument('--episodes', type=int, default=20, help='Episodes per video')
+    parser.add_argument('--no-logging', action='store_true', help='Disable detailed logging')
     args = parser.parse_args()
     
     evaluator = TCSVT_Evaluator()
@@ -295,5 +385,7 @@ if __name__ == '__main__':
     else:
         methods = evaluator.load_methods()
         if methods:
-            evaluator.evaluate(methods, episodes_per_video=args.episodes)
+            evaluator.evaluate(methods, 
+                             episodes_per_video=args.episodes,
+                             enable_logging=not args.no_logging)
             evaluator.save_statistics()

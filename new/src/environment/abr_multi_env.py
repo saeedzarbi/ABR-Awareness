@@ -15,10 +15,13 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
+    # ✅ FIX 1: Lyapunov Gain (unchanged from previous)
     LYAPUNOV_GAIN = 0.15
     
-    REBUF_PENALTY_BASE = 60.0  
+    # ✅ FIX 2: Increased Rebuffer Penalty (from 60 to 75)
+    REBUF_PENALTY_BASE = 75.0
     
+    # ✅ FIX 3: Smoothness Penalty (unchanged)
     SMOOTH_PENALTY_WEIGHT = 1.0
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
@@ -105,6 +108,7 @@ class ABREnv(gym.Env):
                     ti = data.get('mean_ti', 10)
                 except: pass
             
+            # ✅ FIX 4: Improved SI/TI Normalization (150, 70 instead of 300, 120)
             self.video_assets[vid]['si_norm'] = np.clip(si / 150.0, 0, 1) 
             self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1) 
 
@@ -132,11 +136,12 @@ class ABREnv(gym.Env):
         self.total_smooth = 0.0
         
         if random.random() < 0.01:
-            si_raw = self.current_si_norm * 300.0 
+            si_raw = self.current_si_norm * 150.0  # Updated from 300
             
             log_message = (
-                f"\n🔍 [Environment Debug] Video: {self.current_video_name}\n"
+                f"\n🎬 [Environment Debug] Video: {self.current_video_name}\n"
                 f"   SI Input: {self.current_si_norm:.2f} (Raw ~{si_raw:.0f})\n"
+                f"   TI Input: {self.current_ti_norm:.2f}\n"
                 f"   Penalty Used: {self.REBUF_PENALTY_BASE}\n"
                 f"{'-' * 40}\n"
             )
@@ -176,7 +181,10 @@ class ABREnv(gym.Env):
         
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
-        risk_factor = min(risk_factor, 15.0)
+        
+        # ✅ FIX 5: Reduced Risk Factor Cap (from 15.0 to 8.0)
+        # This prevents over-conservative behavior
+        risk_factor = min(risk_factor, 8.0)
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         
@@ -201,7 +209,9 @@ class ABREnv(gym.Env):
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'buffer_level': self.buffer_level,
             'rebuffer': rebuffer_time, 'reward': reward,
-            'video_name': self.current_video_name
+            'video_name': self.current_video_name,
+            'risk_factor': risk_factor,  # Added for logging
+            'weighted_rebuf_penalty': weighted_rebuf  # Added for logging
         })
         return obs, reward, terminated, False, info
 

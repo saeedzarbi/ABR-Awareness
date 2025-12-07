@@ -64,7 +64,7 @@ send_slack_message "info" "Pipeline Started" "ABR Training and Evaluation pipeli
 # Step 1: Train PPO Multi-Dynamic
 echo ""
 echo "=========================================="
-echo "📚 Step 1: Training PPO Multi-Dynamic"
+echo "📚 Training PPO Multi-Dynamic"
 echo "=========================================="
 send_slack_message "info" "Step 1 Started" "Training PPO Multi-Dynamic model..."
 
