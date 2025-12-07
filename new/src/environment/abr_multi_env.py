@@ -15,11 +15,11 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    LYAPUNOV_GAIN = 0.05
+    LYAPUNOV_GAIN = 0.15
     
-    REBUF_PENALTY_BASE = 30.0  
+    REBUF_PENALTY_BASE = 100.0  
     
-    SMOOTH_PENALTY_WEIGHT = 0.1 
+    SMOOTH_PENALTY_WEIGHT = 1.0
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='data/network_traces/processed', 
@@ -106,8 +106,8 @@ class ABREnv(gym.Env):
                 except: pass
             
             # --- NORMALIZATION FIX (Already applied correctly) ---
-            self.video_assets[vid]['si_norm'] = np.clip(si / 300.0, 0, 1) 
-            self.video_assets[vid]['ti_norm'] = np.clip(ti / 120.0, 0, 1) 
+            self.video_assets[vid]['si_norm'] = np.clip(si / 150.0, 0, 1) 
+            self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1) 
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
