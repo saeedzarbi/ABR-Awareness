@@ -24,12 +24,12 @@ class ABREnv(gym.Env):
     
     # ✅ V10 OPTIMIZED PARAMETERS
     LYAPUNOV_GAIN = 0.15
-    REBUF_PENALTY_BASE = 75.0
+    REBUF_PENALTY_BASE = 50.0
     SMOOTH_PENALTY_WEIGHT = 1.0
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
-                 trace_dir='data/network_traces/processed', 
-                 vmaf_dir='data/vmaf_scores', siti_dir='data/content_features', 
+                 trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
+                 vmaf_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores', siti_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/content_features', 
                  max_chunks=48, random_seed=None):
         super().__init__()
         
@@ -193,7 +193,7 @@ class ABREnv(gym.Env):
         risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
         
         # ✅ V10 OPTIMIZED RISK FACTOR CAP
-        risk_factor = min(risk_factor, 8.0)
+        risk_factor = min(risk_factor, 10.0)
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         

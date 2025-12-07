@@ -171,6 +171,20 @@ def send_slack_message(status, step, message):
 
 # ============================================================================
 # Main Evaluator
+# ✓ project_root        : /home/saeedzarbi95/test/ABR-Awareness/new
+# ✓ data_dir            : /home/saeedzarbi95/test/ABR-Awareness/new/data
+# ✓ raw_videos          : /home/saeedzarbi95/test/ABR-Awareness/new/data/raw_videos
+# ✓ encoded_videos      : /home/saeedzarbi95/test/ABR-Awareness/new/data/encoded_videos
+# ✓ vmaf_scores         : /home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores
+# ✓ content_features    : /home/saeedzarbi95/test/ABR-Awareness/new/data/content_features
+# ✓ processed_traces    : /home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces
+# ✓ train_traces        : /home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces
+# ✓ test_traces         : /home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/test_traces
+# ✓ network_traces      : /home/saeedzarbi95/test/ABR-Awareness/new/data/network_traces
+# ✓ results             : /home/saeedzarbi95/test/ABR-Awareness/new/results
+# ✓ models              : /home/saeedzarbi95/test/ABR-Awareness/new/results/models
+# ✓ logs                : /home/saeedzarbi95/test/ABR-Awareness/new/results/logs
+# ✓ plots               : /home/saeedzarbi95/test/ABR-Awareness/new/results/plots
 # ============================================================================
 
 class TCSVT_Evaluator:
@@ -190,9 +204,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed (V10)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_10' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_11' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_10' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_11' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed from: {path}")
         except Exception as e:
@@ -248,7 +262,7 @@ class TCSVT_Evaluator:
                 
                 # Create logger for this method
                 if enable_logging:
-                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v10')
+                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v11')
                 
                 active_model = model
                 if name == 'RobustMPC': 
@@ -325,7 +339,7 @@ class TCSVT_Evaluator:
         df = pd.DataFrame(self.results_detailed)
         
         # ✅ Changed filename to _10
-        path = PATHS['results'] / 'detailed_stats_multi_video_10.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_11.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         
@@ -355,7 +369,7 @@ class TCSVT_Evaluator:
         print(summary)
         
         # Send to Slack
-        details_msg = "📊 *Final Evaluation Results V10*\n\n"
+        details_msg = "📊 *Final Evaluation Results V11*\n\n"
         
         details_msg += "*Overall Performance:*\n"
         for method in summary.index:

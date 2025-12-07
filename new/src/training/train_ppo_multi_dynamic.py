@@ -222,9 +222,9 @@ def main():
     print("="*70 + "\n")
     
     # Create directories
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_10'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_11'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_10'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_11'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     # Create training environments
