@@ -1,0 +1,5005 @@
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~136)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~239)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~204)
+   Penalty Used: 60.0
+----------------------------------------
+
+🔍 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~121)
+   Penalty Used: 60.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: tearsofsteel_short
+   SI Input: 0.45 (Raw ~68)
+   TI Input: 0.84
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: parkjoy
+   SI Input: 0.80 (Raw ~120)
+   TI Input: 0.50
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: crowd_run
+   SI Input: 0.68 (Raw ~102)
+   TI Input: 0.40
+   Penalty Used: 75.0
+----------------------------------------
+
+🎬 [Environment Debug] Video: bigbuckbunny
+   SI Input: 0.40 (Raw ~61)
+   TI Input: 0.67
+   Penalty Used: 75.0
+----------------------------------------
