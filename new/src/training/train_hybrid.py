@@ -3,9 +3,10 @@ Hybrid Training: Imitation Pre-training + PPO Fine-tuning
 Stage 1: Load imitation model
 Stage 2: Continue with PPO
 """
+import sys
+
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-import sys
 from pathlib import Path
 import numpy as np
 import torch
