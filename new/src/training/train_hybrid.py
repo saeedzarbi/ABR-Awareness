@@ -17,7 +17,7 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 sys.path.append(str(Path(__file__).parent.parent))
 
 from abr_multi_env_v13 import ABREnv
-from configs.paths import get_paths
+from new.configs.paths import get_paths
 
 PATHS = get_paths()
 
