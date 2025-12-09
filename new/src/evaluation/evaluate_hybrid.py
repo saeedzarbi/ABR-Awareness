@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from stable_baselines3 import PPO
-from src.environment.abr_env_3 import ABREnv
+from src.environment.abr_env_simple import ABREnvSimple
 import numpy as np
 import pandas as pd
 
@@ -46,7 +46,7 @@ def evaluate_model(
         return
     
     # Create environment
-    env = ABREnv(
+    env = ABREnvSimple(
         video_names=videos,
         trace_dir=trace_dir,
         vmaf_dir=vmaf_dir,

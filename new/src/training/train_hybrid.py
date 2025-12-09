@@ -17,7 +17,7 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from abr_multi_env_v13 import ABREnv
+from src.environment.abr_env_simple import ABREnvSimple
 from configs.paths import get_paths
 
 PATHS = get_paths()
@@ -109,7 +109,7 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
             video_list = HybridTrainingConfig.TRAIN_VIDEOS
             trace_path = PATHS['train_traces']
         
-        env = ABREnv(
+        env = ABREnvSimple(
             video_names=video_list,
             trace_dir=str(trace_path),
             vmaf_dir=str(PATHS['vmaf_scores']),
