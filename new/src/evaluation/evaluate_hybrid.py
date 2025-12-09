@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from stable_baselines3 import PPO
-from abr_multi_env_v13 import ABREnv
+from src.environment.abr_env_3 import ABREnv
 import numpy as np
 import pandas as pd
 
