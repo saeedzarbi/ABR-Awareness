@@ -3,6 +3,7 @@ Hybrid Training: Imitation Pre-training + PPO Fine-tuning
 Stage 1: Load imitation model
 Stage 2: Continue with PPO
 """
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 import sys
 from pathlib import Path
@@ -14,10 +15,9 @@ from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback,
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.policies import ActorCriticPolicy
 
-sys.path.append(str(Path(__file__).parent.parent))
 
 from abr_multi_env_v13 import ABREnv
-from .new.configs.paths import get_paths
+from configs.paths import get_paths
 
 PATHS = get_paths()
 
