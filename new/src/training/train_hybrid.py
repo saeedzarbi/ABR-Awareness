@@ -5,7 +5,6 @@ Stage 2: Continue with PPO
 """
 import sys
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from pathlib import Path
 import numpy as np
@@ -16,6 +15,7 @@ from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback,
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.policies import ActorCriticPolicy
 
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from abr_multi_env_v13 import ABREnv
 from configs.paths import get_paths
