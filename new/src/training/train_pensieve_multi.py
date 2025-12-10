@@ -40,13 +40,13 @@ class PensieveConfig:
     # --- SAME DATASET AS PROPOSED METHOD ---
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
-        'crowd_run',       
+        'sintel',       
         'tearsofsteel_short' 
 
     ]
     
     # Unseen video for fair generalization test
-    TEST_VIDEOS = ['parkjoy'] 
+    TEST_VIDEOS = ['sintel'] 
     
     MAX_CHUNKS = 48
     NUM_ENVS = 8
@@ -99,9 +99,9 @@ def main():
     print(f"🧪 Evaluation Video: {PensieveConfig.TEST_VIDEOS}")
     print("="*70 + "\n")
     
-    save_dir = PATHS['models'] / 'pensieve_multi_vmaf_new_13'
+    save_dir = PATHS['models'] / 'pensieve_multi_vmaf_new_14'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'pensieve_multi_vmaf_new_13'
+    log_dir = PATHS['logs'] / 'pensieve_multi_vmaf_new_14'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(PensieveConfig.NUM_ENVS)])
@@ -130,7 +130,7 @@ def main():
         CheckpointCallback(
             save_freq=PensieveConfig.SAVE_FREQ // PensieveConfig.NUM_ENVS,
             save_path=str(save_dir / 'checkpoints'),
-            name_prefix='pensieve_multi_vmaf_new_13'
+            name_prefix='pensieve_multi_vmaf_new_14'
         ),
         EvalCallback(
             eval_env,
