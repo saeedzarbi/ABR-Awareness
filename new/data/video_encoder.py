@@ -219,10 +219,40 @@ class VideoEncoder:
         Returns:
             Nested dictionary: {video_name: {bitrate: path}}
         """
+        # Check if input directory exists
+        if not self.input_dir.exists():
+            print(f"✗ Input directory does not exist: {self.input_dir.absolute()}")
+            return {}
+        
+        if not self.input_dir.is_dir():
+            print(f"✗ Input path is not a directory: {self.input_dir.absolute()}")
+            return {}
+        
+        # List all files in directory for debugging
+        all_files = list(self.input_dir.iterdir())
+        if all_files:
+            print(f"\n📂 Files found in input directory ({self.input_dir.absolute()}):")
+            for f in sorted(all_files):
+                file_type = "📁" if f.is_dir() else "📄"
+                print(f"  {file_type} {f.name}")
+        else:
+            print(f"\n⚠ Input directory is empty: {self.input_dir.absolute()}")
+        
         video_files = list(self.input_dir.glob("*.mp4"))
         
         if not video_files:
-            print("✗ No videos found in input directory")
+            print(f"\n✗ No .mp4 videos found in input directory: {self.input_dir.absolute()}")
+            print(f"   Searched for pattern: *.mp4")
+            # Check for other video extensions
+            other_video_exts = ['.mkv', '.avi', '.mov', '.webm', '.flv']
+            found_other = []
+            for ext in other_video_exts:
+                found = list(self.input_dir.glob(f"*{ext}"))
+                if found:
+                    found_other.extend(found)
+            if found_other:
+                print(f"   Found other video files: {[f.name for f in found_other]}")
+                print(f"   Please convert them to .mp4 format first")
             return {}
         
         print(f"\n{'='*60}")
