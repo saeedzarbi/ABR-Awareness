@@ -95,18 +95,14 @@ class ActionLogCallback(BaseCallback):
             self.logger.record("custom/mean_action_idx", mean_action)
         return True
 
-# ============================================================================
-# Training Configuration
-# ============================================================================
-
 class TrainingConfigV10:
     """
-    Training configuration for V15 (Log Scale + Robust Adaptability)
+    Training configuration for V16 (Aggressive & Smart)
     """
     
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
-        'crowd_run',          # HARD video active
+        'crowd_run',          
         'tearsofsteel_short' 
     ]
     
@@ -124,8 +120,8 @@ class TrainingConfigV10:
     GAE_LAMBDA = 0.95
     CLIP_RANGE = 0.2
     
-    # Increased to 0.03 to encourage exploration with new log-scale inputs
-    ENT_COEF = 0.03         
+    # Increased Entropy to 0.05 for aggressive exploration
+    ENT_COEF = 0.05         
     VF_COEF = 0.5
     MAX_GRAD_NORM = 0.5
     
@@ -135,10 +131,6 @@ class TrainingConfigV10:
     
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-# ============================================================================
-# Environment Factory
-# ============================================================================
-    
 def make_env(rank: int, seed: int = 0, is_eval: bool = False):
     def _init():
         if is_eval:
@@ -161,21 +153,16 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
         return Monitor(env, info_keywords=('avg_quality', 'total_rebuffer'))
     return _init
 
-# ============================================================================
-# Main Training Function
-# ============================================================================
-
 def main():
     print("\n" + "="*70)
-    print(f"🚀 Training PPO V15: Logarithmic Scale + Robust Adaptability")
+    print(f"🚀 Training PPO V16: Aggressive (High Risk/High Reward)")
     print("="*70)
     print(f"📚 Training Videos: {TrainingConfigV10.TRAIN_VIDEOS}")
     print(f"🧪 Test Videos: {TrainingConfigV10.TEST_VIDEOS}")
     print("\n📊 Configuration:")
-    print(f"   REBUF_PENALTY_BASE: 4.5 (Fixed)") 
-    print(f"   Risk Factor Cap: 6.0 (Fixed)")
-    print(f"   Throughput Norm: Logarithmic (10-20000 kbps)")
-    print(f"   Learning Rate: {TrainingConfigV10.LEARNING_RATE}")
+    print(f"   REBUF_PENALTY: 4.0 (Linear Risk)") 
+    print(f"   Buffer Trend: Included")
+    print(f"   Throughput History: 12 Steps (Log Scale)")
     print(f"   Entropy Coef: {TrainingConfigV10.ENT_COEF}")
     print(f"   Total Timesteps: {TrainingConfigV10.TOTAL_TIMESTEPS:,}")
     print("="*70 + "\n")
@@ -212,7 +199,7 @@ def main():
     )
     
     callbacks = CallbackList([
-        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_15', save_replay_buffer=False, save_vecnormalize=False),
+        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_16', save_replay_buffer=False, save_vecnormalize=False),
         EvalCallback(eval_env, best_model_save_path=str(save_dir / 'best_model'), log_path=str(log_dir / 'eval'), eval_freq=TrainingConfigV10.EVAL_FREQ // TrainingConfigV10.NUM_ENVS, n_eval_episodes=20, deterministic=True, render=False, verbose=1),
         ActionLogCallback(log_freq=40000, log_file="actions_history.txt"),
         EnhancedLoggingCallback(log_dir=log_dir, log_freq=5000, verbose=1)

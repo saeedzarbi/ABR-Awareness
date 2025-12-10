@@ -8,12 +8,13 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V15 - Logarithmic Scaling)
+    Multi-Video ABR Environment (V16 - Aggressive & Smart)
     
-    Key Improvements:
-    1. Logarithmic Throughput Normalization: Helps agent distinguish low bitrates better.
-    2. Preventing Reward Explosion: Capping download time.
-    3. Optimized Penalties: Balanced for VMAF/Rebuffer trade-off.
+    Target: Beat RobustMPC & BBA
+    Changes:
+    1. Linear Risk Factor (Don't panic when buffer drops)
+    2. Extended History (8 -> 12 steps)
+    3. Added 'Buffer Trend' observation (Derivative of buffer)
     """
     
     metadata = {'render_modes': ['human']}
@@ -24,21 +25,18 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # --- OPTIMIZED HYPERPARAMETERS ---
-    # Low gain to prevent panic when buffer drops slightly
-    LYAPUNOV_GAIN = 0.05  
-    
-    # Balanced penalty to encourage high quality while avoiding stalls
-    REBUF_PENALTY_BASE = 4.5
-    
-    # Low smooth penalty to allow necessary quality switches
+    # --- AGGRESSIVE TUNING ---
+    # We remove the exponential fear. Linear penalty allows using buffer as a resource.
+    REBUF_PENALTY_BASE = 4.0  # Slightly lower base
     SMOOTH_PENALTY_WEIGHT = 0.1
     
-    # --- LOGARITHMIC SCALE SETTINGS ---
-    # We use log scale for throughput to make low-bandwidth variations more visible
+    # Network Scale
     MAX_NETWORK_THROUGHPUT = 20000.0
-    MIN_NETWORK_THROUGHPUT = 10.0  # Avoid log(0)
+    MIN_NETWORK_THROUGHPUT = 10.0
     
+    # History length
+    HISTORY_LEN = 12 
+
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
                  vmaf_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores', 
@@ -65,10 +63,13 @@ class ABREnv(gym.Env):
         self._load_all_video_data()
         
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
-        obs_dim = 18
-        self.observation_space = spaces.Box(low=0.0, high=1.0, shape=(obs_dim,), dtype=np.float32)
         
-        # Current episode state
+        # Obs: [Throughput_History(12), Buffer, Last_BR, SI, TI, VMAF(6), Buffer_Trend(1)]
+        # Total dim = 12 + 1 + 1 + 2 + 6 + 1 = 23
+        obs_dim = self.HISTORY_LEN + 11
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
+        
+        # State
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
@@ -79,6 +80,7 @@ class ABREnv(gym.Env):
         self.current_trace_idx = 0
         self.chunk_idx = 0
         self.buffer_level = 0.0
+        self.prev_buffer_level = 0.0 # To calc trend
         self.last_bitrate_idx = 0
         self.last_vmaf = 35.0
         self.throughput_history = []
@@ -98,15 +100,11 @@ class ABREnv(gym.Env):
         vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
         all_vmaf_data = None
         if vmaf_file.exists():
-            try:
-                all_vmaf_data = pd.read_csv(vmaf_file)
-            except: 
-                pass
+            try: all_vmaf_data = pd.read_csv(vmaf_file)
+            except: pass
 
         for vid in self.video_names:
             self.video_assets[vid] = {}
-            
-            # --- VMAF ---
             vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97}
             if all_vmaf_data is not None and 'video' in all_vmaf_data.columns:
                 df = all_vmaf_data[all_vmaf_data['video'] == vid]
@@ -116,7 +114,6 @@ class ABREnv(gym.Env):
             self.video_assets[vid]['vmaf'] = vmaf_scores
             self.video_assets[vid]['vmaf_norm'] = {k: v/100.0 for k, v in vmaf_scores.items()}
 
-            # --- SI/TI ---
             siti_file = self.siti_dir / f"{vid}_siti.json"
             si, ti = 50, 10
             if siti_file.exists():
@@ -124,17 +121,13 @@ class ABREnv(gym.Env):
                     data = json.load(open(siti_file))
                     si = data.get('mean_si', 50)
                     ti = data.get('mean_ti', 10)
-                except: 
-                    pass
+                except: pass
             
-            # Normalization (SI/150, TI/70)
             self.video_assets[vid]['si_norm'] = np.clip(si / 150.0, 0, 1) 
             self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        
-        # Select video
         self.current_video_name = random.choice(self.video_names)
         assets = self.video_assets[self.current_video_name]
         
@@ -148,14 +141,14 @@ class ABREnv(gym.Env):
         
         self.chunk_idx = 0
         self.buffer_level = 1.0
+        self.prev_buffer_level = 1.0
         self.last_bitrate_idx = 0
         self.last_vmaf = self.current_vmaf_scores[self.BITRATE_LEVELS[0]]
         
-        # --- FIX 1: Initialize with Log-scale value ---
-        # Start with a conservative guess (~500kbps) in log scale
+        # Init throughput history (Log scale conservative guess)
         start_tp = 500.0
         log_obs = np.log(start_tp / self.MIN_NETWORK_THROUGHPUT) / np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
-        self.throughput_history = [log_obs] * 8 
+        self.throughput_history = [log_obs] * self.HISTORY_LEN
         
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
@@ -164,14 +157,27 @@ class ABREnv(gym.Env):
         return self._get_observation(), self._get_info()
     
     def _get_observation(self):
-        tp_obs = np.array(self.throughput_history[-8:], dtype=np.float32)
+        tp_obs = np.array(self.throughput_history[-self.HISTORY_LEN:], dtype=np.float32)
         buf_obs = np.clip(self.buffer_level / self.BUFFER_MAX, 0, 1)
-        last_br_obs = self.last_bitrate_idx / (len(self.BITRATE_LEVELS) - 1)
         
+        # New Feature: Buffer Trend (Is buffer growing or shrinking?)
+        # Normalized roughly between -1 and 1
+        buf_trend = (self.buffer_level - self.prev_buffer_level) / self.CHUNK_DURATION
+        buf_trend = np.clip(buf_trend, -1.0, 1.0)
+        
+        last_br_obs = self.last_bitrate_idx / (len(self.BITRATE_LEVELS) - 1)
         content_obs = np.array([self.current_si_norm, self.current_ti_norm], dtype=np.float32)
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
-        return np.concatenate([tp_obs, [buf_obs], [last_br_obs], content_obs, vmaf_obs]).astype(np.float32)
+        # Concatenate all
+        return np.concatenate([
+            tp_obs,           # 12
+            [buf_obs],        # 1
+            [buf_trend],      # 1 (NEW)
+            [last_br_obs],    # 1
+            content_obs,      # 2
+            vmaf_obs          # 6
+        ]).astype(np.float32)
 
     def step(self, action):
         bitrate_kbps = self.BITRATE_LEVELS[action]
@@ -179,17 +185,14 @@ class ABREnv(gym.Env):
         
         trace_tp = self.current_trace['throughput_kbps']
         avail_tp = trace_tp[int(self.chunk_idx * self.CHUNK_DURATION) % len(trace_tp)]
-        
-        # --- SAFEGUARD: Clip throughput range & prevent zero division ---
         effective_tp = np.clip(avail_tp, self.MIN_NETWORK_THROUGHPUT, self.MAX_NETWORK_THROUGHPUT)
         
         download_time = chunk_size_bits / (effective_tp * 1000.0)
-        
-        # --- SAFEGUARD: Cap download time ---
-        if download_time > 60.0:
-            download_time = 60.0
+        if download_time > 60.0: download_time = 60.0
         
         rebuffer_time = max(0, download_time - self.buffer_level)
+        
+        self.prev_buffer_level = self.buffer_level # Save for trend calc
         self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
         self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
         
@@ -198,19 +201,21 @@ class ABREnv(gym.Env):
         
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         
-        # Risk factor
-        risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
-        risk_factor = min(risk_factor, 6.0)
+        # --- NEW: LINEAR RISK FACTOR ---
+        # Instead of exponential panic, use a gentle linear push
+        # If buffer is low (e.g. 5s), dev is 10. risk is 1.0 + 1.0 = 2.0.
+        # Max risk is around 1 + 0.1*15 = 2.5. Much lower than 6.0!
+        risk_factor = 1.0 + (0.1 * buffer_dev) 
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         
+        # Reduced buffer dev penalty to allow utilizing buffer
         reward = current_vmaf \
                  - weighted_rebuf \
                  - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
-                 - (0.05 * buffer_dev)
+                 - (0.02 * buffer_dev) 
         
-        # --- FIX 2: LOGARITHMIC NORMALIZATION ---
-        # Maps [10, 20000] -> [0, 1] but expands low values
+        # Log Scale Update
         log_tp = np.log(effective_tp / self.MIN_NETWORK_THROUGHPUT)
         log_scale = np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
         norm_tp = np.clip(log_tp / log_scale, 0.0, 1.0)
@@ -229,12 +234,9 @@ class ABREnv(gym.Env):
         obs = self._get_observation()
         info = self._get_info()
         info.update({
-            'bitrate': bitrate_kbps, 
-            'throughput': avail_tp,
-            'buffer': self.buffer_level, 
-            'rebuffer': rebuffer_time, 
-            'reward': reward,
-            'video_name': self.current_video_name,
+            'bitrate': bitrate_kbps, 'throughput': avail_tp,
+            'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
+            'reward': reward, 'video_name': self.current_video_name,
             'risk_factor': risk_factor
         })
         return obs, reward, terminated, False, info
@@ -249,10 +251,7 @@ class ABREnv(gym.Env):
             'buffer_level': self.buffer_level
         }
 
-    def render(self): 
-        pass
-    
-    # Baselines compatibility
+    def render(self): pass
     @property
     def vmaf_scores(self): return self.current_vmaf_scores
     @property

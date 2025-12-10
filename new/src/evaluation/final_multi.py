@@ -231,11 +231,11 @@ class TCSVT_Evaluator:
         return methods
 
     def evaluate(self, methods, episodes_per_video=20, enable_logging=True):
-        print(f"\n🔬 Running Evaluation V15 (N={episodes_per_video} per video)...")
+        print(f"\n🔬 Running Evaluation V16 (N={episodes_per_video} per video)...")
         print(f"   Enhanced logging: {'Enabled' if enable_logging else 'Disabled'}")
         
         send_slack_message("info", "Evaluation Started", 
-                          f"Starting V15 evaluation on {len(self.test_videos)} videos")
+                          f"Starting V16 evaluation on {len(self.test_videos)} videos")
         
         if not list(self.test_trace_dir.glob("*.json")):
             print("❌ No traces found.")
@@ -263,7 +263,7 @@ class TCSVT_Evaluator:
                 
                 # Create logger for this method
                 if enable_logging:
-                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v15')
+                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v16')
                 
                 active_model = model
                 if name == 'RobustMPC': 
@@ -340,7 +340,7 @@ class TCSVT_Evaluator:
         df = pd.DataFrame(self.results_detailed)
         
         # ✅ Changed filename to _10
-        path = PATHS['results'] / 'detailed_stats_multi_video_15.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_16.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         
@@ -370,7 +370,7 @@ class TCSVT_Evaluator:
         print(summary)
         
         # Send to Slack
-        details_msg = "📊 *Final Evaluation Results V15*\n\n"
+        details_msg = "📊 *Final Evaluation Results V16*\n\n"
         
         details_msg += "*Overall Performance:*\n"
         for method in summary.index:
