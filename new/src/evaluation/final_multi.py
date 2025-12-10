@@ -194,7 +194,7 @@ class TCSVT_Evaluator:
 
         self.test_videos = [
             'bigbuckbunny',    
-            # 'crowd_run',    
+            'crowd_run',    
             # 'parkjoy',       
             'tearsofsteel_short',
             'sintel'
