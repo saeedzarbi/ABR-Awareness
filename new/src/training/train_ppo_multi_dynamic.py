@@ -18,9 +18,6 @@ PATHS = get_paths()
 # ============================================================================
 
 class EnhancedLoggingCallback(BaseCallback):
-    """
-    Enhanced logging callback for detailed training analysis
-    """
     def __init__(self, log_dir: Path, log_freq: int = 5000, verbose: int = 0):
         super().__init__(verbose)
         self.log_dir = Path(log_dir)
@@ -104,12 +101,12 @@ class ActionLogCallback(BaseCallback):
 
 class TrainingConfigV10:
     """
-    Training configuration for V10 (Fixed Environment)
+    Training configuration for V15 (Log Scale + Robust Adaptability)
     """
     
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
-        'crowd_run',          # <--- FIXED: Uncommented crowd_run
+        'crowd_run',          # HARD video active
         'tearsofsteel_short' 
     ]
     
@@ -127,8 +124,8 @@ class TrainingConfigV10:
     GAE_LAMBDA = 0.95
     CLIP_RANGE = 0.2
     
-    # <--- FIXED: Lower Entropy to stabilize learning
-    ENT_COEF = 0.02         
+    # Increased to 0.03 to encourage exploration with new log-scale inputs
+    ENT_COEF = 0.03         
     VF_COEF = 0.5
     MAX_GRAD_NORM = 0.5
     
@@ -151,8 +148,7 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
             video_list = TrainingConfigV10.TRAIN_VIDEOS
             trace_path = PATHS['train_traces']
             
-        if not video_list: 
-            video_list = ['bigbuckbunny']
+        if not video_list: video_list = ['bigbuckbunny']
 
         env = ABREnv(
             video_names=video_list,
@@ -162,7 +158,6 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
             max_chunks=TrainingConfigV10.MAX_CHUNKS,
             random_seed=seed + rank
         )
-        
         return Monitor(env, info_keywords=('avg_quality', 'total_rebuffer'))
     return _init
 
@@ -172,39 +167,32 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
 
 def main():
     print("\n" + "="*70)
-    print(f"🚀 Training PPO V10: Fixed Env (Normalized Inputs + Lower Penalty)")
+    print(f"🚀 Training PPO V15: Logarithmic Scale + Robust Adaptability")
     print("="*70)
     print(f"📚 Training Videos: {TrainingConfigV10.TRAIN_VIDEOS}")
     print(f"🧪 Test Videos: {TrainingConfigV10.TEST_VIDEOS}")
     print("\n📊 Configuration:")
     print(f"   REBUF_PENALTY_BASE: 4.5 (Fixed)") 
     print(f"   Risk Factor Cap: 6.0 (Fixed)")
-    print(f"   Throughput Norm: / 20000 kbps")
+    print(f"   Throughput Norm: Logarithmic (10-20000 kbps)")
     print(f"   Learning Rate: {TrainingConfigV10.LEARNING_RATE}")
     print(f"   Entropy Coef: {TrainingConfigV10.ENT_COEF}")
     print(f"   Total Timesteps: {TrainingConfigV10.TOTAL_TIMESTEPS:,}")
     print("="*70 + "\n")
     
-    # Create directories
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_15'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_16'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_15'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_16'
     log_dir.mkdir(parents=True, exist_ok=True)
     
-    # Create training environments
-    train_env = SubprocVecEnv([
-        make_env(i, 0, is_eval=False) 
-        for i in range(TrainingConfigV10.NUM_ENVS)
-    ])
+    train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV10.NUM_ENVS)])
     
-    # Create evaluation environment
     if len(list(PATHS['test_traces'].glob('*.json'))) > 0:
         eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=True)])
     else:
         print("⚠️ Warning: No test traces found. Using training traces for eval.")
         eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=False)])
     
-    # Create PPO model
     model = PPO(
         'MlpPolicy',
         train_env,
@@ -223,48 +211,15 @@ def main():
         tensorboard_log=str(log_dir)
     )
     
-    # Setup callbacks
     callbacks = CallbackList([
-        CheckpointCallback(
-            save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, 
-            save_path=str(save_dir / 'checkpoints'), 
-            name_prefix='ppo_multi_dynamic_15',
-            save_replay_buffer=False,
-            save_vecnormalize=False
-        ),
-        EvalCallback(
-            eval_env, 
-            best_model_save_path=str(save_dir / 'best_model'), 
-            log_path=str(log_dir / 'eval'), 
-            eval_freq=TrainingConfigV10.EVAL_FREQ // TrainingConfigV10.NUM_ENVS, 
-            n_eval_episodes=20,
-            deterministic=True,
-            render=False,
-            verbose=1
-        ),
-        ActionLogCallback(
-            log_freq=40000, 
-            log_file="actions_history.txt"
-        ),
-        EnhancedLoggingCallback(
-            log_dir=log_dir,
-            log_freq=5000,
-            verbose=1
-        )
+        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_15', save_replay_buffer=False, save_vecnormalize=False),
+        EvalCallback(eval_env, best_model_save_path=str(save_dir / 'best_model'), log_path=str(log_dir / 'eval'), eval_freq=TrainingConfigV10.EVAL_FREQ // TrainingConfigV10.NUM_ENVS, n_eval_episodes=20, deterministic=True, render=False, verbose=1),
+        ActionLogCallback(log_freq=40000, log_file="actions_history.txt"),
+        EnhancedLoggingCallback(log_dir=log_dir, log_freq=5000, verbose=1)
     ])
     
-    # Train
-    print("🎯 Starting training...")
-    print(f"   Monitor training: tensorboard --logdir {log_dir}")
-    print(f"   Logs will be saved to: {log_dir}")
-    print()
-    
     try:
-        model.learn(
-            total_timesteps=TrainingConfigV10.TOTAL_TIMESTEPS, 
-            callback=callbacks, 
-            progress_bar=True
-        )
+        model.learn(total_timesteps=TrainingConfigV10.TOTAL_TIMESTEPS, callback=callbacks, progress_bar=True)
         model.save(save_dir / 'final_model')
         print("\n✅ Training completed successfully!")
         

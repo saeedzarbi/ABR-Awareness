@@ -8,12 +8,12 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V14 - Final Optimized)
+    Multi-Video ABR Environment (V15 - Logarithmic Scaling)
     
     Key Improvements:
-    1. Fixed Throughput Normalization (Scaled to 20mbps max)
-    2. Preventing Reward Explosion (Download time capping)
-    3. Tuned Penalties for better VMAF/Rebuffer trade-off
+    1. Logarithmic Throughput Normalization: Helps agent distinguish low bitrates better.
+    2. Preventing Reward Explosion: Capping download time.
+    3. Optimized Penalties: Balanced for VMAF/Rebuffer trade-off.
     """
     
     metadata = {'render_modes': ['human']}
@@ -34,8 +34,10 @@ class ABREnv(gym.Env):
     # Low smooth penalty to allow necessary quality switches
     SMOOTH_PENALTY_WEIGHT = 0.1
     
-    # Network Scale: 20000 kbps covers most 4G/LTE/WiFi scenarios
+    # --- LOGARITHMIC SCALE SETTINGS ---
+    # We use log scale for throughput to make low-bandwidth variations more visible
     MAX_NETWORK_THROUGHPUT = 20000.0
+    MIN_NETWORK_THROUGHPUT = 10.0  # Avoid log(0)
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
@@ -149,8 +151,11 @@ class ABREnv(gym.Env):
         self.last_bitrate_idx = 0
         self.last_vmaf = self.current_vmaf_scores[self.BITRATE_LEVELS[0]]
         
-        # --- IMPROVEMENT: Initialize assuming LOW throughput (0.1 = 2000kbps) ---
-        self.throughput_history = [0.1] * 8 
+        # --- FIX 1: Initialize with Log-scale value ---
+        # Start with a conservative guess (~500kbps) in log scale
+        start_tp = 500.0
+        log_obs = np.log(start_tp / self.MIN_NETWORK_THROUGHPUT) / np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
+        self.throughput_history = [log_obs] * 8 
         
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
@@ -169,91 +174,4 @@ class ABREnv(gym.Env):
         return np.concatenate([tp_obs, [buf_obs], [last_br_obs], content_obs, vmaf_obs]).astype(np.float32)
 
     def step(self, action):
-        bitrate_kbps = self.BITRATE_LEVELS[action]
-        chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
-        
-        trace_tp = self.current_trace['throughput_kbps']
-        avail_tp = trace_tp[int(self.chunk_idx * self.CHUNK_DURATION) % len(trace_tp)]
-        
-        # --- SAFEGUARD 1: Avoid zero division ---
-        effective_tp = max(avail_tp, 10.0) 
-        
-        download_time = chunk_size_bits / (effective_tp * 1000.0)
-        
-        # --- SAFEGUARD 2: Cap download time to prevent reward explosion ---
-        if download_time > 60.0:
-            download_time = 60.0
-        
-        rebuffer_time = max(0, download_time - self.buffer_level)
-        self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
-        self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
-        
-        current_vmaf = self.current_vmaf_scores.get(bitrate_kbps, 35.0)
-        smooth_pen = abs(current_vmaf - self.last_vmaf)
-        
-        buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
-        
-        # Gentle risk factor
-        risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
-        risk_factor = min(risk_factor, 6.0) # Cap at 6x
-        
-        weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
-        
-        reward = current_vmaf \
-                 - weighted_rebuf \
-                 - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
-                 - (0.05 * buffer_dev)
-        
-        # --- IMPROVEMENT: Normalize by MAX_NETWORK_THROUGHPUT (20000) ---
-        self.throughput_history.append(np.clip(avail_tp / self.MAX_NETWORK_THROUGHPUT, 0, 1))
-        
-        self.last_bitrate_idx = action
-        self.last_vmaf = current_vmaf
-        self.chunk_idx += 1
-        terminated = self.chunk_idx >= self.max_chunks
-        
-        self.total_quality += current_vmaf
-        self.total_rebuffer += rebuffer_time
-        self.total_smooth += smooth_pen
-        
-        obs = self._get_observation()
-        info = self._get_info()
-        info.update({
-            'bitrate': bitrate_kbps, 
-            'throughput': avail_tp,
-            'buffer': self.buffer_level, 
-            'rebuffer': rebuffer_time, 
-            'reward': reward,
-            'video_name': self.current_video_name,
-            'risk_factor': risk_factor
-        })
-        return obs, reward, terminated, False, info
-
-    def _get_info(self):
-        return {
-            'chunk_idx': self.chunk_idx,
-            'total_rebuffer': self.total_rebuffer,
-            'total_quality': self.total_quality,
-            'avg_quality': self.total_quality / max(1, self.chunk_idx),
-            'total_smoothness': self.total_smooth,
-            'buffer_level': self.buffer_level
-        }
-
-    def render(self): 
-        pass
-    
-    # ============================================================================
-    # Compatibility properties for baselines (Genie, RobustMPC, BBA)
-    # ============================================================================
-    
-    @property
-    def vmaf_scores(self):
-        return self.current_vmaf_scores
-    
-    @property
-    def video_name(self):
-        return self.current_video_name
-    
-    @property
-    def trace(self):
-        return self.current_trace
+        bitrate_kbps = self.BITRATE_LEVELS
