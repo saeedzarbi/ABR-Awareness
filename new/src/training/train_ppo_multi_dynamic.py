@@ -222,9 +222,9 @@ def main():
     print("="*70 + "\n")
     
     # Create directories
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_12'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_13'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_12'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_13'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     # Create training environments
@@ -265,7 +265,7 @@ def main():
         CheckpointCallback(
             save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, 
             save_path=str(save_dir / 'checkpoints'), 
-            name_prefix='ppo_multi_dynamic_12',
+            name_prefix='ppo_multi_dynamic_13',
             save_replay_buffer=False,
             save_vecnormalize=False
         ),

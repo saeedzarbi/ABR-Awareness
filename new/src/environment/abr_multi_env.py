@@ -18,18 +18,25 @@ class ABREnv(gym.Env):
     
     BITRATE_LEVELS = np.array([300, 750, 1200, 1850, 2850, 6000])
     CHUNK_DURATION = 4.0
-    
+        
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # ✅ V10 OPTIMIZED PARAMETERS
-    LYAPUNOV_GAIN = 0.15
-    REBUF_PENALTY_BASE = 50.0
-    SMOOTH_PENALTY_WEIGHT = 1.0
+    # Lyapunov Gain
+    LYAPUNOV_GAIN = 0.1  
+    
+    # --- FINAL TUNING FOR TCSVT ---
+    # 85 was too strict (VMAF -> 35)
+    # 45 was too loose (Rebuffer -> 8.5%)
+    # 65 is the Sweet Spot
+    REBUF_PENALTY_BASE = 65.0 
+    
+    # Keep smooth penalty low to allow switching
+    SMOOTH_PENALTY_WEIGHT = 0.1
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
-                 trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
-                 vmaf_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores', siti_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/content_features', 
+                 trace_dir='data/network_traces/processed', 
+                 vmaf_dir='data/vmaf_scores', siti_dir='data/content_features', 
                  max_chunks=48, random_seed=None):
         super().__init__()
         
@@ -82,12 +89,11 @@ class ABREnv(gym.Env):
             self.traces = [json.load(open(f)) for f in trace_files]
     
     def _load_all_video_data(self):
-        import pandas as pd
-        
         vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
-        all_vmaf_data = pd.DataFrame()
+        all_vmaf_data = None
         if vmaf_file.exists():
-            try: 
+            try:
+                import pandas as pd
                 all_vmaf_data = pd.read_csv(vmaf_file)
             except: 
                 pass
@@ -95,9 +101,9 @@ class ABREnv(gym.Env):
         for vid in self.video_names:
             self.video_assets[vid] = {}
             
-            # --- VMAF ---
+            # --- VMAF --- (following abr_env.py pattern)
             vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97}
-            if not all_vmaf_data.empty and 'video' in all_vmaf_data.columns:
+            if all_vmaf_data is not None and 'video' in all_vmaf_data.columns:
                 df = all_vmaf_data[all_vmaf_data['video'] == vid]
                 if not df.empty:
                     vmaf_scores = dict(zip(df['bitrate_kbps'], df['vmaf']))
@@ -105,7 +111,7 @@ class ABREnv(gym.Env):
             self.video_assets[vid]['vmaf'] = vmaf_scores
             self.video_assets[vid]['vmaf_norm'] = {k: v/100.0 for k, v in vmaf_scores.items()}
 
-            # --- SI/TI ---
+            # --- SI/TI --- (following abr_env.py pattern)
             siti_file = self.siti_dir / f"{vid}_siti.json"
             si, ti = 50, 10
             if siti_file.exists():
@@ -116,9 +122,9 @@ class ABREnv(gym.Env):
                 except: 
                     pass
             
-            # ✅ V10 IMPROVED NORMALIZATION
-            self.video_assets[vid]['si_norm'] = np.clip(si / 150.0, 0, 1) 
-            self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1) 
+            # Normalization matching abr_env.py
+            self.video_assets[vid]['si_norm'] = np.clip(si / 100, 0, 1) 
+            self.video_assets[vid]['ti_norm'] = np.clip(ti / 50, 0, 1) 
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -144,24 +150,6 @@ class ABREnv(gym.Env):
         self.total_quality = 0.0
         self.total_smooth = 0.0
         
-        # Debug logging (1% of resets)
-        if random.random() < 0.01:
-            si_raw = self.current_si_norm * 150.0
-            
-            log_message = (
-                f"\n🎬 [Environment Debug] Video: {self.current_video_name}\n"
-                f"   SI Input: {self.current_si_norm:.2f} (Raw ~{si_raw:.0f})\n"
-                f"   TI Input: {self.current_ti_norm:.2f}\n"
-                f"   Penalty Used: {self.REBUF_PENALTY_BASE}\n"
-                f"{'-' * 40}\n"
-            )
-            
-            try:
-                with open("env_debug_log.txt", "a") as f:
-                    f.write(log_message)
-            except Exception as e:
-                print(f"Error writing to log file: {e}")
-            
         return self._get_observation(), self._get_info()
     
     def _get_observation(self):
@@ -191,9 +179,7 @@ class ABREnv(gym.Env):
         
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
-        
-        # ✅ V10 OPTIMIZED RISK FACTOR CAP
-        risk_factor = min(risk_factor, 10.0)
+        risk_factor = min(risk_factor, 6.0) # Increased cap slightly
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         

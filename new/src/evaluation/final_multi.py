@@ -194,9 +194,10 @@ class TCSVT_Evaluator:
 
         self.test_videos = [
             'bigbuckbunny',    
-            # 'crowd_run',    
-            'parkjoy',       
-            'tearsofsteel_short' 
+            'crowd_run',    
+            # 'parkjoy',       
+            'tearsofsteel_short',
+            'sintel'
         ]
 
     def load_methods(self):
@@ -204,9 +205,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed (V10)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_12' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_13' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_12' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_13' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed from: {path}")
         except Exception as e:
@@ -214,9 +215,9 @@ class TCSVT_Evaluator:
         
         # 2. Pensieve
         try:
-            path = PATHS['models'] / 'pensieve_multi_vmaf_new_9' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'pensieve_multi_vmaf_new_13' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_9' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_13' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
             print(f"✅ Loaded Pensieve from: {path}")
         except Exception as e:
@@ -230,11 +231,11 @@ class TCSVT_Evaluator:
         return methods
 
     def evaluate(self, methods, episodes_per_video=20, enable_logging=True):
-        print(f"\n🔬 Running Evaluation V12 (N={episodes_per_video} per video)...")
+        print(f"\n🔬 Running Evaluation V13 (N={episodes_per_video} per video)...")
         print(f"   Enhanced logging: {'Enabled' if enable_logging else 'Disabled'}")
         
         send_slack_message("info", "Evaluation Started", 
-                          f"Starting V12 evaluation on {len(self.test_videos)} videos")
+                          f"Starting V13 evaluation on {len(self.test_videos)} videos")
         
         if not list(self.test_trace_dir.glob("*.json")):
             print("❌ No traces found.")
@@ -262,7 +263,7 @@ class TCSVT_Evaluator:
                 
                 # Create logger for this method
                 if enable_logging:
-                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v12')
+                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v13')
                 
                 active_model = model
                 if name == 'RobustMPC': 
@@ -339,7 +340,7 @@ class TCSVT_Evaluator:
         df = pd.DataFrame(self.results_detailed)
         
         # ✅ Changed filename to _10
-        path = PATHS['results'] / 'detailed_stats_multi_video_12.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_13.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         
@@ -369,7 +370,7 @@ class TCSVT_Evaluator:
         print(summary)
         
         # Send to Slack
-        details_msg = "📊 *Final Evaluation Results V12*\n\n"
+        details_msg = "📊 *Final Evaluation Results V13*\n\n"
         
         details_msg += "*Overall Performance:*\n"
         for method in summary.index:
