@@ -8,10 +8,12 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V10)
+    Multi-Video ABR Environment (V14 - Final Optimized)
     
-    Compatible with both multi-video training and single-video evaluation.
-    Includes compatibility properties for baselines (RobustMPC, Genie, BBA).
+    Key Improvements:
+    1. Fixed Throughput Normalization (Scaled to 20mbps max)
+    2. Preventing Reward Explosion (Download time capping)
+    3. Tuned Penalties for better VMAF/Rebuffer trade-off
     """
     
     metadata = {'render_modes': ['human']}
@@ -22,18 +24,26 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # ✅ V13 QUICK FIX PARAMETERS (Phase 1)
-    LYAPUNOV_GAIN = 0.15
-    REBUF_PENALTY_BASE = 20.0  # V13: Reduced penalty
-    SMOOTH_PENALTY_WEIGHT = 1.0
+    # --- OPTIMIZED HYPERPARAMETERS ---
+    # Low gain to prevent panic when buffer drops slightly
+    LYAPUNOV_GAIN = 0.05  
+    
+    # Balanced penalty to encourage high quality while avoiding stalls
+    REBUF_PENALTY_BASE = 4.5
+    
+    # Low smooth penalty to allow necessary quality switches
+    SMOOTH_PENALTY_WEIGHT = 0.1
+    
+    # Network Scale: 20000 kbps covers most 4G/LTE/WiFi scenarios
+    MAX_NETWORK_THROUGHPUT = 20000.0
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
-                 vmaf_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores', siti_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/content_features', 
+                 vmaf_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores', 
+                 siti_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/content_features', 
                  max_chunks=48, random_seed=None):
         super().__init__()
         
-        # Handle both single video (str) and multiple videos (list)
         if isinstance(video_names, str):
             self.video_names = [video_names]
         else:
@@ -83,11 +93,10 @@ class ABREnv(gym.Env):
     
     def _load_all_video_data(self):
         import pandas as pd
-        
         vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
-        all_vmaf_data = pd.DataFrame()
+        all_vmaf_data = None
         if vmaf_file.exists():
-            try: 
+            try:
                 all_vmaf_data = pd.read_csv(vmaf_file)
             except: 
                 pass
@@ -97,7 +106,7 @@ class ABREnv(gym.Env):
             
             # --- VMAF ---
             vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97}
-            if not all_vmaf_data.empty and 'video' in all_vmaf_data.columns:
+            if all_vmaf_data is not None and 'video' in all_vmaf_data.columns:
                 df = all_vmaf_data[all_vmaf_data['video'] == vid]
                 if not df.empty:
                     vmaf_scores = dict(zip(df['bitrate_kbps'], df['vmaf']))
@@ -116,14 +125,14 @@ class ABREnv(gym.Env):
                 except: 
                     pass
             
-            # ✅ V10 IMPROVED NORMALIZATION
+            # Normalization (SI/150, TI/70)
             self.video_assets[vid]['si_norm'] = np.clip(si / 150.0, 0, 1) 
-            self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1) 
+            self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         
-        # Select video (random if multiple, or the single video)
+        # Select video
         self.current_video_name = random.choice(self.video_names)
         assets = self.video_assets[self.current_video_name]
         
@@ -139,29 +148,14 @@ class ABREnv(gym.Env):
         self.buffer_level = 1.0
         self.last_bitrate_idx = 0
         self.last_vmaf = self.current_vmaf_scores[self.BITRATE_LEVELS[0]]
-        self.throughput_history = [1.0] * 8 
+        
+        # --- IMPROVEMENT: Initialize assuming LOW throughput (0.1 = 2000kbps) ---
+        self.throughput_history = [0.1] * 8 
+        
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
         self.total_smooth = 0.0
         
-        # Debug logging (1% of resets)
-        if random.random() < 0.01:
-            si_raw = self.current_si_norm * 150.0
-            
-            log_message = (
-                f"\n🎬 [Environment Debug] Video: {self.current_video_name}\n"
-                f"   SI Input: {self.current_si_norm:.2f} (Raw ~{si_raw:.0f})\n"
-                f"   TI Input: {self.current_ti_norm:.2f}\n"
-                f"   Penalty Used: {self.REBUF_PENALTY_BASE}\n"
-                f"{'-' * 40}\n"
-            )
-            
-            try:
-                with open("env_debug_log.txt", "a") as f:
-                    f.write(log_message)
-            except Exception as e:
-                print(f"Error writing to log file: {e}")
-            
         return self._get_observation(), self._get_info()
     
     def _get_observation(self):
@@ -181,7 +175,15 @@ class ABREnv(gym.Env):
         trace_tp = self.current_trace['throughput_kbps']
         avail_tp = trace_tp[int(self.chunk_idx * self.CHUNK_DURATION) % len(trace_tp)]
         
-        download_time = chunk_size_bits / (avail_tp * 1000.0 + 1e-6)
+        # --- SAFEGUARD 1: Avoid zero division ---
+        effective_tp = max(avail_tp, 10.0) 
+        
+        download_time = chunk_size_bits / (effective_tp * 1000.0)
+        
+        # --- SAFEGUARD 2: Cap download time to prevent reward explosion ---
+        if download_time > 60.0:
+            download_time = 60.0
+        
         rebuffer_time = max(0, download_time - self.buffer_level)
         self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
         self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
@@ -190,19 +192,21 @@ class ABREnv(gym.Env):
         smooth_pen = abs(current_vmaf - self.last_vmaf)
         
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
-        risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
         
-        # ✅ V10 OPTIMIZED RISK FACTOR CAP
-        risk_factor = min(risk_factor, 10.0)
+        # Gentle risk factor
+        risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
+        risk_factor = min(risk_factor, 6.0) # Cap at 6x
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         
         reward = current_vmaf \
                  - weighted_rebuf \
                  - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
-                 - (0.1 * buffer_dev)
+                 - (0.05 * buffer_dev)
         
-        self.throughput_history.append(np.clip(avail_tp / 6000.0, 0, 1))
+        # --- IMPROVEMENT: Normalize by MAX_NETWORK_THROUGHPUT (20000) ---
+        self.throughput_history.append(np.clip(avail_tp / self.MAX_NETWORK_THROUGHPUT, 0, 1))
+        
         self.last_bitrate_idx = action
         self.last_vmaf = current_vmaf
         self.chunk_idx += 1
@@ -218,12 +222,10 @@ class ABREnv(gym.Env):
             'bitrate': bitrate_kbps, 
             'throughput': avail_tp,
             'buffer': self.buffer_level, 
-            'buffer_level': self.buffer_level,
             'rebuffer': rebuffer_time, 
             'reward': reward,
             'video_name': self.current_video_name,
-            'risk_factor': risk_factor,
-            'weighted_rebuf_penalty': weighted_rebuf
+            'risk_factor': risk_factor
         })
         return obs, reward, terminated, False, info
 
@@ -246,24 +248,12 @@ class ABREnv(gym.Env):
     
     @property
     def vmaf_scores(self):
-        """
-        Compatibility property for baselines that expect env.vmaf_scores
-        Returns VMAF scores for current video
-        """
         return self.current_vmaf_scores
     
     @property
     def video_name(self):
-        """
-        Compatibility property for baselines that expect env.video_name
-        Returns current video name (single string)
-        """
         return self.current_video_name
     
     @property
     def trace(self):
-        """
-        Compatibility property for baselines that expect env.trace
-        Returns current trace
-        """
         return self.current_trace
