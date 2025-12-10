@@ -29,7 +29,7 @@ class ABREnv(gym.Env):
     # 85 was too strict (VMAF -> 35)
     # 45 was too loose (Rebuffer -> 8.5%)
     # 65 is the Sweet Spot
-    REBUF_PENALTY_BASE = 65.0 
+    REBUF_PENALTY_BASE = 10.0
     
     # Keep smooth penalty low to allow switching
     SMOOTH_PENALTY_WEIGHT = 0.1
