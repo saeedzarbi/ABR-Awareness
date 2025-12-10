@@ -26,6 +26,9 @@ class VideoEncoder:
         6000: '1920x1080'  # 1080p
     }
     
+    # Supported input video formats
+    SUPPORTED_INPUT_FORMATS = ['.mp4', '.y4m', '.mkv', '.avi', '.mov', '.webm', '.flv']
+    
     def __init__(
         self, 
         input_dir: str = 'raw_videos',
@@ -87,6 +90,23 @@ class VideoEncoder:
             print(f"⚠ Error getting video info: {e}")
             return {}
     
+    def _has_audio_stream(self, video_path: Path) -> bool:
+        """Check if video file has an audio stream."""
+        try:
+            cmd = [
+                'ffprobe',
+                '-v', 'quiet',
+                '-select_streams', 'a',
+                '-show_entries', 'stream=codec_type',
+                '-of', 'csv=p=0',
+                str(video_path)
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return bool(result.stdout.strip())
+        except Exception:
+            # If probe fails, assume no audio (safer for .y4m files)
+            return False
+    
     def encode_video(
         self,
         input_path: Path,
@@ -118,13 +138,22 @@ class VideoEncoder:
             '-g', '48',                   # GOP size (2 seconds at 24fps)
             '-keyint_min', '48',          # Minimum GOP size
             '-sc_threshold', '0',         # Disable scene cut detection
-            '-c:a', 'aac',                # Audio codec
-            '-b:a', '128k',               # Audio bitrate
-            '-ar', '44100',               # Audio sample rate
             '-movflags', '+faststart',    # Web optimization
             '-y',                         # Overwrite output
             str(output_path)
         ]
+        
+        # Add audio encoding only if input has audio stream
+        # Insert audio parameters before output path (insert in reverse order)
+        if self._has_audio_stream(input_path):
+            cmd.insert(-1, '-ar')
+            cmd.insert(-1, '44100')      # Audio sample rate
+            cmd.insert(-1, '-b:a')
+            cmd.insert(-1, '128k')       # Audio bitrate
+            cmd.insert(-1, '-c:a')
+            cmd.insert(-1, 'aac')        # Audio codec
+        else:
+            cmd.insert(-1, '-an')        # No audio
         
         try:
             # Run FFmpeg with progress
@@ -153,6 +182,22 @@ class VideoEncoder:
             print(f"✗ Encoding error: {e}")
             return False
     
+    def _find_input_video(self, video_name: str) -> Path | None:
+        """
+        Find input video file with any supported extension.
+        
+        Args:
+            video_name: Name of the video (without extension)
+            
+        Returns:
+            Path to input video file, or None if not found
+        """
+        for ext in self.SUPPORTED_INPUT_FORMATS:
+            input_path = self.input_dir / f"{video_name}{ext}"
+            if input_path.exists():
+                return input_path
+        return None
+    
     def encode_all_bitrates(self, video_name: str) -> Dict[int, Path]:
         """
         Encode a single video at all bitrate levels.
@@ -163,10 +208,10 @@ class VideoEncoder:
         Returns:
             Dictionary mapping bitrate to output path
         """
-        input_path = self.input_dir / f"{video_name}.mp4"
+        input_path = self._find_input_video(video_name)
         
-        if not input_path.exists():
-            print(f"✗ Video not found: {input_path}")
+        if not input_path:
+            print(f"✗ Video not found: {video_name} (searched for: {', '.join(self.SUPPORTED_INPUT_FORMATS)})")
             return {}
         
         # Get original video info
@@ -238,21 +283,14 @@ class VideoEncoder:
         else:
             print(f"\n⚠ Input directory is empty: {self.input_dir.absolute()}")
         
-        video_files = list(self.input_dir.glob("*.mp4"))
+        # Search for all supported video formats
+        video_files = []
+        for ext in self.SUPPORTED_INPUT_FORMATS:
+            video_files.extend(list(self.input_dir.glob(f"*{ext}")))
         
         if not video_files:
-            print(f"\n✗ No .mp4 videos found in input directory: {self.input_dir.absolute()}")
-            print(f"   Searched for pattern: *.mp4")
-            # Check for other video extensions
-            other_video_exts = ['.mkv', '.avi', '.mov', '.webm', '.flv']
-            found_other = []
-            for ext in other_video_exts:
-                found = list(self.input_dir.glob(f"*{ext}"))
-                if found:
-                    found_other.extend(found)
-            if found_other:
-                print(f"   Found other video files: {[f.name for f in found_other]}")
-                print(f"   Please convert them to .mp4 format first")
+            print(f"\n✗ No supported video files found in input directory: {self.input_dir.absolute()}")
+            print(f"   Searched for: {', '.join(self.SUPPORTED_INPUT_FORMATS)}")
             return {}
         
         print(f"\n{'='*60}")
