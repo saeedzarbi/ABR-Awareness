@@ -8,10 +8,11 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V10)
+    Multi-Video ABR Environment (Fixed V10)
     
-    Compatible with both multi-video training and single-video evaluation.
-    Includes compatibility properties for baselines (RobustMPC, Genie, BBA).
+    Fixes applied:
+    1. Throughput Normalization: Increased scale from 6000 to 20000 kbps to prevent observation clipping.
+    2. Reward Tuning: Reduced penalties to fix over-conservatism.
     """
     
     metadata = {'render_modes': ['human']}
@@ -22,25 +23,27 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # Lyapunov Gain
-    LYAPUNOV_GAIN = 0.1  
+    # --- FIX 1: TUNE HYPERPARAMETERS ---
+    # Reduced Gain to prevent panic when buffer drops slightly
+    LYAPUNOV_GAIN = 0.05  
     
-    # --- FINAL TUNING FOR TCSVT ---
-    # 85 was too strict (VMAF -> 35)
-    # 45 was too loose (Rebuffer -> 8.5%)
-    # 65 is the Sweet Spot
-    REBUF_PENALTY_BASE = 10.0
+    # Reduced Penalty to encourage taking risks for higher quality
+    REBUF_PENALTY_BASE = 4.5
     
-    # Keep smooth penalty low to allow switching
+    # Keep smooth penalty low
     SMOOTH_PENALTY_WEIGHT = 0.1
     
+    # --- FIX 2: NETWORK SCALE ---
+    # Max throughput expectation for normalization (kbps)
+    # 20000 covers most 4G/LTE/WiFi traces better than 6000
+    MAX_NETWORK_THROUGHPUT = 20000.0
+
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='data/network_traces/processed', 
                  vmaf_dir='data/vmaf_scores', siti_dir='data/content_features', 
                  max_chunks=48, random_seed=None):
         super().__init__()
         
-        # Handle both single video (str) and multiple videos (list)
         if isinstance(video_names, str):
             self.video_names = [video_names]
         else:
@@ -63,7 +66,6 @@ class ABREnv(gym.Env):
         obs_dim = 18
         self.observation_space = spaces.Box(low=0.0, high=1.0, shape=(obs_dim,), dtype=np.float32)
         
-        # Current episode state
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
@@ -101,7 +103,7 @@ class ABREnv(gym.Env):
         for vid in self.video_names:
             self.video_assets[vid] = {}
             
-            # --- VMAF --- (following abr_env.py pattern)
+            # Default VMAF
             vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97}
             if all_vmaf_data is not None and 'video' in all_vmaf_data.columns:
                 df = all_vmaf_data[all_vmaf_data['video'] == vid]
@@ -111,7 +113,7 @@ class ABREnv(gym.Env):
             self.video_assets[vid]['vmaf'] = vmaf_scores
             self.video_assets[vid]['vmaf_norm'] = {k: v/100.0 for k, v in vmaf_scores.items()}
 
-            # --- SI/TI --- (following abr_env.py pattern)
+            # Default SI/TI
             siti_file = self.siti_dir / f"{vid}_siti.json"
             si, ti = 50, 10
             if siti_file.exists():
@@ -122,26 +124,12 @@ class ABREnv(gym.Env):
                 except: 
                     pass
             
-            # Normalization matching abr_env.py
             self.video_assets[vid]['si_norm'] = np.clip(si / 100, 0, 1) 
             self.video_assets[vid]['ti_norm'] = np.clip(ti / 50, 0, 1)
-            
-            # Print VMAF and SI/TI values
-            print(f"\n{'='*60}")
-            print(f"Video: {vid}")
-            print(f"{'='*60}")
-            print(f"VMAF Scores:")
-            for br, vmaf in sorted(vmaf_scores.items()):
-                print(f"  Bitrate {br:5d} kbps -> VMAF: {vmaf:5.2f} (normalized: {vmaf/100.0:.3f})")
-            print(f"\nSI/TI Features:")
-            print(f"  SI (raw): {si:.2f} -> normalized: {self.video_assets[vid]['si_norm']:.3f}")
-            print(f"  TI (raw): {ti:.2f} -> normalized: {self.video_assets[vid]['ti_norm']:.3f}")
-            print(f"{'='*60}\n") 
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         
-        # Select video (random if multiple, or the single video)
         self.current_video_name = random.choice(self.video_names)
         assets = self.video_assets[self.current_video_name]
         
@@ -157,7 +145,11 @@ class ABREnv(gym.Env):
         self.buffer_level = 1.0
         self.last_bitrate_idx = 0
         self.last_vmaf = self.current_vmaf_scores[self.BITRATE_LEVELS[0]]
-        self.throughput_history = [1.0] * 8 
+        
+        # --- FIX 3: BETTER INITIALIZATION ---
+        # Initialize with a small value (e.g., 2000kbps / 20000 = 0.1) instead of 1.0 (max)
+        self.throughput_history = [0.1] * 8 
+        
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
         self.total_smooth = 0.0
@@ -176,6 +168,8 @@ class ABREnv(gym.Env):
 
     def step(self, action):
         bitrate_kbps = self.BITRATE_LEVELS[action]
+        # Note: Ideally this should use real chunk sizes (VBR), but we lack that data.
+        # Assuming CBR for now based on available metadata.
         chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
         
         trace_tp = self.current_trace['throughput_kbps']
@@ -190,17 +184,22 @@ class ABREnv(gym.Env):
         smooth_pen = abs(current_vmaf - self.last_vmaf)
         
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
+        
+        # Less aggressive risk factor
         risk_factor = 1.0 + np.exp(self.LYAPUNOV_GAIN * buffer_dev) if buffer_dev > 0 else 1.0
-        risk_factor = min(risk_factor, 6.0) # Increased cap slightly
+        risk_factor = min(risk_factor, 6.0)
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         
         reward = current_vmaf \
                  - weighted_rebuf \
                  - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
-                 - (0.1 * buffer_dev)
+                 - (0.05 * buffer_dev) # Reduced buffer deviation penalty slightly
         
-        self.throughput_history.append(np.clip(avail_tp / 6000.0, 0, 1))
+        # --- FIX 4: CORRECT NORMALIZATION ---
+        # Normalize by MAX_NETWORK_THROUGHPUT (20000) instead of 6000
+        self.throughput_history.append(np.clip(avail_tp / self.MAX_NETWORK_THROUGHPUT, 0, 1))
+        
         self.last_bitrate_idx = action
         self.last_vmaf = current_vmaf
         self.chunk_idx += 1
@@ -216,12 +215,9 @@ class ABREnv(gym.Env):
             'bitrate': bitrate_kbps, 
             'throughput': avail_tp,
             'buffer': self.buffer_level, 
-            'buffer_level': self.buffer_level,
             'rebuffer': rebuffer_time, 
             'reward': reward,
-            'video_name': self.current_video_name,
-            'risk_factor': risk_factor,
-            'weighted_rebuf_penalty': weighted_rebuf
+            'video_name': self.current_video_name
         })
         return obs, reward, terminated, False, info
 
@@ -238,30 +234,15 @@ class ABREnv(gym.Env):
     def render(self): 
         pass
     
-    # ============================================================================
-    # Compatibility properties for baselines (Genie, RobustMPC, BBA)
-    # ============================================================================
-    
+    # Baselines compatibility
     @property
     def vmaf_scores(self):
-        """
-        Compatibility property for baselines that expect env.vmaf_scores
-        Returns VMAF scores for current video
-        """
         return self.current_vmaf_scores
     
     @property
     def video_name(self):
-        """
-        Compatibility property for baselines that expect env.video_name
-        Returns current video name (single string)
-        """
         return self.current_video_name
     
     @property
     def trace(self):
-        """
-        Compatibility property for baselines that expect env.trace
-        Returns current trace
-        """
         return self.current_trace
