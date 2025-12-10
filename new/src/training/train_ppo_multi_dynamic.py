@@ -147,11 +147,11 @@ class TrainingConfigV10:
     
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
-        # 'crowd_run',       
+        'crowd_run',       
         'tearsofsteel_short' 
     ]
     
-    TEST_VIDEOS = ['parkjoy'] 
+    TEST_VIDEOS = ['sintel'] 
     
     MAX_CHUNKS = 48
     NUM_ENVS = 8
