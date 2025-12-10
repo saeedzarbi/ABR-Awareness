@@ -124,7 +124,19 @@ class ABREnv(gym.Env):
             
             # Normalization matching abr_env.py
             self.video_assets[vid]['si_norm'] = np.clip(si / 100, 0, 1) 
-            self.video_assets[vid]['ti_norm'] = np.clip(ti / 50, 0, 1) 
+            self.video_assets[vid]['ti_norm'] = np.clip(ti / 50, 0, 1)
+            
+            # Print VMAF and SI/TI values
+            print(f"\n{'='*60}")
+            print(f"Video: {vid}")
+            print(f"{'='*60}")
+            print(f"VMAF Scores:")
+            for br, vmaf in sorted(vmaf_scores.items()):
+                print(f"  Bitrate {br:5d} kbps -> VMAF: {vmaf:5.2f} (normalized: {vmaf/100.0:.3f})")
+            print(f"\nSI/TI Features:")
+            print(f"  SI (raw): {si:.2f} -> normalized: {self.video_assets[vid]['si_norm']:.3f}")
+            print(f"  TI (raw): {ti:.2f} -> normalized: {self.video_assets[vid]['ti_norm']:.3f}")
+            print(f"{'='*60}\n") 
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)

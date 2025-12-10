@@ -40,8 +40,9 @@ class PensieveConfig:
     # --- SAME DATASET AS PROPOSED METHOD ---
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
-        'crowd_run',       # High Motion
-        'tearsofsteel_short'        # Zoom
+        'crowd_run',       
+        'tearsofsteel_short' 
+
     ]
     
     # Unseen video for fair generalization test
