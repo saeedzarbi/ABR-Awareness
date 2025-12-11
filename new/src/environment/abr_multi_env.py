@@ -8,7 +8,13 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V16 - Clean & Stable)
+    Multi-Video ABR Environment (V18 - The Golden Balance)
+    
+    Target: Beat RobustMPC by calibrating the risk.
+    Strategy: 
+    - Base Penalty: 2.5 (Lower base encourages quality in easy videos)
+    - Smart Brake: 1.5x Complexity (Instead of 2.5x, avoids freezing the agent)
+    - Effective Penalty on Hard Video: ~6.25 (Perfect middle ground)
     """
     
     metadata = {'render_modes': ['human']}
@@ -19,9 +25,12 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # Parameters
+    # --- V18 CALIBRATED PARAMETERS ---
     LYAPUNOV_GAIN = 0.05  
-    REBUF_PENALTY_BASE = 3.5  # Adjusted for Smart Braking
+    
+    # Lower base to maximize VMAF on easy videos
+    REBUF_PENALTY_BASE = 2.5  
+    
     SMOOTH_PENALTY_WEIGHT = 0.1
     
     MAX_NETWORK_THROUGHPUT = 20000.0
@@ -53,10 +62,9 @@ class ABREnv(gym.Env):
         self._load_all_video_data()
         
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
-        obs_dim = 12 + 11 # 23
+        obs_dim = 12 + 11 
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
         
-        # State
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
@@ -145,7 +153,6 @@ class ABREnv(gym.Env):
     def _get_observation(self):
         tp_obs = np.array(self.throughput_history[-12:], dtype=np.float32)
         buf_obs = np.clip(self.buffer_level / self.BUFFER_MAX, 0, 1)
-        
         buf_trend = (self.buffer_level - self.prev_buffer_level) / self.CHUNK_DURATION
         buf_trend = np.clip(buf_trend, -1.0, 1.0)
         
@@ -154,12 +161,7 @@ class ABREnv(gym.Env):
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
         return np.concatenate([
-            tp_obs,           # 12
-            [buf_obs],        # 1
-            [buf_trend],      # 1
-            [last_br_obs],    # 1
-            content_obs,      # 2
-            vmaf_obs          # 6
+            tp_obs, [buf_obs], [buf_trend], [last_br_obs], content_obs, vmaf_obs
         ]).astype(np.float32)
 
     def step(self, action):
@@ -185,9 +187,13 @@ class ABREnv(gym.Env):
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + (0.1 * buffer_dev) 
         
-        # --- SMART BRAKING ---
+        # --- FIX 3: CALIBRATED SMART BRAKING (V18) ---
         video_complexity = (self.current_si_norm + self.current_ti_norm) / 2.0
-        smart_brake = 1.0 + (2.5 * video_complexity)
+        
+        # Reduced multiplier from 2.5 to 1.5
+        # Easy video (0.2) -> 1.0 + 0.3 = 1.3  -> Total Penalty: 2.5 * 1.3 = 3.25
+        # Hard video (1.0) -> 1.0 + 1.5 = 2.5  -> Total Penalty: 2.5 * 2.5 = 6.25
+        smart_brake = 1.0 + (1.5 * video_complexity)
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * smart_brake * rebuffer_time
         
@@ -196,7 +202,6 @@ class ABREnv(gym.Env):
                  - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
                  - (0.02 * buffer_dev) 
         
-        # Log Scale
         log_tp = np.log(effective_tp / self.MIN_NETWORK_THROUGHPUT)
         log_scale = np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
         norm_tp = np.clip(log_tp / log_scale, 0.0, 1.0)

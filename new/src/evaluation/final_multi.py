@@ -205,9 +205,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed (V10)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_17' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_18' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_17' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_18' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed from: {path}")
         except Exception as e:
@@ -340,7 +340,7 @@ class TCSVT_Evaluator:
         df = pd.DataFrame(self.results_detailed)
         
         # ✅ Changed filename to _10
-        path = PATHS['results'] / 'detailed_stats_multi_video_17.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_18.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         
@@ -370,7 +370,7 @@ class TCSVT_Evaluator:
         print(summary)
         
         # Send to Slack
-        details_msg = "📊 *Final Evaluation Results V17*\n\n"
+        details_msg = "📊 *Final Evaluation Results V18*\n\n"
         
         details_msg += "*Overall Performance:*\n"
         for method in summary.index:
