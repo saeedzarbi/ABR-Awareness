@@ -95,7 +95,6 @@ send_slack_message "info" "Step 2 Started" "Training Pensieve Multi model..."
 #     exit 1
 # fi
 
-# Step 3: Run Final Evaluation
 echo ""
 echo "=========================================="
 echo "🔬 Step 3: Running Final Evaluation"
