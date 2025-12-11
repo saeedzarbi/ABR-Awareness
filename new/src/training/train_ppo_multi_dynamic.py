@@ -155,21 +155,21 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
 
 def main():
     print("\n" + "="*70)
-    print(f"🚀 Training PPO V16: Aggressive (High Risk/High Reward)")
+    print(f"🚀 Training PPO V17: Aggressive (High Risk/High Reward)")
     print("="*70)
     print(f"📚 Training Videos: {TrainingConfigV10.TRAIN_VIDEOS}")
     print(f"🧪 Test Videos: {TrainingConfigV10.TEST_VIDEOS}")
     print("\n📊 Configuration:")
-    print(f"   REBUF_PENALTY: 4.0 (Linear Risk)") 
+    print(f"   REBUF_PENALTY: 3.5(Linear Risk)") 
     print(f"   Buffer Trend: Included")
     print(f"   Throughput History: 12 Steps (Log Scale)")
     print(f"   Entropy Coef: {TrainingConfigV10.ENT_COEF}")
     print(f"   Total Timesteps: {TrainingConfigV10.TOTAL_TIMESTEPS:,}")
     print("="*70 + "\n")
     
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_16'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_17'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_16'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_17'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV10.NUM_ENVS)])

@@ -85,15 +85,15 @@ echo "📚 Step 2: Training Pensieve Multi"
 echo "=========================================="
 send_slack_message "info" "Step 2 Started" "Training Pensieve Multi model..."
 
-if python3 train_pensieve_multi.py; then
-    echo "✅ Pensieve Multi training completed!"
-    send_slack_message "success" "Step 2 Completed" "Pensieve Multi training completed successfully!"
-else
-    ERROR_MSG="Pensieve Multi training failed with exit code $?"
-    echo "❌ $ERROR_MSG"
-    send_slack_message "error" "Step 2 Failed" "$ERROR_MSG"
-    exit 1
-fi
+# if python3 train_pensieve_multi.py; then
+#     echo "✅ Pensieve Multi training completed!"
+#     send_slack_message "success" "Step 2 Completed" "Pensieve Multi training completed successfully!"
+# else
+#     ERROR_MSG="Pensieve Multi training failed with exit code $?"
+#     echo "❌ $ERROR_MSG"
+#     send_slack_message "error" "Step 2 Failed" "$ERROR_MSG"
+#     exit 1
+# fi
 
 # Step 3: Run Final Evaluation
 echo ""
