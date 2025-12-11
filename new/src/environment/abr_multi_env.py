@@ -8,13 +8,7 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V16 - Aggressive & Smart)
-    
-    Target: Beat RobustMPC & BBA
-    Changes:
-    1. Linear Risk Factor (Don't panic when buffer drops)
-    2. Extended History (8 -> 12 steps)
-    3. Added 'Buffer Trend' observation (Derivative of buffer)
+    Multi-Video ABR Environment (V16 - Clean & Stable)
     """
     
     metadata = {'render_modes': ['human']}
@@ -25,18 +19,14 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # --- AGGRESSIVE TUNING ---
-    # We remove the exponential fear. Linear penalty allows using buffer as a resource.
-    REBUF_PENALTY_BASE = 4.0  # Slightly lower base
+    # Parameters
+    LYAPUNOV_GAIN = 0.05  
+    REBUF_PENALTY_BASE = 3.5  # Adjusted for Smart Braking
     SMOOTH_PENALTY_WEIGHT = 0.1
     
-    # Network Scale
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
     
-    # History length
-    HISTORY_LEN = 12 
-
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
                  vmaf_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores', 
@@ -63,10 +53,7 @@ class ABREnv(gym.Env):
         self._load_all_video_data()
         
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
-        
-        # Obs: [Throughput_History(12), Buffer, Last_BR, SI, TI, VMAF(6), Buffer_Trend(1)]
-        # Total dim = 12 + 1 + 1 + 2 + 6 + 1 = 23
-        obs_dim = self.HISTORY_LEN + 11
+        obs_dim = 12 + 11 # 23
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
         
         # State
@@ -80,7 +67,7 @@ class ABREnv(gym.Env):
         self.current_trace_idx = 0
         self.chunk_idx = 0
         self.buffer_level = 0.0
-        self.prev_buffer_level = 0.0 # To calc trend
+        self.prev_buffer_level = 0.0
         self.last_bitrate_idx = 0
         self.last_vmaf = 35.0
         self.throughput_history = []
@@ -123,8 +110,8 @@ class ABREnv(gym.Env):
                     ti = data.get('mean_ti', 10)
                 except: pass
             
-            self.video_assets[vid]['si_norm'] = np.clip(si / 150.0, 0, 1) 
-            self.video_assets[vid]['ti_norm'] = np.clip(ti / 70.0, 0, 1)
+            self.video_assets[vid]['si_norm'] = float(np.clip(si / 150.0, 0, 1))
+            self.video_assets[vid]['ti_norm'] = float(np.clip(ti / 70.0, 0, 1))
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -145,10 +132,9 @@ class ABREnv(gym.Env):
         self.last_bitrate_idx = 0
         self.last_vmaf = self.current_vmaf_scores[self.BITRATE_LEVELS[0]]
         
-        # Init throughput history (Log scale conservative guess)
         start_tp = 500.0
         log_obs = np.log(start_tp / self.MIN_NETWORK_THROUGHPUT) / np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
-        self.throughput_history = [log_obs] * self.HISTORY_LEN
+        self.throughput_history = [log_obs] * 12
         
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
@@ -157,11 +143,9 @@ class ABREnv(gym.Env):
         return self._get_observation(), self._get_info()
     
     def _get_observation(self):
-        tp_obs = np.array(self.throughput_history[-self.HISTORY_LEN:], dtype=np.float32)
+        tp_obs = np.array(self.throughput_history[-12:], dtype=np.float32)
         buf_obs = np.clip(self.buffer_level / self.BUFFER_MAX, 0, 1)
         
-        # New Feature: Buffer Trend (Is buffer growing or shrinking?)
-        # Normalized roughly between -1 and 1
         buf_trend = (self.buffer_level - self.prev_buffer_level) / self.CHUNK_DURATION
         buf_trend = np.clip(buf_trend, -1.0, 1.0)
         
@@ -169,78 +153,16 @@ class ABREnv(gym.Env):
         content_obs = np.array([self.current_si_norm, self.current_ti_norm], dtype=np.float32)
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
-        # Concatenate all
         return np.concatenate([
             tp_obs,           # 12
             [buf_obs],        # 1
-            [buf_trend],      # 1 (NEW)
+            [buf_trend],      # 1
             [last_br_obs],    # 1
             content_obs,      # 2
             vmaf_obs          # 6
         ]).astype(np.float32)
 
-    # def step(self, action):
-        # bitrate_kbps = self.BITRATE_LEVELS[action]
-        # chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
-        
-        # trace_tp = self.current_trace['throughput_kbps']
-        # avail_tp = trace_tp[int(self.chunk_idx * self.CHUNK_DURATION) % len(trace_tp)]
-        # effective_tp = np.clip(avail_tp, self.MIN_NETWORK_THROUGHPUT, self.MAX_NETWORK_THROUGHPUT)
-        
-        # download_time = chunk_size_bits / (effective_tp * 1000.0)
-        # if download_time > 60.0: download_time = 60.0
-        
-        # rebuffer_time = max(0, download_time - self.buffer_level)
-        
-        # self.prev_buffer_level = self.buffer_level # Save for trend calc
-        # self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
-        # self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
-        
-        # current_vmaf = self.current_vmaf_scores.get(bitrate_kbps, 35.0)
-        # smooth_pen = abs(current_vmaf - self.last_vmaf)
-        
-        # buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
-        
-        # # --- NEW: LINEAR RISK FACTOR ---
-        # # Instead of exponential panic, use a gentle linear push
-        # # If buffer is low (e.g. 5s), dev is 10. risk is 1.0 + 1.0 = 2.0.
-        # # Max risk is around 1 + 0.1*15 = 2.5. Much lower than 6.0!
-        # risk_factor = 1.0 + (0.1 * buffer_dev) 
-        
-        # weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
-        
-        # # Reduced buffer dev penalty to allow utilizing buffer
-        # reward = current_vmaf \
-        #          - weighted_rebuf \
-        #          - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
-        #          - (0.02 * buffer_dev) 
-        
-        # # Log Scale Update
-        # log_tp = np.log(effective_tp / self.MIN_NETWORK_THROUGHPUT)
-        # log_scale = np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
-        # norm_tp = np.clip(log_tp / log_scale, 0.0, 1.0)
-        
-        # self.throughput_history.append(norm_tp)
-        
-        # self.last_bitrate_idx = action
-        # self.last_vmaf = current_vmaf
-        # self.chunk_idx += 1
-        # terminated = self.chunk_idx >= self.max_chunks
-        
-        # self.total_quality += current_vmaf
-        # self.total_rebuffer += rebuffer_time
-        # self.total_smooth += smooth_pen
-        
-        # obs = self._get_observation()
-        # info = self._get_info()
-        # info.update({
-        #     'bitrate': bitrate_kbps, 'throughput': avail_tp,
-        #     'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
-        #     'reward': reward, 'video_name': self.current_video_name,
-        #     'risk_factor': risk_factor
-        # })
-        # return obs, reward, terminated, False, info
-    def step_smart_brake(self, action):
+    def step(self, action):
         bitrate_kbps = self.BITRATE_LEVELS[action]
         chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
         
@@ -263,16 +185,10 @@ class ABREnv(gym.Env):
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + (0.1 * buffer_dev) 
         
-        # --- FIX 3: CONTENT-AWARE BRAKING (ترمز هوشمند) ---
-        # محاسبه پیچیدگی ویدیو (بین 0 تا 1)
+        # --- SMART BRAKING ---
         video_complexity = (self.current_si_norm + self.current_ti_norm) / 2.0
-        
-        # ضریب ترمز:
-        # برای ویدیوهای آسان (0.2) -> ضریب 1.4 (جریمه معمولی)
-        # برای ویدیوهای سخت (0.9) -> ضریب 3.0 (جریمه سنگین = ترمز شدید)
         smart_brake = 1.0 + (2.5 * video_complexity)
         
-        # اعمال ضریب در جریمه
         weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * smart_brake * rebuffer_time
         
         reward = current_vmaf \
@@ -280,7 +196,7 @@ class ABREnv(gym.Env):
                  - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
                  - (0.02 * buffer_dev) 
         
-        # Log Scale Update
+        # Log Scale
         log_tp = np.log(effective_tp / self.MIN_NETWORK_THROUGHPUT)
         log_scale = np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
         norm_tp = np.clip(log_tp / log_scale, 0.0, 1.0)
@@ -300,11 +216,12 @@ class ABREnv(gym.Env):
         info.update({
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
-            'reward': reward, 'video_name': self.current_video_name,
-            'risk_factor': risk_factor,
-            'smart_brake': smart_brake # لاگ کردن مقدار ترمز برای دیباگ
+            'reward': float(reward), 'video_name': self.current_video_name,
+            'risk_factor': float(risk_factor),
+            'smart_brake': float(smart_brake)
         })
-        return obs, reward, terminated, False, info
+        return obs, float(reward), terminated, False, info
+
     def _get_info(self):
         return {
             'chunk_idx': self.chunk_idx,
@@ -316,6 +233,7 @@ class ABREnv(gym.Env):
         }
 
     def render(self): pass
+    
     @property
     def vmaf_scores(self): return self.current_vmaf_scores
     @property
