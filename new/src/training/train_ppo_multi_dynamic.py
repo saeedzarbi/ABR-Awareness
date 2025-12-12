@@ -96,12 +96,12 @@ class ActionLogCallback(BaseCallback):
         return True
 
 # ============================================================================
-# Training Configuration V21
+# Training Configuration V22
 # ============================================================================
 
 class TrainingConfigV10:
     """
-    Training configuration for V21 (Pure Quality / No CrowdRun)
+    Training configuration for V22 (Balanced Exploration)
     """
     
     TRAIN_VIDEOS = [
@@ -128,7 +128,7 @@ class TrainingConfigV10:
     # ENT_COEF = 0.01         
     VF_COEF = 0.5
     MAX_GRAD_NORM = 0.5
-    ENT_COEF = 0.03 # Balanced exploration
+    ENT_COEF = 0.05 # Balanced exploration
     TOTAL_TIMESTEPS = 1_000_000 
     EVAL_FREQ = 20_000
     SAVE_FREQ = 50_000
@@ -159,7 +159,7 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
 
 def main():
     print("\n" + "="*70)
-    print(f"🚀 Training PPO V21: Pure Quality (No CrowdRun)")
+    print(f"🚀 Training PPO V22: Pure Quality (No CrowdRun)")
     print("="*70)
     print(f"📚 Training Videos: {TrainingConfigV10.TRAIN_VIDEOS}")
     print(f"🧪 Test Videos: {TrainingConfigV10.TEST_VIDEOS}")
@@ -170,9 +170,9 @@ def main():
     print(f"   Total Timesteps: {TrainingConfigV10.TOTAL_TIMESTEPS:,}")
     print("="*70 + "\n")
     
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_21'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_22'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_21'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_22'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV10.NUM_ENVS)])
@@ -202,7 +202,7 @@ def main():
     )
     
     callbacks = CallbackList([
-        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_21', save_replay_buffer=False, save_vecnormalize=False),
+        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_22', save_replay_buffer=False, save_vecnormalize=False),
         EvalCallback(eval_env, best_model_save_path=str(save_dir / 'best_model'), log_path=str(log_dir / 'eval'), eval_freq=TrainingConfigV10.EVAL_FREQ // TrainingConfigV10.NUM_ENVS, n_eval_episodes=20, deterministic=True, render=False, verbose=1),
         ActionLogCallback(log_freq=40000, log_file="actions_history.txt"),
         EnhancedLoggingCallback(log_dir=log_dir, log_freq=5000, verbose=1)

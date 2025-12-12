@@ -205,9 +205,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed (V10)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_21' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_21' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed from: {path}")
         except Exception as e:
@@ -231,11 +231,11 @@ class TCSVT_Evaluator:
         return methods
 
     def evaluate(self, methods, episodes_per_video=20, enable_logging=True):
-        print(f"\n🔬 Running Evaluation V21 (N={episodes_per_video} per video)...")
+        print(f"\n🔬 Running Evaluation V22 (N={episodes_per_video} per video)...")
         print(f"   Enhanced logging: {'Enabled' if enable_logging else 'Disabled'}")
         
         send_slack_message("info", "Evaluation Started", 
-                          f"Starting V21 evaluation on {len(self.test_videos)} videos")
+                          f"Starting V22 evaluation on {len(self.test_videos)} videos")
         
         if not list(self.test_trace_dir.glob("*.json")):
             print("❌ No traces found.")
@@ -263,7 +263,7 @@ class TCSVT_Evaluator:
                 
                 # Create logger for this method
                 if enable_logging:
-                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v21')
+                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v22')
                 
                 active_model = model
                 if name == 'RobustMPC': 
@@ -340,7 +340,7 @@ class TCSVT_Evaluator:
         df = pd.DataFrame(self.results_detailed)
         
         # ✅ Changed filename to _10
-        path = PATHS['results'] / 'detailed_stats_multi_video_21.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_22.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         
@@ -370,7 +370,7 @@ class TCSVT_Evaluator:
         print(summary)
         
         # Send to Slack
-        details_msg = "📊 *Final Evaluation Results V21*\n\n"
+        details_msg = "📊 *Final Evaluation Results V22*\n\n"
         
         details_msg += "*Overall Performance:*\n"
         for method in summary.index:

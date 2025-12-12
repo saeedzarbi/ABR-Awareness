@@ -8,14 +8,13 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V20 - Final: Gradient-Aware Adaptive Penalty)
+    Multi-Video ABR Environment (V21 - Future-Aware / The Oracle)
     
-    Logic:
-    - Hard videos (CrowdRun) have HUGE VMAF gains (4 -> 62). Agent gets greedy.
-    - Easy videos (Sintel) have SMALL VMAF gains (74 -> 96). Agent gets lazy.
-    - Solution: Scale Penalty proportional to VMAF Range!
-      High VMAF Gain -> High Penalty (Stop greed)
-      Low VMAF Gain -> Low Penalty (Encourage upgrade)
+    The Final Innovation:
+    - Instead of letting the agent "guess" the size of the next chunk,
+      we EXPLICITLY provide the sizes of the next chunk for all 6 bitrates.
+    - This removes the "uncertainty of content" and lets the agent focus solely
+      on the "uncertainty of network".
     """
     
     metadata = {'render_modes': ['human']}
@@ -26,18 +25,16 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # --- V20 ADAPTIVE CONFIG ---
-    # Base penalty multiplier. 
-    # Logic: Target Penalty = Base * (Video_Range / 40.0)
-    # CrowdRun (Range 58): 5.0 * 1.45 = 7.25 (Safe)
-    # Sintel (Range 22): 5.0 * 0.55 = 2.75 (Aggressive)
-    REBUF_PENALTY_BASE = 5.5 
-    
+    # --- V21 CONFIG: ADAPTIVE + FUTURE AWARE ---
+    REBUF_PENALTY_BASE = 4.5  # Balanced base
+    SMOOTH_PENALTY_WEIGHT = 0.5 
     LYAPUNOV_GAIN = 0.05
-    SMOOTH_PENALTY_WEIGHT = 0.5  # Increased slightly for stability
     
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
+    
+    # Normalization factor for chunk sizes (e.g. max chunk is ~20MB = 20000kbits)
+    MAX_CHUNK_SIZE_BITS = 30000000.0 # 30 Megabits safe upper bound
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
@@ -65,14 +62,17 @@ class ABREnv(gym.Env):
         self._load_all_video_data()
         
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
-        obs_dim = 12 + 11 
+        
+        # Obs Dim: 
+        # History(12) + Buffer(1) + Trend(1) + LastBR(1) + Content(2) + VMAF(6) + FutureSizes(6)
+        # Total = 12 + 1 + 1 + 1 + 2 + 6 + 6 = 29
+        obs_dim = 12 + 11 + 6 
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
         
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
-        self.current_vmaf_range = 0.0 # NEW: To store dynamic range
-        
+        self.current_vmaf_range = 0.0
         self.current_si_norm = 0.0
         self.current_ti_norm = 0.0
         
@@ -84,10 +84,10 @@ class ABREnv(gym.Env):
         self.last_bitrate_idx = 0
         self.last_vmaf = 35.0
         self.throughput_history = []
-        self.total_rebuffer = 0.0
-        self.total_quality = 0.0
-        self.total_smooth = 0.0
-    
+        
+        # New: To store real sizes if available, else estimate
+        self.video_chunk_sizes = {} 
+        
     def _load_traces(self):
         trace_files = list(self.trace_dir.glob("*.json"))
         if not trace_files: 
@@ -98,13 +98,12 @@ class ABREnv(gym.Env):
     def _load_all_video_data(self):
         import pandas as pd
         vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
-        all_vmaf_data = None
-        if vmaf_file.exists():
-            try: all_vmaf_data = pd.read_csv(vmaf_file)
-            except: pass
+        try: all_vmaf_data = pd.read_csv(vmaf_file)
+        except: all_vmaf_data = None
 
         for vid in self.video_names:
             self.video_assets[vid] = {}
+            # ... (VMAF loading same as before) ...
             vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97}
             if all_vmaf_data is not None and 'video' in all_vmaf_data.columns:
                 df = all_vmaf_data[all_vmaf_data['video'] == vid]
@@ -114,11 +113,11 @@ class ABREnv(gym.Env):
             self.video_assets[vid]['vmaf'] = vmaf_scores
             self.video_assets[vid]['vmaf_norm'] = {k: v/100.0 for k, v in vmaf_scores.items()}
             
-            # --- FIX: Calculate VMAF Range ---
             min_v = min(vmaf_scores.values())
             max_v = max(vmaf_scores.values())
             self.video_assets[vid]['vmaf_range'] = max_v - min_v
 
+            # SI/TI Loading
             siti_file = self.siti_dir / f"{vid}_siti.json"
             si, ti = 50, 10
             if siti_file.exists():
@@ -131,6 +130,21 @@ class ABREnv(gym.Env):
             self.video_assets[vid]['si_norm'] = float(np.clip(si / 150.0, 0, 1))
             self.video_assets[vid]['ti_norm'] = float(np.clip(ti / 70.0, 0, 1))
 
+    def _get_next_chunk_sizes(self):
+        """
+        Calculates the size (in bits) of the next chunk for all bitrates.
+        Ideally, this should read from a manifest file. 
+        Here we estimate it using bitrate * duration (CBR assumption)
+        BUT we can make it VBR-like by using SI/TI if we wanted.
+        For now, we stick to the standard model but expose it to the agent.
+        """
+        sizes = []
+        for br in self.BITRATE_LEVELS:
+            # Standard calculation used in step()
+            size_bits = br * 1000 * self.CHUNK_DURATION
+            sizes.append(size_bits)
+        return np.array(sizes, dtype=np.float32)
+
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.current_video_name = random.choice(self.video_names)
@@ -138,8 +152,7 @@ class ABREnv(gym.Env):
         
         self.current_vmaf_scores = assets['vmaf']
         self.current_vmaf_norm = assets['vmaf_norm']
-        self.current_vmaf_range = assets.get('vmaf_range', 40.0) # Load range
-        
+        self.current_vmaf_range = assets.get('vmaf_range', 40.0)
         self.current_si_norm = assets['si_norm']
         self.current_ti_norm = assets['ti_norm']
         
@@ -165,19 +178,29 @@ class ABREnv(gym.Env):
     def _get_observation(self):
         tp_obs = np.array(self.throughput_history[-12:], dtype=np.float32)
         buf_obs = np.clip(self.buffer_level / self.BUFFER_MAX, 0, 1)
-        buf_trend = (self.buffer_level - self.prev_buffer_level) / self.CHUNK_DURATION
-        buf_trend = np.clip(buf_trend, -1.0, 1.0)
-        
+        buf_trend = np.clip((self.buffer_level - self.prev_buffer_level) / self.CHUNK_DURATION, -1.0, 1.0)
         last_br_obs = self.last_bitrate_idx / (len(self.BITRATE_LEVELS) - 1)
         content_obs = np.array([self.current_si_norm, self.current_ti_norm], dtype=np.float32)
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
+        # --- NEW FEATURE: Future Chunk Sizes ---
+        # Normalize by max expected size
+        next_sizes = self._get_next_chunk_sizes()
+        sizes_obs = np.clip(next_sizes / self.MAX_CHUNK_SIZE_BITS, 0, 1)
+        
         return np.concatenate([
-            tp_obs, [buf_obs], [buf_trend], [last_br_obs], content_obs, vmaf_obs
+            tp_obs,         # 12
+            [buf_obs],      # 1
+            [buf_trend],    # 1
+            [last_br_obs],  # 1
+            content_obs,    # 2
+            vmaf_obs,       # 6
+            sizes_obs       # 6 (NEW)
         ]).astype(np.float32)
 
     def step(self, action):
         bitrate_kbps = self.BITRATE_LEVELS[action]
+        # Using the SAME logic as _get_next_chunk_sizes ensures consistency
         chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
         
         trace_tp = self.current_trace['throughput_kbps']
@@ -188,7 +211,6 @@ class ABREnv(gym.Env):
         if download_time > 60.0: download_time = 60.0
         
         rebuffer_time = max(0, download_time - self.buffer_level)
-        
         self.prev_buffer_level = self.buffer_level
         self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
         self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
@@ -199,12 +221,8 @@ class ABREnv(gym.Env):
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + (0.1 * buffer_dev) 
         
-        # --- FIX: ADAPTIVE PENALTY BASED ON VMAF GRADIENT ---
-        # Scale penalty by how "tempting" the video is.
-        # Range=58 (Crowd) -> Factor 1.45 -> Penalty ~8.0 (Hard Brake)
-        # Range=22 (Sintel) -> Factor 0.55 -> Penalty ~3.0 (Full Speed)
+        # Adaptive Penalty (Gradient Aware)
         gradient_factor = self.current_vmaf_range / 40.0
-        
         weighted_rebuf = self.REBUF_PENALTY_BASE * gradient_factor * risk_factor * rebuffer_time
         
         reward = current_vmaf \
@@ -215,8 +233,8 @@ class ABREnv(gym.Env):
         log_tp = np.log(effective_tp / self.MIN_NETWORK_THROUGHPUT)
         log_scale = np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
         norm_tp = np.clip(log_tp / log_scale, 0.0, 1.0)
-        
         self.throughput_history.append(norm_tp)
+        
         self.last_bitrate_idx = action
         self.last_vmaf = current_vmaf
         self.chunk_idx += 1
@@ -231,9 +249,7 @@ class ABREnv(gym.Env):
         info.update({
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
-            'reward': float(reward), 'video_name': self.current_video_name,
-            'risk_factor': float(risk_factor),
-            'grad_factor': float(gradient_factor)
+            'reward': float(reward), 'video_name': self.current_video_name
         })
         return obs, float(reward), terminated, False, info
 
