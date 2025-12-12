@@ -193,11 +193,11 @@ class TCSVT_Evaluator:
         self.results_detailed = [] 
 
         self.test_videos = [
-            'bigbuckbunny',    
-            # 'crowd_run',    
+            # 'bigbuckbunny',    
+            'crowd_run',    
             # 'parkjoy',       
-            'tearsofsteel_short',
-            'sintel'
+            # 'tearsofsteel_short',
+            # 'sintel'
         ]
 
     def load_methods(self):
@@ -340,7 +340,7 @@ class TCSVT_Evaluator:
         df = pd.DataFrame(self.results_detailed)
         
         # ✅ Changed filename to _10
-        path = PATHS['results'] / 'detailed_stats_multi_video_19.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_20.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         
@@ -370,7 +370,7 @@ class TCSVT_Evaluator:
         print(summary)
         
         # Send to Slack
-        details_msg = "📊 *Final Evaluation Results V19*\n\n"
+        details_msg = "📊 *Final Evaluation Results V20*\n\n"
         
         details_msg += "*Overall Performance:*\n"
         for method in summary.index:
