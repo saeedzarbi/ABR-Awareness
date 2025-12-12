@@ -14,7 +14,7 @@ from configs.paths import get_paths
 PATHS = get_paths()
 
 # ============================================================================
-# Callbacks (Enhanced + ActionLog)
+# Enhanced Logging Callback
 # ============================================================================
 
 class EnhancedLoggingCallback(BaseCallback):
@@ -96,17 +96,17 @@ class ActionLogCallback(BaseCallback):
         return True
 
 # ============================================================================
-# Training Configuration V18
+# Training Configuration V19
 # ============================================================================
 
 class TrainingConfigV10:
     """
-    Training configuration for V18 (Calibrated Balance)
+    Training configuration for V19 (Pure Quality / No CrowdRun)
     """
     
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
-        'crowd_run',          
+        # 'crowd_run',  <-- REMOVED per user request
         'tearsofsteel_short' 
     ]
     
@@ -124,7 +124,8 @@ class TrainingConfigV10:
     GAE_LAMBDA = 0.95
     CLIP_RANGE = 0.2
     
-    ENT_COEF = 0.05         
+    # Lower entropy (0.01) to converge fast to High Bitrate strategies
+    ENT_COEF = 0.01         
     VF_COEF = 0.5
     MAX_GRAD_NORM = 0.5
     
@@ -158,21 +159,20 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
 
 def main():
     print("\n" + "="*70)
-    print(f"🚀 Training PPO V18: Calibrated Smart Braking (Goldilocks Zone)")
+    print(f"🚀 Training PPO V19: Pure Quality (No CrowdRun)")
     print("="*70)
     print(f"📚 Training Videos: {TrainingConfigV10.TRAIN_VIDEOS}")
     print(f"🧪 Test Videos: {TrainingConfigV10.TEST_VIDEOS}")
     print("\n📊 Configuration:")
-    print(f"   REBUF_PENALTY_BASE: 2.5 (Lower Base)") 
-    print(f"   Smart Brake Multiplier: 1.5x (Reduced from 2.5x)")
-    print(f"   Result: Easy videos run free, Hard videos get moderate penalty.")
-    print(f"   Entropy Coef: {TrainingConfigV10.ENT_COEF}")
+    print(f"   REBUF_PENALTY_BASE: 1.0 (Very Low Risk)") 
+    print(f"   SMOOTH_PENALTY: 1.0 (High Stability)")
+    print(f"   Entropy Coef: {TrainingConfigV10.ENT_COEF} (Fast Convergence)")
     print(f"   Total Timesteps: {TrainingConfigV10.TOTAL_TIMESTEPS:,}")
     print("="*70 + "\n")
     
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_18'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_19'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_18'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_19'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV10.NUM_ENVS)])
@@ -202,7 +202,7 @@ def main():
     )
     
     callbacks = CallbackList([
-        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_18', save_replay_buffer=False, save_vecnormalize=False),
+        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_19', save_replay_buffer=False, save_vecnormalize=False),
         EvalCallback(eval_env, best_model_save_path=str(save_dir / 'best_model'), log_path=str(log_dir / 'eval'), eval_freq=TrainingConfigV10.EVAL_FREQ // TrainingConfigV10.NUM_ENVS, n_eval_episodes=20, deterministic=True, render=False, verbose=1),
         ActionLogCallback(log_freq=40000, log_file="actions_history.txt"),
         EnhancedLoggingCallback(log_dir=log_dir, log_freq=5000, verbose=1)

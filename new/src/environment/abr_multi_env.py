@@ -8,13 +8,13 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V18 - The Golden Balance)
+    Multi-Video ABR Environment (V19 - Pure Performance)
     
-    Target: Beat RobustMPC by calibrating the risk.
+    Target: Maximize QoE on standard videos (Beat RobustMPC).
     Strategy: 
-    - Base Penalty: 2.5 (Lower base encourages quality in easy videos)
-    - Smart Brake: 1.5x Complexity (Instead of 2.5x, avoids freezing the agent)
-    - Effective Penalty on Hard Video: ~6.25 (Perfect middle ground)
+    - Remove CrowdRun safety nets.
+    - Very Low Rebuffer Penalty (1.0) -> Encourage high bitrate.
+    - High Smooth Penalty (1.0) -> Force stability (reduce switching cost).
     """
     
     metadata = {'render_modes': ['human']}
@@ -25,13 +25,14 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # --- V18 CALIBRATED PARAMETERS ---
+    # --- V19 AGGRESSIVE SETTINGS ---
     LYAPUNOV_GAIN = 0.05  
     
-    # Lower base to maximize VMAF on easy videos
-    REBUF_PENALTY_BASE = 2.5  
+    # Very low penalty: Don't fear buffering, just stream High Quality!
+    REBUF_PENALTY_BASE = 1.0  
     
-    SMOOTH_PENALTY_WEIGHT = 0.1
+    # High penalty: Don't switch unnecessarily! (Stability = Higher QoE)
+    SMOOTH_PENALTY_WEIGHT = 1.0
     
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
@@ -187,15 +188,9 @@ class ABREnv(gym.Env):
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + (0.1 * buffer_dev) 
         
-        # --- FIX 3: CALIBRATED SMART BRAKING (V18) ---
-        video_complexity = (self.current_si_norm + self.current_ti_norm) / 2.0
-        
-        # Reduced multiplier from 2.5 to 1.5
-        # Easy video (0.2) -> 1.0 + 0.3 = 1.3  -> Total Penalty: 2.5 * 1.3 = 3.25
-        # Hard video (1.0) -> 1.0 + 1.5 = 2.5  -> Total Penalty: 2.5 * 2.5 = 6.25
-        smart_brake = 1.0 + (1.5 * video_complexity)
-        
-        weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * smart_brake * rebuffer_time
+        # --- FIX: REMOVED SMART BRAKING (Go full speed!) ---
+        # No extra multiplier. Just base risk factor.
+        weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
         
         reward = current_vmaf \
                  - weighted_rebuf \
@@ -222,8 +217,7 @@ class ABREnv(gym.Env):
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
             'reward': float(reward), 'video_name': self.current_video_name,
-            'risk_factor': float(risk_factor),
-            'smart_brake': float(smart_brake)
+            'risk_factor': float(risk_factor)
         })
         return obs, float(reward), terminated, False, info
 
