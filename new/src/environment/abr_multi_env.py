@@ -8,13 +8,14 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V19 - Pure Performance)
+    Multi-Video ABR Environment (V20 - Final: Gradient-Aware Adaptive Penalty)
     
-    Target: Maximize QoE on standard videos (Beat RobustMPC).
-    Strategy: 
-    - Remove CrowdRun safety nets.
-    - Very Low Rebuffer Penalty (1.0) -> Encourage high bitrate.
-    - High Smooth Penalty (1.0) -> Force stability (reduce switching cost).
+    Logic:
+    - Hard videos (CrowdRun) have HUGE VMAF gains (4 -> 62). Agent gets greedy.
+    - Easy videos (Sintel) have SMALL VMAF gains (74 -> 96). Agent gets lazy.
+    - Solution: Scale Penalty proportional to VMAF Range!
+      High VMAF Gain -> High Penalty (Stop greed)
+      Low VMAF Gain -> Low Penalty (Encourage upgrade)
     """
     
     metadata = {'render_modes': ['human']}
@@ -25,14 +26,15 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # --- V19 AGGRESSIVE SETTINGS ---
-    LYAPUNOV_GAIN = 0.05  
+    # --- V20 ADAPTIVE CONFIG ---
+    # Base penalty multiplier. 
+    # Logic: Target Penalty = Base * (Video_Range / 40.0)
+    # CrowdRun (Range 58): 5.0 * 1.45 = 7.25 (Safe)
+    # Sintel (Range 22): 5.0 * 0.55 = 2.75 (Aggressive)
+    REBUF_PENALTY_BASE = 5.5 
     
-    # Very low penalty: Don't fear buffering, just stream High Quality!
-    REBUF_PENALTY_BASE = 1.0  
-    
-    # High penalty: Don't switch unnecessarily! (Stability = Higher QoE)
-    SMOOTH_PENALTY_WEIGHT = 1.0
+    LYAPUNOV_GAIN = 0.05
+    SMOOTH_PENALTY_WEIGHT = 0.5  # Increased slightly for stability
     
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
@@ -69,6 +71,8 @@ class ABREnv(gym.Env):
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
+        self.current_vmaf_range = 0.0 # NEW: To store dynamic range
+        
         self.current_si_norm = 0.0
         self.current_ti_norm = 0.0
         
@@ -109,6 +113,11 @@ class ABREnv(gym.Env):
             
             self.video_assets[vid]['vmaf'] = vmaf_scores
             self.video_assets[vid]['vmaf_norm'] = {k: v/100.0 for k, v in vmaf_scores.items()}
+            
+            # --- FIX: Calculate VMAF Range ---
+            min_v = min(vmaf_scores.values())
+            max_v = max(vmaf_scores.values())
+            self.video_assets[vid]['vmaf_range'] = max_v - min_v
 
             siti_file = self.siti_dir / f"{vid}_siti.json"
             si, ti = 50, 10
@@ -129,6 +138,8 @@ class ABREnv(gym.Env):
         
         self.current_vmaf_scores = assets['vmaf']
         self.current_vmaf_norm = assets['vmaf_norm']
+        self.current_vmaf_range = assets.get('vmaf_range', 40.0) # Load range
+        
         self.current_si_norm = assets['si_norm']
         self.current_ti_norm = assets['ti_norm']
         
@@ -188,9 +199,13 @@ class ABREnv(gym.Env):
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + (0.1 * buffer_dev) 
         
-        # --- FIX: REMOVED SMART BRAKING (Go full speed!) ---
-        # No extra multiplier. Just base risk factor.
-        weighted_rebuf = self.REBUF_PENALTY_BASE * risk_factor * rebuffer_time
+        # --- FIX: ADAPTIVE PENALTY BASED ON VMAF GRADIENT ---
+        # Scale penalty by how "tempting" the video is.
+        # Range=58 (Crowd) -> Factor 1.45 -> Penalty ~8.0 (Hard Brake)
+        # Range=22 (Sintel) -> Factor 0.55 -> Penalty ~3.0 (Full Speed)
+        gradient_factor = self.current_vmaf_range / 40.0
+        
+        weighted_rebuf = self.REBUF_PENALTY_BASE * gradient_factor * risk_factor * rebuffer_time
         
         reward = current_vmaf \
                  - weighted_rebuf \
@@ -217,7 +232,8 @@ class ABREnv(gym.Env):
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
             'reward': float(reward), 'video_name': self.current_video_name,
-            'risk_factor': float(risk_factor)
+            'risk_factor': float(risk_factor),
+            'grad_factor': float(gradient_factor)
         })
         return obs, float(reward), terminated, False, info
 
@@ -232,7 +248,6 @@ class ABREnv(gym.Env):
         }
 
     def render(self): pass
-    
     @property
     def vmaf_scores(self): return self.current_vmaf_scores
     @property
