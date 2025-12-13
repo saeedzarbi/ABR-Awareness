@@ -13,10 +13,7 @@ from configs.paths import get_paths
 
 PATHS = get_paths()
 
-# ============================================================================
-# Enhanced Logging Callback
-# ============================================================================
-
+# ... (Logging classes same as before) ...
 class EnhancedLoggingCallback(BaseCallback):
     def __init__(self, log_dir: Path, log_freq: int = 5000, verbose: int = 0):
         super().__init__(verbose)
@@ -95,18 +92,14 @@ class ActionLogCallback(BaseCallback):
             self.logger.record("custom/mean_action_idx", mean_action)
         return True
 
-# ============================================================================
-# Training Configuration V22
-# ============================================================================
-
 class TrainingConfigV10:
     """
-    Training configuration for V22 (Balanced Exploration)
+    Training configuration for V23 (Hybrid Analyst - Deep Brain)
     """
     
     TRAIN_VIDEOS = [
         'bigbuckbunny',    
-        'crowd_run',
+        'crowd_run',       
         'tearsofsteel_short' 
     ]
     
@@ -115,7 +108,6 @@ class TrainingConfigV10:
     MAX_CHUNKS = 48
     NUM_ENVS = 8
     
-    # --- Hyperparameters ---
     LEARNING_RATE = 3e-4
     N_STEPS = 4096          
     BATCH_SIZE = 128
@@ -124,11 +116,10 @@ class TrainingConfigV10:
     GAE_LAMBDA = 0.95
     CLIP_RANGE = 0.2
     
-    # Lower entropy (0.01) to converge fast to High Bitrate strategies
-    # ENT_COEF = 0.01         
+    ENT_COEF = 0.05 
     VF_COEF = 0.5
     MAX_GRAD_NORM = 0.5
-    ENT_COEF = 0.05 # Balanced exploration
+    
     TOTAL_TIMESTEPS = 1_000_000 
     EVAL_FREQ = 20_000
     SAVE_FREQ = 50_000
@@ -159,20 +150,16 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
 
 def main():
     print("\n" + "="*70)
-    print(f"🚀 Training PPO V22: Pure Quality (No CrowdRun)")
+    print(f"🚀 Training PPO V23: THE HYBRID ANALYST")
     print("="*70)
-    print(f"📚 Training Videos: {TrainingConfigV10.TRAIN_VIDEOS}")
-    print(f"🧪 Test Videos: {TrainingConfigV10.TEST_VIDEOS}")
-    print("\n📊 Configuration:")
-    print(f"   REBUF_PENALTY_BASE: 1.0 (Very Low Risk)") 
-    print(f"   SMOOTH_PENALTY: 1.0 (High Stability)")
-    print(f"   Entropy Coef: {TrainingConfigV10.ENT_COEF} (Fast Convergence)")
-    print(f"   Total Timesteps: {TrainingConfigV10.TOTAL_TIMESTEPS:,}")
+    print(f"   Architecture: Deep Network [400, 300]")
+    print(f"   Features: Future Sizes + Harmonic Mean + Network Trend")
+    print(f"   Goal: Beat MPC's efficiency in CrowdRun using its own math!")
     print("="*70 + "\n")
     
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_22'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_23'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_22'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_23'
     log_dir.mkdir(parents=True, exist_ok=True)
     
     train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV10.NUM_ENVS)])
@@ -182,6 +169,9 @@ def main():
     else:
         print("⚠️ Warning: No test traces found. Using training traces for eval.")
         eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=False)])
+    
+    # --- DEEPER NETWORK POLICY ---
+    policy_kwargs = dict(net_arch=[400, 300])
     
     model = PPO(
         'MlpPolicy',
@@ -196,13 +186,14 @@ def main():
         ent_coef=TrainingConfigV10.ENT_COEF,
         vf_coef=TrainingConfigV10.VF_COEF,
         max_grad_norm=TrainingConfigV10.MAX_GRAD_NORM,
+        policy_kwargs=policy_kwargs, # <--- NEW: Bigger Brain
         verbose=1,
         device=TrainingConfigV10.DEVICE,
         tensorboard_log=str(log_dir)
     )
     
     callbacks = CallbackList([
-        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_22', save_replay_buffer=False, save_vecnormalize=False),
+        CheckpointCallback(save_freq=TrainingConfigV10.SAVE_FREQ // TrainingConfigV10.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_23', save_replay_buffer=False, save_vecnormalize=False),
         EvalCallback(eval_env, best_model_save_path=str(save_dir / 'best_model'), log_path=str(log_dir / 'eval'), eval_freq=TrainingConfigV10.EVAL_FREQ // TrainingConfigV10.NUM_ENVS, n_eval_episodes=20, deterministic=True, render=False, verbose=1),
         ActionLogCallback(log_freq=40000, log_file="actions_history.txt"),
         EnhancedLoggingCallback(log_dir=log_dir, log_freq=5000, verbose=1)

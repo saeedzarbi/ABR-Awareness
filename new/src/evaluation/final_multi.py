@@ -191,9 +191,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed (V22)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_23' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_23' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed from: {path}")
         except Exception as e:
@@ -217,11 +217,11 @@ class TCSVT_Evaluator:
         return methods
 
     def evaluate(self, methods, episodes_per_video=20, enable_logging=True):
-        print(f"\n🔬 Running Evaluation V22 (N={episodes_per_video} per video)...")
+        print(f"\n🔬 Running Evaluation V23 (N={episodes_per_video} per video)...")
         print(f"   Enhanced logging: {'Enabled' if enable_logging else 'Disabled'}")
         
         send_slack_message("info", "Evaluation Started", 
-                          f"Starting V22 evaluation on {len(self.test_videos)} videos")
+                          f"Starting V23 evaluation on {len(self.test_videos)} videos")
         
         if not list(self.test_trace_dir.glob("*.json")):
             print("❌ No traces found.")
@@ -235,7 +235,7 @@ class TCSVT_Evaluator:
                 print(f"   ⚠️ Skipping {video_name}: Data not found.")
                 continue
 
-            # Initialize environment (V21/V22 logic, 29 features)
+            # Initialize environment (V23 logic, 31 features)
             env = ABREnv(
                 video_names=[video_name],
                 trace_dir=str(self.test_trace_dir),
@@ -250,7 +250,7 @@ class TCSVT_Evaluator:
                 
                 # Create logger for this method
                 if enable_logging:
-                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v22')
+                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v23')
                 
                 active_model = model
                 if name == 'RobustMPC': 
@@ -278,7 +278,7 @@ class TCSVT_Evaluator:
                         else:
                             # --- FIX FOR OBSERVATION SHAPE MISMATCH ---
                             if name == 'Pensieve':
-                                # Pensieve expects 23 features, Env provides 29 (V21/V22)
+                                # Pensieve expects 23 features, Env provides 31 (V23)
                                 if obs.shape[0] == 29:
                                     curr_obs = obs[:23].copy() # Slice off future chunk sizes
                                 else:
@@ -337,8 +337,8 @@ class TCSVT_Evaluator:
         
         df = pd.DataFrame(self.results_detailed)
         
-        # ✅ Changed filename to _22
-        path = PATHS['results'] / 'detailed_stats_multi_video_22.csv'
+        # ✅ Changed filename to _23
+        path = PATHS['results'] / 'detailed_stats_multi_video_23.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         
@@ -368,7 +368,7 @@ class TCSVT_Evaluator:
         print(summary)
         
         # Send to Slack
-        details_msg = "📊 *Final Evaluation Results V22*\n\n"
+        details_msg = "📊 *Final Evaluation Results V23*\n\n"
         
         details_msg += "*Overall Performance:*\n"
         for method in summary.index:

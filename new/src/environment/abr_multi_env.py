@@ -8,13 +8,12 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V21 - Future-Aware / The Oracle)
+    Multi-Video ABR Environment (V23 - The Hybrid Analyst)
     
-    The Final Innovation:
-    - Instead of letting the agent "guess" the size of the next chunk,
-      we EXPLICITLY provide the sizes of the next chunk for all 6 bitrates.
-    - This removes the "uncertainty of content" and lets the agent focus solely
-      on the "uncertainty of network".
+    Innovation:
+    - Combines "Future Awareness" (Next Chunk Sizes) from V22.
+    - Adds "Trend Analysis" (Harmonic Mean & Derivative) from Control Theory.
+    - This gives the agent the 'math skills' of MPC + the 'foresight' of Oracle.
     """
     
     metadata = {'render_modes': ['human']}
@@ -25,16 +24,13 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # --- V21 CONFIG: ADAPTIVE + FUTURE AWARE ---
-    REBUF_PENALTY_BASE = 4.5  # Balanced base
+    # Tuned from V22 results
+    REBUF_PENALTY_BASE = 4.8  # Slight increase to beat MPC's 7s rebuffer
     SMOOTH_PENALTY_WEIGHT = 0.5 
-    LYAPUNOV_GAIN = 0.05
     
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
-    
-    # Normalization factor for chunk sizes (e.g. max chunk is ~20MB = 20000kbits)
-    MAX_CHUNK_SIZE_BITS = 30000000.0 # 30 Megabits safe upper bound
+    MAX_CHUNK_SIZE_BITS = 30000000.0
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
@@ -63,16 +59,18 @@ class ABREnv(gym.Env):
         
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
         
-        # Obs Dim: 
-        # History(12) + Buffer(1) + Trend(1) + LastBR(1) + Content(2) + VMAF(6) + FutureSizes(6)
-        # Total = 12 + 1 + 1 + 1 + 2 + 6 + 6 = 29
-        obs_dim = 12 + 11 + 6 
+        # Obs Dim Breakdown:
+        # History(12) + Buffer(1) + BufTrend(1) + LastBR(1) + Content(2) + VMAF(6) + FutureSizes(6)
+        # + HarmonicMean(1) + NetworkTrend(1)
+        # Total = 29 + 2 = 31 features
+        obs_dim = 31
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
         
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
         self.current_vmaf_range = 0.0
+        
         self.current_si_norm = 0.0
         self.current_ti_norm = 0.0
         
@@ -85,8 +83,8 @@ class ABREnv(gym.Env):
         self.last_vmaf = 35.0
         self.throughput_history = []
         
-        # New: To store real sizes if available, else estimate
-        self.video_chunk_sizes = {} 
+        # Real-time tracking
+        self.raw_throughput_history = [] # To calc harmonic mean correctly
         
     def _load_traces(self):
         trace_files = list(self.trace_dir.glob("*.json"))
@@ -103,7 +101,6 @@ class ABREnv(gym.Env):
 
         for vid in self.video_names:
             self.video_assets[vid] = {}
-            # ... (VMAF loading same as before) ...
             vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97}
             if all_vmaf_data is not None and 'video' in all_vmaf_data.columns:
                 df = all_vmaf_data[all_vmaf_data['video'] == vid]
@@ -117,7 +114,6 @@ class ABREnv(gym.Env):
             max_v = max(vmaf_scores.values())
             self.video_assets[vid]['vmaf_range'] = max_v - min_v
 
-            # SI/TI Loading
             siti_file = self.siti_dir / f"{vid}_siti.json"
             si, ti = 50, 10
             if siti_file.exists():
@@ -131,16 +127,8 @@ class ABREnv(gym.Env):
             self.video_assets[vid]['ti_norm'] = float(np.clip(ti / 70.0, 0, 1))
 
     def _get_next_chunk_sizes(self):
-        """
-        Calculates the size (in bits) of the next chunk for all bitrates.
-        Ideally, this should read from a manifest file. 
-        Here we estimate it using bitrate * duration (CBR assumption)
-        BUT we can make it VBR-like by using SI/TI if we wanted.
-        For now, we stick to the standard model but expose it to the agent.
-        """
         sizes = []
         for br in self.BITRATE_LEVELS:
-            # Standard calculation used in step()
             size_bits = br * 1000 * self.CHUNK_DURATION
             sizes.append(size_bits)
         return np.array(sizes, dtype=np.float32)
@@ -168,6 +156,7 @@ class ABREnv(gym.Env):
         start_tp = 500.0
         log_obs = np.log(start_tp / self.MIN_NETWORK_THROUGHPUT) / np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
         self.throughput_history = [log_obs] * 12
+        self.raw_throughput_history = [start_tp] * 5 # Short memory for harmonic mean
         
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
@@ -183,10 +172,23 @@ class ABREnv(gym.Env):
         content_obs = np.array([self.current_si_norm, self.current_ti_norm], dtype=np.float32)
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
-        # --- NEW FEATURE: Future Chunk Sizes ---
-        # Normalize by max expected size
+        # Future Awareness
         next_sizes = self._get_next_chunk_sizes()
         sizes_obs = np.clip(next_sizes / self.MAX_CHUNK_SIZE_BITS, 0, 1)
+        
+        # --- NEW: Hybrid Analyst Features ---
+        # 1. Harmonic Mean (MPC Style)
+        recent_tp = np.array(self.raw_throughput_history[-5:]) # Last 5 chunks
+        harmonic_mean = len(recent_tp) / np.sum(1.0 / (recent_tp + 1e-5))
+        harmonic_obs = np.log(harmonic_mean / self.MIN_NETWORK_THROUGHPUT) / np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
+        harmonic_obs = np.clip(harmonic_obs, 0, 1)
+        
+        # 2. Network Trend (Derivative)
+        if len(self.raw_throughput_history) >= 2:
+            trend = (self.raw_throughput_history[-1] - self.raw_throughput_history[-2]) / self.MAX_NETWORK_THROUGHPUT
+        else:
+            trend = 0.0
+        trend_obs = np.clip(trend, -1.0, 1.0)
         
         return np.concatenate([
             tp_obs,         # 12
@@ -195,12 +197,13 @@ class ABREnv(gym.Env):
             [last_br_obs],  # 1
             content_obs,    # 2
             vmaf_obs,       # 6
-            sizes_obs       # 6 (NEW)
+            sizes_obs,      # 6
+            [harmonic_obs], # 1 (NEW)
+            [trend_obs]     # 1 (NEW)
         ]).astype(np.float32)
 
     def step(self, action):
         bitrate_kbps = self.BITRATE_LEVELS[action]
-        # Using the SAME logic as _get_next_chunk_sizes ensures consistency
         chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
         
         trace_tp = self.current_trace['throughput_kbps']
@@ -221,7 +224,6 @@ class ABREnv(gym.Env):
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         risk_factor = 1.0 + (0.1 * buffer_dev) 
         
-        # Adaptive Penalty (Gradient Aware)
         gradient_factor = self.current_vmaf_range / 40.0
         weighted_rebuf = self.REBUF_PENALTY_BASE * gradient_factor * risk_factor * rebuffer_time
         
@@ -230,10 +232,12 @@ class ABREnv(gym.Env):
                  - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
                  - (0.02 * buffer_dev) 
         
+        # Update histories
         log_tp = np.log(effective_tp / self.MIN_NETWORK_THROUGHPUT)
         log_scale = np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
         norm_tp = np.clip(log_tp / log_scale, 0.0, 1.0)
         self.throughput_history.append(norm_tp)
+        self.raw_throughput_history.append(effective_tp) # Store raw for Harmonic calc
         
         self.last_bitrate_idx = action
         self.last_vmaf = current_vmaf
