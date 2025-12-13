@@ -13,10 +13,7 @@ from configs.paths import get_paths
 
 PATHS = get_paths()
 
-# ============================================================================
-# Enhanced Logging Callback
-# ============================================================================
-
+# ... (Logging classes same as before) ...
 class EnhancedLoggingCallback(BaseCallback):
     def __init__(self, log_dir: Path, log_freq: int = 5000, verbose: int = 0):
         super().__init__(verbose)
@@ -95,13 +92,9 @@ class ActionLogCallback(BaseCallback):
             self.logger.record("custom/mean_action_idx", mean_action)
         return True
 
-# ============================================================================
-# Training Configuration V24
-# ============================================================================
-
-class TrainingConfigV24:
+class TrainingConfigV25:
     """
-    Training configuration for V24 (Deep Foresight)
+    Training configuration for V25 (Soft-Floor Strategy)
     """
     
     TRAIN_VIDEOS = [
@@ -115,7 +108,6 @@ class TrainingConfigV24:
     MAX_CHUNKS = 48
     NUM_ENVS = 8
     
-    # --- Hyperparameters ---
     LEARNING_RATE = 3e-4
     N_STEPS = 4096          
     BATCH_SIZE = 128
@@ -137,10 +129,10 @@ class TrainingConfigV24:
 def make_env(rank: int, seed: int = 0, is_eval: bool = False):
     def _init():
         if is_eval:
-            video_list = TrainingConfigV24.TEST_VIDEOS
+            video_list = TrainingConfigV25.TEST_VIDEOS
             trace_path = PATHS['test_traces']
         else:
-            video_list = TrainingConfigV24.TRAIN_VIDEOS
+            video_list = TrainingConfigV25.TRAIN_VIDEOS
             trace_path = PATHS['train_traces']
             
         if not video_list: video_list = ['bigbuckbunny']
@@ -150,7 +142,7 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
             trace_dir=str(trace_path), 
             vmaf_dir=str(PATHS['vmaf_scores']),
             siti_dir=str(PATHS['content_features']),
-            max_chunks=TrainingConfigV24.MAX_CHUNKS,
+            max_chunks=TrainingConfigV25.MAX_CHUNKS,
             random_seed=seed + rank
         )
         return Monitor(env, info_keywords=('avg_quality', 'total_rebuffer'))
@@ -158,20 +150,18 @@ def make_env(rank: int, seed: int = 0, is_eval: bool = False):
 
 def main():
     print("\n" + "="*70)
-    print(f"🚀 Training PPO V24: DEEP FORESIGHT (3-Step Lookahead)")
+    print(f"🚀 Training PPO V25: SOFT VMAF FLOOR (Survival Mode)")
     print("="*70)
-    print(f"   Architecture: Deep Network [400, 300]")
-    print(f"   Features: Multi-Step Future Chunk Sizes (Horizon=3)")
-    print(f"   Goal: Pre-emptive buffer building to beat RobustMPC in CrowdRun!")
+    print(f"   Goal: Fix CrowdRun Death Spiral.")
+    print(f"   Strategy: Treat VMAF < 12 as 12 to encourage switching to Bitrate 0.")
     print("="*70 + "\n")
     
-    # Updated paths for V24
-    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_24'
+    save_dir = PATHS['models'] / 'ppo_abr_multi_dynamic_25'
     save_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_24'
+    log_dir = PATHS['logs'] / 'ppo_abr_multi_dynamic_25'
     log_dir.mkdir(parents=True, exist_ok=True)
     
-    train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV24.NUM_ENVS)])
+    train_env = SubprocVecEnv([make_env(i, 0, is_eval=False) for i in range(TrainingConfigV25.NUM_ENVS)])
     
     if len(list(PATHS['test_traces'].glob('*.json'))) > 0:
         eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=True)])
@@ -179,39 +169,36 @@ def main():
         print("⚠️ Warning: No test traces found. Using training traces for eval.")
         eval_env = SubprocVecEnv([make_env(0, 1000, is_eval=False)])
     
-    # --- DEEPER NETWORK POLICY ---
-    # Essential for handling the 41-dimensional input space effectively
-    
-    policy_kwargs = dict(net_arch=[400, 300])
+    # Back to standard network size (V22 was optimal)
+    # V25 uses 29 features like V22.
     
     model = PPO(
         'MlpPolicy',
         train_env,
-        learning_rate=TrainingConfigV24.LEARNING_RATE,
-        n_steps=TrainingConfigV24.N_STEPS,
-        batch_size=TrainingConfigV24.BATCH_SIZE,
-        n_epochs=TrainingConfigV24.N_EPOCHS,
-        gamma=TrainingConfigV24.GAMMA,
-        gae_lambda=TrainingConfigV24.GAE_LAMBDA,
-        clip_range=TrainingConfigV24.CLIP_RANGE,
-        ent_coef=TrainingConfigV24.ENT_COEF,
-        vf_coef=TrainingConfigV24.VF_COEF,
-        max_grad_norm=TrainingConfigV24.MAX_GRAD_NORM,
-        policy_kwargs=policy_kwargs, 
+        learning_rate=TrainingConfigV25.LEARNING_RATE,
+        n_steps=TrainingConfigV25.N_STEPS,
+        batch_size=TrainingConfigV25.BATCH_SIZE,
+        n_epochs=TrainingConfigV25.N_EPOCHS,
+        gamma=TrainingConfigV25.GAMMA,
+        gae_lambda=TrainingConfigV25.GAE_LAMBDA,
+        clip_range=TrainingConfigV25.CLIP_RANGE,
+        ent_coef=TrainingConfigV25.ENT_COEF,
+        vf_coef=TrainingConfigV25.VF_COEF,
+        max_grad_norm=TrainingConfigV25.MAX_GRAD_NORM,
         verbose=1,
-        device=TrainingConfigV24.DEVICE,
+        device=TrainingConfigV25.DEVICE,
         tensorboard_log=str(log_dir)
     )
     
     callbacks = CallbackList([
-        CheckpointCallback(save_freq=TrainingConfigV24.SAVE_FREQ // TrainingConfigV24.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_24', save_replay_buffer=False, save_vecnormalize=False),
-        EvalCallback(eval_env, best_model_save_path=str(save_dir / 'best_model'), log_path=str(log_dir / 'eval'), eval_freq=TrainingConfigV24.EVAL_FREQ // TrainingConfigV24.NUM_ENVS, n_eval_episodes=20, deterministic=True, render=False, verbose=1),
+        CheckpointCallback(save_freq=TrainingConfigV25.SAVE_FREQ // TrainingConfigV25.NUM_ENVS, save_path=str(save_dir / 'checkpoints'), name_prefix='ppo_multi_dynamic_25', save_replay_buffer=False, save_vecnormalize=False),
+        EvalCallback(eval_env, best_model_save_path=str(save_dir / 'best_model'), log_path=str(log_dir / 'eval'), eval_freq=TrainingConfigV25.EVAL_FREQ // TrainingConfigV25.NUM_ENVS, n_eval_episodes=20, deterministic=True, render=False, verbose=1),
         ActionLogCallback(log_freq=40000, log_file="actions_history.txt"),
         EnhancedLoggingCallback(log_dir=log_dir, log_freq=5000, verbose=1)
     ])
     
     try:
-        model.learn(total_timesteps=TrainingConfigV24.TOTAL_TIMESTEPS, callback=callbacks, progress_bar=True)
+        model.learn(total_timesteps=TrainingConfigV25.TOTAL_TIMESTEPS, callback=callbacks, progress_bar=True)
         model.save(save_dir / 'final_model')
         print("\n✅ Training completed successfully!")
         

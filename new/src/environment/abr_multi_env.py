@@ -8,12 +8,19 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V24 - Deep Foresight)
+    Multi-Video ABR Environment (V25 - Soft VMAF Floor)
     
-    Improvement over V22:
-    - V22 saw only 1 chunk ahead. It reacted too late to sudden spikes in CrowdRun.
-    - V24 sees 3 chunks ahead (t+1, t+2, t+3).
-    - This mimics MPC's 'Lookahead Horizon' to allow pre-emptive buffer building.
+    Diagnosis of V22/V24 Failure in CrowdRun:
+    - The drop from Bitrate 1 (VMAF 15) to Bitrate 0 (VMAF 4) is too steep (-11).
+    - Rebuffer penalty is ~4.5.
+    - Agent prefers Rebuffering (Cost 4.5) over switching to Bitrate 0 (Cost 11).
+    - Result: Infinite buffering loop at Bitrate 1.
+    
+    Solution (V25):
+    - Apply a "Soft Floor" to VMAF reward during training.
+    - max(vmaf, 12.0).
+    - Bitrate 0 becomes 12.0. Drop becomes 15->12 (-3).
+    - Since 3 < 4.5, Agent will switch to Bitrate 0 and survive!
     """
     
     metadata = {'render_modes': ['human']}
@@ -24,16 +31,13 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # Back to V22 penalty (it was optimal)
-    REBUF_PENALTY_BASE = 4.5 
+    # Standardizing Penalty to match RobustMPC literature
+    REBUF_PENALTY_BASE = 4.3 
     SMOOTH_PENALTY_WEIGHT = 0.5 
     
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
-    MAX_CHUNK_SIZE_BITS = 30000000.0 # Normalization factor
-    
-    # LOOKAHEAD HORIZON
-    LOOKAHEAD_STEPS = 3 
+    MAX_CHUNK_SIZE_BITS = 30000000.0
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
@@ -62,18 +66,15 @@ class ABREnv(gym.Env):
         
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
         
-        # Obs Dim Breakdown:
-        # History(12) + Buffer(1) + BufTrend(1) + LastBR(1) + Content(2) + VMAF(6) 
-        # + FutureSizes(6 bitrates * 3 steps) = 18
-        # Total = 23 + 18 = 41 features
-        obs_dim = 41
+        # V22 Features (29 dims) - Proven to be best architecture
+        # History(12) + Buf(1) + Trend(1) + LastBr(1) + Content(2) + VMAF(6) + Future(6)
+        obs_dim = 29
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
         
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
         self.current_vmaf_range = 0.0
-        
         self.current_si_norm = 0.0
         self.current_ti_norm = 0.0
         
@@ -126,27 +127,12 @@ class ABREnv(gym.Env):
             self.video_assets[vid]['si_norm'] = float(np.clip(si / 150.0, 0, 1))
             self.video_assets[vid]['ti_norm'] = float(np.clip(ti / 70.0, 0, 1))
 
-    def _get_horizon_sizes(self):
-        """
-        Returns flattened array of sizes for next LOOKAHEAD_STEPS chunks.
-        Shape: (LOOKAHEAD_STEPS * 6,)
-        """
-        horizon_sizes = []
-        
-        for step in range(self.LOOKAHEAD_STEPS):
-            # Future index
-            target_idx = self.chunk_idx + step
-            
-            if target_idx >= self.max_chunks:
-                # If beyond video end, pad with zeros
-                horizon_sizes.extend([0.0] * len(self.BITRATE_LEVELS))
-            else:
-                # Real sizes (Simulated as CBR for now, can be VBR)
-                for br in self.BITRATE_LEVELS:
-                    size_bits = br * 1000 * self.CHUNK_DURATION
-                    horizon_sizes.append(size_bits)
-                    
-        return np.array(horizon_sizes, dtype=np.float32)
+    def _get_next_chunk_sizes(self):
+        sizes = []
+        for br in self.BITRATE_LEVELS:
+            size_bits = br * 1000 * self.CHUNK_DURATION
+            sizes.append(size_bits)
+        return np.array(sizes, dtype=np.float32)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -186,9 +172,9 @@ class ABREnv(gym.Env):
         content_obs = np.array([self.current_si_norm, self.current_ti_norm], dtype=np.float32)
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
-        # --- NEW: Multi-Step Lookahead ---
-        raw_horizon = self._get_horizon_sizes()
-        horizon_obs = np.clip(raw_horizon / self.MAX_CHUNK_SIZE_BITS, 0, 1)
+        # Future Awareness (V22 Style - Proven)
+        next_sizes = self._get_next_chunk_sizes()
+        sizes_obs = np.clip(next_sizes / self.MAX_CHUNK_SIZE_BITS, 0, 1)
         
         return np.concatenate([
             tp_obs,         # 12
@@ -197,7 +183,7 @@ class ABREnv(gym.Env):
             [last_br_obs],  # 1
             content_obs,    # 2
             vmaf_obs,       # 6
-            horizon_obs     # 18 (3 steps * 6 bitrates)
+            sizes_obs       # 6
         ]).astype(np.float32)
 
     def step(self, action):
@@ -216,17 +202,22 @@ class ABREnv(gym.Env):
         self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
         self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
         
-        current_vmaf = self.current_vmaf_scores.get(bitrate_kbps, 35.0)
-        smooth_pen = abs(current_vmaf - self.last_vmaf)
+        # --- TRUE VMAF (For Logging) ---
+        actual_vmaf = self.current_vmaf_scores.get(bitrate_kbps, 35.0)
         
+        # --- PERCEIVED VMAF (For Reward) ---
+        # "Soft Floor" Strategy: Treat any VMAF < 12 as 12.
+        # This reduces the penalty of switching to the lowest bitrate.
+        perceived_vmaf = max(actual_vmaf, 12.0)
+        
+        smooth_pen = abs(perceived_vmaf - self.last_vmaf)
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
-        risk_factor = 1.0 + (0.1 * buffer_dev) 
         
-        # Adaptive Gradient Penalty (Same as V22 - it was good)
-        gradient_factor = self.current_vmaf_range / 40.0
-        weighted_rebuf = self.REBUF_PENALTY_BASE * gradient_factor * risk_factor * rebuffer_time
+        # Using Fixed Penalty (No Gradient) - Gradient hurt CrowdRun
+        weighted_rebuf = self.REBUF_PENALTY_BASE * rebuffer_time
         
-        reward = current_vmaf \
+        # Reward based on Perceived VMAF (Encourages usage of Bitrate 0 in crisis)
+        reward = perceived_vmaf \
                  - weighted_rebuf \
                  - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
                  - (0.02 * buffer_dev) 
@@ -237,13 +228,13 @@ class ABREnv(gym.Env):
         self.throughput_history.append(norm_tp)
         
         self.last_bitrate_idx = action
-        self.last_vmaf = current_vmaf
+        self.last_vmaf = perceived_vmaf # Agent tracks perceived stability
         self.chunk_idx += 1
         terminated = self.chunk_idx >= self.max_chunks
         
-        self.total_quality += current_vmaf
+        self.total_quality += actual_vmaf # Log actual quality
         self.total_rebuffer += rebuffer_time
-        self.total_smooth += smooth_pen
+        self.total_smooth += abs(actual_vmaf - self.current_vmaf_scores.get(self.BITRATE_LEVELS[self.last_bitrate_idx], 35.0)) if self.chunk_idx > 1 else 0
         
         obs = self._get_observation()
         info = self._get_info()
@@ -251,8 +242,7 @@ class ABREnv(gym.Env):
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
             'reward': float(reward), 'video_name': self.current_video_name,
-            'risk_factor': float(risk_factor),
-            'grad_factor': float(gradient_factor)
+            'vmaf_real': actual_vmaf
         })
         return obs, float(reward), terminated, False, info
 

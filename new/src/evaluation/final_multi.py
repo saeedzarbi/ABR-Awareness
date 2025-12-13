@@ -154,9 +154,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed (V23)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_24' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_25' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_24' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_25' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed from: {path}")
         except Exception as e:
@@ -164,9 +164,9 @@ class TCSVT_Evaluator:
         
         # 2. Pensieve (V16 Baseline)
         try:
-            path = PATHS['models'] / 'pensieve_multi_vmaf_new_16' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'pensieve_multi_vmaf_new_14' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_16' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_14' / 'final_model'
             methods['Pensieve'] = PPO.load(str(path))
             print(f"✅ Loaded Pensieve from: {path}")
         except Exception as e:
@@ -180,10 +180,10 @@ class TCSVT_Evaluator:
         return methods
 
     def evaluate(self, methods, episodes_per_video=20, enable_logging=True):
-        print(f"\n🔬 Running Evaluation V24 (N={episodes_per_video} per video)...")
+        print(f"\n🔬 Running Evaluation V25 (N={episodes_per_video} per video)...")
         print(f"   Enhanced logging: {'Enabled' if enable_logging else 'Disabled'}")
         
-        send_slack_message("info", "Evaluation Started", f"Starting V24 evaluation on {len(self.test_videos)} videos")
+        send_slack_message("info", "Evaluation Started", f"Starting V25 evaluation on {len(self.test_videos)} videos")
         
         if not list(self.test_trace_dir.glob("*.json")):
             print("❌ No traces found.")
@@ -210,7 +210,7 @@ class TCSVT_Evaluator:
                 print(f"   > Running {name}...", end='\r')
                 
                 if enable_logging:
-                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v24')
+                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v25')
                 
                 active_model = model
                 if name == 'RobustMPC': 
@@ -295,7 +295,7 @@ class TCSVT_Evaluator:
             return
         
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_multi_video_24.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_25.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         send_slack_message("info", "Results Saved", f"Saved to: {path}")
@@ -321,7 +321,7 @@ class TCSVT_Evaluator:
         print("\n🏆 Overall Statistical Summary:")
         print(summary)
         
-        details_msg = "📊 *Final Results V24*\n\n"
+        details_msg = "📊 *Final Results V25*\n\n"
         for method in summary.index:
             qoe = summary.loc[method, ('QoE', 'mean')]
             vmaf = summary.loc[method, ('VMAF', 'mean')]
