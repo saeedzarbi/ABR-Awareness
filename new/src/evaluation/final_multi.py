@@ -297,4 +297,51 @@ class TCSVT_Evaluator:
         df = pd.DataFrame(self.results_detailed)
         path = PATHS['results'] / 'detailed_stats_multi_video_23.csv'
         df.to_csv(path, index=False)
-        print(f"\n
+        print(f"\n✅ Saved results to: {path}")
+        send_slack_message("info", "Results Saved", f"Saved to: {path}")
+        self.print_summary(df)
+        return df
+    
+    def load_and_calculate_statistics(self, csv_file):
+        path = PATHS['results'] / csv_file
+        if not path.exists():
+            print(f"❌ File not found: {path}")
+            return
+        print(f"\n📊 Loading from: {csv_file}")
+        df = pd.read_csv(path)
+        self.print_summary(df)
+        return df
+
+    def print_summary(self, df):
+        summary = df.groupby('Method').agg({
+            'QoE': ['mean', 'std'],
+            'VMAF': ['mean', 'std'],
+            'Rebuffer': ['mean', 'std']
+        }).round(2)
+        print("\n🏆 Overall Statistical Summary:")
+        print(summary)
+        
+        details_msg = "📊 *Final Results V23*\n\n"
+        for method in summary.index:
+            qoe = summary.loc[method, ('QoE', 'mean')]
+            vmaf = summary.loc[method, ('VMAF', 'mean')]
+            rebuf = summary.loc[method, ('Rebuffer', 'mean')]
+            details_msg += f"• *{method}:* QoE={qoe:.1f}, VMAF={vmaf:.2f}, Rebuf={rebuf:.2f}%\n"
+        
+        send_slack_message("success", "Evaluation Completed", details_msg)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--load', type=str, help='Load existing CSV')
+    parser.add_argument('--episodes', type=int, default=20)
+    parser.add_argument('--no-logging', action='store_true')
+    args = parser.parse_args()
+    
+    evaluator = TCSVT_Evaluator()
+    if args.load:
+        evaluator.load_and_calculate_statistics(args.load)
+    else:
+        methods = evaluator.load_methods()
+        if methods:
+            evaluator.evaluate(methods, episodes_per_video=args.episodes, enable_logging=not args.no_logging)
+            evaluator.save_statistics()
