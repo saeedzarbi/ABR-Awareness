@@ -154,9 +154,9 @@ class TCSVT_Evaluator:
         
         # 1. Proposed (V23)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_23' / 'best_model' / 'best_model'
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_24' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_23' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_24' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed from: {path}")
         except Exception as e:
