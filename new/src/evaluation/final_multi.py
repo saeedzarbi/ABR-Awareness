@@ -171,20 +171,6 @@ def send_slack_message(status, step, message):
 
 # ============================================================================
 # Main Evaluator
-# ✓ project_root        : /home/saeedzarbi95/test/ABR-Awareness/new
-# ✓ data_dir            : /home/saeedzarbi95/test/ABR-Awareness/new/data
-# ✓ raw_videos          : /home/saeedzarbi95/test/ABR-Awareness/new/data/raw_videos
-# ✓ encoded_videos      : /home/saeedzarbi95/test/ABR-Awareness/new/data/encoded_videos
-# ✓ vmaf_scores         : /home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores
-# ✓ content_features    : /home/saeedzarbi95/test/ABR-Awareness/new/data/content_features
-# ✓ processed_traces    : /home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces
-# ✓ train_traces        : /home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces
-# ✓ test_traces         : /home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/test_traces
-# ✓ network_traces      : /home/saeedzarbi95/test/ABR-Awareness/new/data/network_traces
-# ✓ results             : /home/saeedzarbi95/test/ABR-Awareness/new/results
-# ✓ models              : /home/saeedzarbi95/test/ABR-Awareness/new/results/models
-# ✓ logs                : /home/saeedzarbi95/test/ABR-Awareness/new/results/logs
-# ✓ plots               : /home/saeedzarbi95/test/ABR-Awareness/new/results/plots
 # ============================================================================
 
 class TCSVT_Evaluator:
@@ -203,7 +189,7 @@ class TCSVT_Evaluator:
     def load_methods(self):
         methods = {}
         
-        # 1. Proposed (V10)
+        # 1. Proposed (V22)
         try:
             path = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
@@ -249,8 +235,9 @@ class TCSVT_Evaluator:
                 print(f"   ⚠️ Skipping {video_name}: Data not found.")
                 continue
 
+            # Initialize environment (V21/V22 logic, 29 features)
             env = ABREnv(
-                video_names=video_name,  # Changed from video_name to video_names (accepts single string)
+                video_names=[video_name],
                 trace_dir=str(self.test_trace_dir),
                 vmaf_dir=str(PATHS['vmaf_scores']),
                 siti_dir=str(PATHS['content_features']),
@@ -272,7 +259,7 @@ class TCSVT_Evaluator:
                     active_model = Genie(env)
                 
                 for ep in range(episodes_per_video):
-                    obs, info = env.reset()
+                    obs, info = env.reset(seed=ep) # Seeding important for comparisons
                     done = False
                     last_br = 0
                     switches = 0
@@ -289,9 +276,20 @@ class TCSVT_Evaluator:
                         elif name == 'BBA':
                             action = active_model.select_bitrate(info['buffer_level'])
                         else:
-                            if name == 'Pensieve': 
-                                obs[10:] = 0.0
-                            action, _ = active_model.predict(obs, deterministic=True)
+                            # --- FIX FOR OBSERVATION SHAPE MISMATCH ---
+                            if name == 'Pensieve':
+                                # Pensieve expects 23 features, Env provides 29 (V21/V22)
+                                if obs.shape[0] == 29:
+                                    curr_obs = obs[:23].copy() # Slice off future chunk sizes
+                                else:
+                                    curr_obs = obs.copy()
+                                
+                                # Apply Pensieve masking logic (zero out VMAF features if needed)
+                                curr_obs[10:] = 0.0 
+                                action, _ = active_model.predict(curr_obs, deterministic=True)
+                            else:
+                                # Proposed model (uses full 29 features)
+                                action, _ = active_model.predict(obs, deterministic=True)
                         
                         if action != last_br: 
                             switches += 1
@@ -339,7 +337,7 @@ class TCSVT_Evaluator:
         
         df = pd.DataFrame(self.results_detailed)
         
-        # ✅ Changed filename to _10
+        # ✅ Changed filename to _22
         path = PATHS['results'] / 'detailed_stats_multi_video_22.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
