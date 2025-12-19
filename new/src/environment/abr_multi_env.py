@@ -8,19 +8,19 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V25 - Soft VMAF Floor)
+    Multi-Video ABR Environment (V26 - Survival Mode)
     
-    Diagnosis of V22/V24 Failure in CrowdRun:
-    - The drop from Bitrate 1 (VMAF 15) to Bitrate 0 (VMAF 4) is too steep (-11).
-    - Rebuffer penalty is ~4.5.
-    - Agent prefers Rebuffering (Cost 4.5) over switching to Bitrate 0 (Cost 11).
-    - Result: Infinite buffering loop at Bitrate 1.
+    Base: V22 (Best performing architecture so far)
+    Fix: Dynamic Smoothness Penalty.
     
-    Solution (V25):
-    - Apply a "Soft Floor" to VMAF reward during training.
-    - max(vmaf, 12.0).
-    - Bitrate 0 becomes 12.0. Drop becomes 15->12 (-3).
-    - Since 3 < 4.5, Agent will switch to Bitrate 0 and survive!
+    Problem in CrowdRun: 
+    - Dropping from Bitrate 1 to 0 costs ~11 pts (Smoothness penalty).
+    - Rebuffering costs ~4.3 pts.
+    - Agent chooses Rebuffering because it's "cheaper" than switching down.
+    
+    Solution:
+    - If buffer < 5.0 seconds (CRISIS): Smoothness Penalty = 0.0
+    - This removes the barrier to switching down when survival is at stake.
     """
     
     metadata = {'render_modes': ['human']}
@@ -31,9 +31,9 @@ class ABREnv(gym.Env):
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
     
-    # Standardizing Penalty to match RobustMPC literature
+    # Standard Penalties
     REBUF_PENALTY_BASE = 4.3 
-    SMOOTH_PENALTY_WEIGHT = 0.5 
+    SMOOTH_PENALTY_WEIGHT = 1.0  # Increased to enforce stability when safe
     
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
@@ -66,15 +66,13 @@ class ABREnv(gym.Env):
         
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
         
-        # V22 Features (29 dims) - Proven to be best architecture
-        # History(12) + Buf(1) + Trend(1) + LastBr(1) + Content(2) + VMAF(6) + Future(6)
+        # V22 Architecture (29 features) - The Gold Standard
         obs_dim = 29
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
         
         self.current_video_name = None
         self.current_vmaf_scores = {}
         self.current_vmaf_norm = {}
-        self.current_vmaf_range = 0.0
         self.current_si_norm = 0.0
         self.current_ti_norm = 0.0
         
@@ -110,10 +108,6 @@ class ABREnv(gym.Env):
             
             self.video_assets[vid]['vmaf'] = vmaf_scores
             self.video_assets[vid]['vmaf_norm'] = {k: v/100.0 for k, v in vmaf_scores.items()}
-            
-            min_v = min(vmaf_scores.values())
-            max_v = max(vmaf_scores.values())
-            self.video_assets[vid]['vmaf_range'] = max_v - min_v
 
             siti_file = self.siti_dir / f"{vid}_siti.json"
             si, ti = 50, 10
@@ -141,7 +135,6 @@ class ABREnv(gym.Env):
         
         self.current_vmaf_scores = assets['vmaf']
         self.current_vmaf_norm = assets['vmaf_norm']
-        self.current_vmaf_range = assets.get('vmaf_range', 40.0)
         self.current_si_norm = assets['si_norm']
         self.current_ti_norm = assets['ti_norm']
         
@@ -172,7 +165,7 @@ class ABREnv(gym.Env):
         content_obs = np.array([self.current_si_norm, self.current_ti_norm], dtype=np.float32)
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
         
-        # Future Awareness (V22 Style - Proven)
+        # Future Awareness (V22)
         next_sizes = self._get_next_chunk_sizes()
         sizes_obs = np.clip(next_sizes / self.MAX_CHUNK_SIZE_BITS, 0, 1)
         
@@ -202,25 +195,30 @@ class ABREnv(gym.Env):
         self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
         self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
         
-        # --- TRUE VMAF (For Logging) ---
-        actual_vmaf = self.current_vmaf_scores.get(bitrate_kbps, 35.0)
+        current_vmaf = self.current_vmaf_scores.get(bitrate_kbps, 35.0)
         
-        # --- PERCEIVED VMAF (For Reward) ---
-        # "Soft Floor" Strategy: Treat any VMAF < 12 as 12.
-        # This reduces the penalty of switching to the lowest bitrate.
-        perceived_vmaf = max(actual_vmaf, 12.0)
+        # --- DYNAMIC REWARD LOGIC (V26) ---
         
-        smooth_pen = abs(perceived_vmaf - self.last_vmaf)
-        buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
+        # 1. Smoothness Penalty Logic
+        raw_smooth_pen = abs(current_vmaf - self.last_vmaf)
         
-        # Using Fixed Penalty (No Gradient) - Gradient hurt CrowdRun
+        # Survival Mode: If buffer is dangerously low (< 5s), changing bitrate is FREE.
+        # This encourages switching down to save the session without fear of VMAF drop penalty.
+        if self.buffer_level < 5.0:
+            smooth_weight = 0.0
+        else:
+            smooth_weight = self.SMOOTH_PENALTY_WEIGHT
+
+        # 2. Rebuffer Penalty
         weighted_rebuf = self.REBUF_PENALTY_BASE * rebuffer_time
         
-        # Reward based on Perceived VMAF (Encourages usage of Bitrate 0 in crisis)
-        reward = perceived_vmaf \
+        # 3. Buffer Deviation (Small guidance)
+        buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
+        
+        reward = current_vmaf \
                  - weighted_rebuf \
-                 - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
-                 - (0.02 * buffer_dev) 
+                 - (smooth_weight * raw_smooth_pen) \
+                 - (0.05 * buffer_dev) 
         
         log_tp = np.log(effective_tp / self.MIN_NETWORK_THROUGHPUT)
         log_scale = np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
@@ -228,13 +226,13 @@ class ABREnv(gym.Env):
         self.throughput_history.append(norm_tp)
         
         self.last_bitrate_idx = action
-        self.last_vmaf = perceived_vmaf # Agent tracks perceived stability
+        self.last_vmaf = current_vmaf
         self.chunk_idx += 1
         terminated = self.chunk_idx >= self.max_chunks
         
-        self.total_quality += actual_vmaf # Log actual quality
+        self.total_quality += current_vmaf
         self.total_rebuffer += rebuffer_time
-        self.total_smooth += abs(actual_vmaf - self.current_vmaf_scores.get(self.BITRATE_LEVELS[self.last_bitrate_idx], 35.0)) if self.chunk_idx > 1 else 0
+        self.total_smooth += raw_smooth_pen
         
         obs = self._get_observation()
         info = self._get_info()
@@ -242,7 +240,7 @@ class ABREnv(gym.Env):
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
             'reward': float(reward), 'video_name': self.current_video_name,
-            'vmaf_real': actual_vmaf
+            'survival_mode': 1.0 if self.buffer_level < 5.0 else 0.0
         })
         return obs, float(reward), terminated, False, info
 
@@ -257,9 +255,3 @@ class ABREnv(gym.Env):
         }
 
     def render(self): pass
-    @property
-    def vmaf_scores(self): return self.current_vmaf_scores
-    @property
-    def video_name(self): return self.current_video_name
-    @property
-    def trace(self): return self.current_trace
