@@ -182,7 +182,7 @@ class ABREnv(gym.Env):
             [last_br_obs],  # 1
             content_obs,    # 2
             vmaf_obs,       # 6
-            sizes_obs       # 6 -> This is the magic sauce!
+            sizes_obs       # 6
         ]).astype(np.float32)
 
     def step(self, action):
@@ -251,3 +251,16 @@ class ABREnv(gym.Env):
         }
 
     def render(self): pass
+
+    # --- Properties needed for Baselines (MPC/Genie) ---
+    @property
+    def vmaf_scores(self):
+        return self.current_vmaf_scores
+    
+    @property
+    def video_name(self):
+        return self.current_video_name
+    
+    @property
+    def trace(self):
+        return self.current_trace
