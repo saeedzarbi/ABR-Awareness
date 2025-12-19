@@ -21,7 +21,7 @@ PATHS = get_paths()
 SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK_URL', '')
 
 # ============================================================================
-# Evaluation Logger
+# Evaluation Logger (Updated for Shield Monitoring)
 # ============================================================================
 
 class EvaluationLogger:
@@ -49,13 +49,17 @@ class EvaluationLogger:
             'vmaf': float(env.last_vmaf),
             'reward': float(info.get('reward', 0)),
             'risk_factor': float(info.get('risk_factor', 1.0)),
-            'grad_factor': float(info.get('grad_factor', 1.0)) # Added for V20+
+            # --- NEW: Check if Safety Shield was triggered ---
+            'shield_active': int(info.get('shield_active', 0)) 
         }
         self.chunk_logs.append(chunk_data)
     
     def log_episode(self, env, total_reward, switches, episode_num):
         rebuffer_rate = (env.total_rebuffer / (env.chunk_idx * 4.0)) * 100 if env.chunk_idx > 0 else 0
         
+        # Calculate how many times shield was active in this episode
+        shield_count = sum([1 for c in self.chunk_logs if c['episode'] == episode_num and c['shield_active'] == 1])
+
         episode_data = {
             'episode': episode_num,
             'video': env.current_video_name,
@@ -66,7 +70,8 @@ class EvaluationLogger:
             'rebuffer_rate': float(rebuffer_rate),
             'total_smooth': float(env.total_smooth),
             'switches': int(switches),
-            'chunks': int(env.chunk_idx)
+            'chunks': int(env.chunk_idx),
+            'shield_triggers': int(shield_count) # Log shield usage
         }
         self.episode_logs.append(episode_data)
     
@@ -96,6 +101,9 @@ class EvaluationLogger:
         print(f"   Avg QoE:       {df['total_reward'].mean():.1f} ± {df['total_reward'].std():.1f}")
         print(f"   Avg Switches:  {df['switches'].mean():.1f}")
         
+        if 'shield_triggers' in df.columns:
+             print(f"   🛡️ Avg Shield Triggers: {df['shield_triggers'].mean():.1f}")
+
         high_rebuf = df[df['rebuffer_rate'] > 5.0]
         if len(high_rebuf) > 0:
             print(f"\n   ⚠️ High rebuffer episodes (>5%): {len(high_rebuf)}/{len(df)}")
@@ -110,27 +118,20 @@ def send_slack_message(status, step, message):
         return
     
     color = "good" if status == "success" else ("danger" if status == "error" else "warning")
-    emoji = "✅" if status == "success" else ("❌" if status == "error" else "⚠️")
-    if status == "info": 
-        color = "#36a64f"
-        emoji = "ℹ️"
+    emoji = "✅" if status == "success" else ("❌" if status == "error" else "ℹ️")
     
     payload = {
         "attachments": [{
             "color": color,
             "title": f"{emoji} {step}",
             "text": message,
-            "footer": "Final Evaluation V23",
+            "footer": "Final Evaluation V27",
             "ts": int(pd.Timestamp.now().timestamp())
         }]
     }
     
     try:
-        data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(
-            SLACK_WEBHOOK, data=data, headers={'Content-Type': 'application/json'}
-        )
-        urllib.request.urlopen(req, timeout=5)
+        urllib.request.urlopen(urllib.request.Request(SLACK_WEBHOOK, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'}), timeout=5)
     except: pass
 
 # ============================================================================
@@ -152,21 +153,22 @@ class TCSVT_Evaluator:
     def load_methods(self):
         methods = {}
         
-        # 1. Proposed (V23)
+        # 1. Proposed (V27 - Safety Shield)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_26' / 'best_model' / 'best_model'
+            # Look for model 27
+            path = PATHS['models'] / 'ppo_abr_multi_dynamic_27' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                path = PATHS['models'] / 'ppo_abr_multi_dynamic_26' / 'final_model'
+                path = PATHS['models'] / 'ppo_abr_multi_dynamic_27' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
-            print(f"✅ Loaded Proposed from: {path}")
+            print(f"✅ Loaded Proposed (V27) from: {path}")
         except Exception as e:
             print(f"⚠️ Proposed missing: {e}")
         
-        # 2. Pensieve (V16 Baseline)
+        # 2. Pensieve (Baseline)
         try:
             path = PATHS['models'] / 'pensieve_multi_vmaf_new_14' / 'best_model' / 'best_model'
             if not path.with_suffix('.zip').exists():
-                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_14' / 'final_model'
+                 path = PATHS['models'] / 'pensieve_multi_vmaf_new_14' / 'best_model' / 'best_model'
             methods['Pensieve'] = PPO.load(str(path))
             print(f"✅ Loaded Pensieve from: {path}")
         except Exception as e:
@@ -180,10 +182,10 @@ class TCSVT_Evaluator:
         return methods
 
     def evaluate(self, methods, episodes_per_video=20, enable_logging=True):
-        print(f"\n🔬 Running Evaluation V26 (N={episodes_per_video} per video)...")
+        print(f"\n🔬 Running Evaluation V27 (Safety Shield) (N={episodes_per_video})...")
         print(f"   Enhanced logging: {'Enabled' if enable_logging else 'Disabled'}")
         
-        send_slack_message("info", "Evaluation Started", f"Starting V26 evaluation on {len(self.test_videos)} videos")
+        send_slack_message("info", "Evaluation Started", f"Starting V27 evaluation on {len(self.test_videos)} videos")
         
         if not list(self.test_trace_dir.glob("*.json")):
             print("❌ No traces found.")
@@ -196,7 +198,7 @@ class TCSVT_Evaluator:
                 print(f"   ⚠️ Skipping {video_name}: Data not found.")
                 continue
 
-            # Initialize environment (V23 has 31 features)
+            # Initialize V27 Environment (Safety Shield Enabled)
             env = ABREnv(
                 video_names=[video_name],
                 trace_dir=str(self.test_trace_dir),
@@ -210,7 +212,7 @@ class TCSVT_Evaluator:
                 print(f"   > Running {name}...", end='\r')
                 
                 if enable_logging:
-                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v26')
+                    logger = EvaluationLogger(PATHS['logs'] / 'evaluation_v27')
                 
                 active_model = model
                 if name == 'RobustMPC': 
@@ -236,22 +238,21 @@ class TCSVT_Evaluator:
                         elif name == 'BBA':
                             action = active_model.select_bitrate(info['buffer_level'])
                         else:
-                            # --- CRITICAL FIX FOR V23 (31 FEATURES) ---
-                            if name == 'Pensieve':
-                                # Pensieve was trained on 23 features.
-                                # V23 Env returns 31 features (History + Buffer + ... + Future + Trend)
-                                # We must slice it to the first 23 features.
-                                if obs.shape[0] > 23:
-                                    curr_obs = obs[:23].copy()
-                                else:
-                                    curr_obs = obs.copy()
-                                
-                                # Pensieve masking logic
-                                curr_obs[10:] = 0.0 
-                                action, _ = active_model.predict(curr_obs, deterministic=True)
+                            # --- OBSERVATION SLICING ---
+                            try:
+                                expected_dim = active_model.observation_space.shape[0]
+                            except:
+                                expected_dim = 23
+
+                            if obs.shape[0] > expected_dim:
+                                curr_obs = obs[:expected_dim].copy()
                             else:
-                                # Proposed V23 uses full 31 features
-                                action, _ = active_model.predict(obs, deterministic=True)
+                                curr_obs = obs.copy()
+                            
+                            if name == 'Pensieve' and expected_dim >= 23:
+                                curr_obs[10:] = 0.0 
+                                
+                            action, _ = active_model.predict(curr_obs, deterministic=True)
                         
                         if action != last_br: 
                             switches += 1
@@ -291,11 +292,11 @@ class TCSVT_Evaluator:
 
     def save_statistics(self):
         if not self.results_detailed: 
-            send_slack_message("warning", "No Results", "No evaluation results")
+            send_slack_message("warning", "No Results", "No results")
             return
         
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_multi_video_26.csv'
+        path = PATHS['results'] / 'detailed_stats_multi_video_27.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved results to: {path}")
         send_slack_message("info", "Results Saved", f"Saved to: {path}")
@@ -321,7 +322,7 @@ class TCSVT_Evaluator:
         print("\n🏆 Overall Statistical Summary:")
         print(summary)
         
-        details_msg = "📊 *Final Results V26*\n\n"
+        details_msg = "📊 *Final Results V27*\n\n"
         for method in summary.index:
             qoe = summary.loc[method, ('QoE', 'mean')]
             vmaf = summary.loc[method, ('VMAF', 'mean')]
