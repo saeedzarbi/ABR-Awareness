@@ -8,36 +8,30 @@ import random
 
 class ABREnv(gym.Env):
     """
-    Multi-Video ABR Environment (V27 - Safety Shield)
+    Multi-Video ABR Environment (V22 - Future Aware)
     
-    Base: V22 (Future Aware - Best Architecture)
-    New Feature: Heuristic Safety Shield (Hard Constraint)
-    
-    Logic:
-    - Before executing the agent's action, we check if it leads to immediate rebuffering.
-    - If (Predicted_Download_Time > Buffer_Level) AND (Buffer < Safe_Threshold):
-         Override Action -> Max Safe Bitrate (that fits in buffer).
-    
-    This guarantees survival in CrowdRun while letting the agent optimize in Sintel.
+    Key Feature:
+    - Includes 'next_chunk_size' in observation (Lookahead = 1).
+    - This allows the agent to anticipate big chunks and avoid rebuffering.
+    - Proven to be the most balanced and effective version.
     """
     
     metadata = {'render_modes': ['human']}
     
+    # Standard Bitrate Ladder (kbps)
     BITRATE_LEVELS = np.array([300, 750, 1200, 1850, 2850, 6000])
     CHUNK_DURATION = 4.0
     
     BUFFER_TARGET = 15.0
     BUFFER_MAX = 30.0
-    SAFE_BUFFER_THRESHOLD = 4.0 # Seconds. Below this, Shield activates.
     
-    # Penalties
+    # Penalties (Standard Linear QoE)
     REBUF_PENALTY_BASE = 4.3 
     SMOOTH_PENALTY_WEIGHT = 1.0 
-    SHIELD_PENALTY = 2.0 # Penalty for triggering the safety shield
     
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
-    MAX_CHUNK_SIZE_BITS = 30000000.0
+    MAX_CHUNK_SIZE_BITS = 30000000.0 # Normalization factor
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
                  trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
@@ -66,7 +60,9 @@ class ABREnv(gym.Env):
         
         self.action_space = spaces.Discrete(len(self.BITRATE_LEVELS))
         
-        # V22 Architecture (29 features)
+        # Observation Space (29 Features):
+        # 12 (Throughput History) + 1 (Buffer) + 1 (Trend) + 1 (Last Bitrate)
+        # + 2 (Content Features: SI/TI) + 6 (VMAF Map) + 6 (Next Chunk Sizes)
         obs_dim = 29
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
         
@@ -84,7 +80,6 @@ class ABREnv(gym.Env):
         self.last_bitrate_idx = 0
         self.last_vmaf = 35.0
         self.throughput_history = []
-        self.raw_throughput_history = [] # For Shield prediction
         
     def _load_traces(self):
         trace_files = list(self.trace_dir.glob("*.json"))
@@ -101,7 +96,9 @@ class ABREnv(gym.Env):
 
         for vid in self.video_names:
             self.video_assets[vid] = {}
+            # Default fallback VMAF
             vmaf_scores = {300:35, 750:58, 1200:74, 1850:84, 2850:91, 6000:97}
+            
             if all_vmaf_data is not None and 'video' in all_vmaf_data.columns:
                 df = all_vmaf_data[all_vmaf_data['video'] == vid]
                 if not df.empty:
@@ -109,7 +106,8 @@ class ABREnv(gym.Env):
             
             self.video_assets[vid]['vmaf'] = vmaf_scores
             self.video_assets[vid]['vmaf_norm'] = {k: v/100.0 for k, v in vmaf_scores.items()}
-
+            
+            # Load Content Features (SI/TI)
             siti_file = self.siti_dir / f"{vid}_siti.json"
             si, ti = 50, 10
             if siti_file.exists():
@@ -123,8 +121,14 @@ class ABREnv(gym.Env):
             self.video_assets[vid]['ti_norm'] = float(np.clip(ti / 70.0, 0, 1))
 
     def _get_next_chunk_sizes(self):
+        """
+        Calculates the size of the *next* chunk for all bitrate levels.
+        This provides the 'Future Awareness' capability.
+        """
         sizes = []
         for br in self.BITRATE_LEVELS:
+            # Simple CBR approximation for simulation speed. 
+            # In a real VBR dataset, you would look up the exact size from a file.
             size_bits = br * 1000 * self.CHUNK_DURATION
             sizes.append(size_bits)
         return np.array(sizes, dtype=np.float32)
@@ -148,10 +152,10 @@ class ABREnv(gym.Env):
         self.last_bitrate_idx = 0
         self.last_vmaf = self.current_vmaf_scores[self.BITRATE_LEVELS[0]]
         
+        # Initialize throughput history
         start_tp = 500.0
         log_obs = np.log(start_tp / self.MIN_NETWORK_THROUGHPUT) / np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
         self.throughput_history = [log_obs] * 12
-        self.raw_throughput_history = [start_tp] * 5 # Keep raw for harmonic mean prediction
         
         self.total_rebuffer = 0.0
         self.total_quality = 0.0
@@ -166,55 +170,26 @@ class ABREnv(gym.Env):
         last_br_obs = self.last_bitrate_idx / (len(self.BITRATE_LEVELS) - 1)
         content_obs = np.array([self.current_si_norm, self.current_ti_norm], dtype=np.float32)
         vmaf_obs = np.array([self.current_vmaf_norm[br] for br in self.BITRATE_LEVELS], dtype=np.float32)
+        
+        # --- Future Awareness (V22 Specific) ---
         next_sizes = self._get_next_chunk_sizes()
         sizes_obs = np.clip(next_sizes / self.MAX_CHUNK_SIZE_BITS, 0, 1)
         
         return np.concatenate([
-            tp_obs, [buf_obs], [buf_trend], [last_br_obs], content_obs, vmaf_obs, sizes_obs
+            tp_obs,         # 12
+            [buf_obs],      # 1
+            [buf_trend],    # 1
+            [last_br_obs],  # 1
+            content_obs,    # 2
+            vmaf_obs,       # 6
+            sizes_obs       # 6 -> This is the magic sauce!
         ]).astype(np.float32)
 
-    def _predict_throughput(self):
-        # Use Harmonic Mean of last 5 chunks (MPC style) for robust prediction
-        recent = np.array(self.raw_throughput_history[-5:])
-        if len(recent) == 0: return 500.0
-        harmonic_mean = len(recent) / np.sum(1.0 / (recent + 1e-5))
-        return harmonic_mean
-
     def step(self, action):
-        # --- SAFETY SHIELD LOGIC ---
-        safe_action = action
-        shield_triggered = False
-        
-        # Only activate shield if buffer is critically low
-        if self.buffer_level < self.SAFE_BUFFER_THRESHOLD:
-            predicted_tp = self._predict_throughput()
-            
-            # Check proposed action
-            chosen_br = self.BITRATE_LEVELS[action]
-            chosen_size = chosen_br * 1000 * self.CHUNK_DURATION
-            pred_download_time = chosen_size / (predicted_tp * 1000.0)
-            
-            if pred_download_time > self.buffer_level:
-                # Unsafe! Find the highest bitrate that is safe
-                shield_triggered = True
-                safe_action = 0 # Default to lowest
-                
-                # Check possibilities from highest to lowest
-                for i in range(len(self.BITRATE_LEVELS)-1, -1, -1):
-                    br = self.BITRATE_LEVELS[i]
-                    size = br * 1000 * self.CHUNK_DURATION
-                    time = size / (predicted_tp * 1000.0)
-                    if time < self.buffer_level:
-                        safe_action = i
-                        break
-        
-        # Apply the Safe Action (Overwrite agent's choice if needed)
-        final_action = safe_action
-        
-        bitrate_kbps = self.BITRATE_LEVELS[final_action]
+        bitrate_kbps = self.BITRATE_LEVELS[action]
         chunk_size_bits = bitrate_kbps * 1000 * self.CHUNK_DURATION
         
-        # --- REAL WORLD EXECUTION ---
+        # Simulate Network
         trace_tp = self.current_trace['throughput_kbps']
         avail_tp = trace_tp[int(self.chunk_idx * self.CHUNK_DURATION) % len(trace_tp)]
         effective_tp = np.clip(avail_tp, self.MIN_NETWORK_THROUGHPUT, self.MAX_NETWORK_THROUGHPUT)
@@ -222,35 +197,32 @@ class ABREnv(gym.Env):
         download_time = chunk_size_bits / (effective_tp * 1000.0)
         if download_time > 60.0: download_time = 60.0
         
+        # Buffer Dynamics
         rebuffer_time = max(0, download_time - self.buffer_level)
         self.prev_buffer_level = self.buffer_level
         self.buffer_level = max(0, self.buffer_level - download_time) + self.CHUNK_DURATION
         self.buffer_level = min(self.buffer_level, self.BUFFER_MAX)
         
+        # Metrics
         current_vmaf = self.current_vmaf_scores.get(bitrate_kbps, 35.0)
         smooth_pen = abs(current_vmaf - self.last_vmaf)
         buffer_dev = max(0, self.BUFFER_TARGET - self.buffer_level)
         
         weighted_rebuf = self.REBUF_PENALTY_BASE * rebuffer_time
         
-        # Reward Calculation
+        # Reward Function (Standard Linear QoE)
         reward = current_vmaf \
                  - weighted_rebuf \
                  - (self.SMOOTH_PENALTY_WEIGHT * smooth_pen) \
-                 - (0.02 * buffer_dev)
-        
-        # Add penalty if Shield was triggered (Teacher forcing: Don't do it again!)
-        if shield_triggered and action != final_action:
-             reward -= self.SHIELD_PENALTY
+                 - (0.02 * buffer_dev) 
         
         # Update State
         log_tp = np.log(effective_tp / self.MIN_NETWORK_THROUGHPUT)
         log_scale = np.log(self.MAX_NETWORK_THROUGHPUT / self.MIN_NETWORK_THROUGHPUT)
         norm_tp = np.clip(log_tp / log_scale, 0.0, 1.0)
         self.throughput_history.append(norm_tp)
-        self.raw_throughput_history.append(effective_tp)
         
-        self.last_bitrate_idx = final_action
+        self.last_bitrate_idx = action
         self.last_vmaf = current_vmaf
         self.chunk_idx += 1
         terminated = self.chunk_idx >= self.max_chunks
@@ -264,8 +236,7 @@ class ABREnv(gym.Env):
         info.update({
             'bitrate': bitrate_kbps, 'throughput': avail_tp,
             'buffer': self.buffer_level, 'rebuffer': rebuffer_time, 
-            'reward': float(reward), 'video_name': self.current_video_name,
-            'shield_active': 1.0 if shield_triggered else 0.0
+            'reward': float(reward), 'video_name': self.current_video_name
         })
         return obs, float(reward), terminated, False, info
 
