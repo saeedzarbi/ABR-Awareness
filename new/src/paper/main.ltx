@@ -63,30 +63,27 @@ Our contributions are summarized as follows:
 \end{enumerate}
 
 The remainder of this paper is organized as follows: Section \ref{sec:related} reviews related work. Section \ref{sec:system} details the system model and PPO formulation. Section \ref{sec:evaluation} presents the experimental results, and Section \ref{sec:conclusion} concludes the paper.
-
-% --- Section II: Related Work ---
+% --- Section II: Related Work (Revised for 2025 Submission) ---
 \section{Related Work}
 \label{sec:related}
 
-The optimization of Adaptive Bitrate (ABR) streaming has evolved from simple heuristics to sophisticated learning-based control systems. In this section, we review the three primary categories of existing solutions: heuristic/control-theoretic methods, reinforcement learning approaches, and content-aware streaming strategies.
+The evolution of ABR algorithms has transitioned from simple heuristics to sophisticated learning-based systems. We classify existing literature into three distinct paradigms: model-based control, reinforcement learning, and stability-oriented optimization.
 
-\subsection{Heuristic and Control-Theoretic Schemes}
-Early ABR algorithms were predominantly heuristic-based. Rate-based algorithms estimated future bandwidth based on harmonic means of past throughput, selecting the highest feasible bitrate. However, these methods proved unstable in volatile networks due to estimation errors.
-To mitigate instability, Buffer-Based Approaches (BBA) \cite{bba} were introduced, which prioritize buffer occupancy over throughput estimation. While BBA effectively reduces rebuffering, it tends to be overly conservative, often failing to reach high video quality even when bandwidth is sufficient.
-More advanced control-theoretic methods, notably \textit{RobustMPC} \cite{mpc}, formulate bitrate selection as a Model Predictive Control (MPC) problem. RobustMPC optimizes a specific QoE objective over a finite horizon. Despite its mathematical rigor, MPC relies heavily on the accuracy of throughput predictors. In highly dynamic environments (e.g., cellular networks or dense WiFi), prediction errors accumulate, causing the algorithm to oscillate severely between bitrates (flickering), as confirmed by our stability analysis in Section \ref{sec:evaluation}.
+\subsection{Model-Based and Predictive Control}
+Early algorithms, such as BBA \cite{huang2014buffer}, relied on fixed heuristic rules based on buffer occupancy. While robust, they often fail to utilize available bandwidth efficiently during ramp-up phases. To address this, control-theoretic approaches like MPC \cite{yin2015control} and RobustMPC formulated bitrate selection as an optimization problem over a sliding horizon.
+Recent advancements have focused on improving the throughput prediction component of MPC. For instance, \textit{Kairos} (2025) \cite{kairos2025} employs attention-based neural networks to forecast throughput with higher accuracy. However, these methods suffer from a fundamental limitation: they are computationally expensive and heavily dependent on the accuracy of the predictor. In highly stochastic environments (e.g., millimeter-wave 5G), even sophisticated predictors like Kairos can exhibit significant errors, leading to rebuffering. Our approach avoids this dependency by utilizing deterministic future chunk sizes ($\vec{v}_{next}$) from the manifest, eliminating prediction error for content size.
 
-\subsection{Learning-Based Approaches}
-The application of Deep Reinforcement Learning (DRL) marked a paradigm shift in ABR. \textit{Pensieve} \cite{pensieve} demonstrated that generic RL agents (using A3C) could learn policies that outperform fixed-rule algorithms without explicit network modeling. Following Pensieve, researchers explored various learning paradigms, including Imitation Learning (e.g., \textit{Comyco}) to speed up training, and Supervised Learning approaches.
-However, standard RL-based ABR agents face two main challenges:
-\begin{enumerate}
-    \item \textbf{Sample Efficiency and Stability:} Many prior works utilize A3C, which can suffer from high variance in gradient updates. We leverage Proximal Policy Optimization (PPO), which limits the policy update step size, ensuring more monotonic and stable convergence.
-    \item \textbf{Blindness to Content:} Most RL agents treat the video as a uniform stream. They observe network state but are oblivious to the \textit{size variations} of upcoming chunks. This "blindness" forces the agent to rely solely on throughput history, making it reactive rather than proactive.
-\end{enumerate}
+\subsection{Reinforcement Learning Approaches}
+The application of Deep Reinforcement Learning (DRL) revolutionized ABR by enabling agents to learn policies directly from experience. Pensieve \cite{mao2017neural} set the benchmark by using A3C to outperform heuristics. Following this, \textit{Oboe} and \textit{Fugu} attempted to combine heuristics with learning.
+More recently, \textit{Pensieve 5G} (2024) \cite{pensieve5g2024} adapted the state space for high-bandwidth volatile networks, and \textit{DeepReal} (2025) \cite{deepreal2025} proposed continuous control for short-form video streaming. Despite their success, these "black-box" RL methods lack mathematical stability guarantees. They prioritize average reward maximization, which often leads to aggressive behaviors and catastrophic stalls during rare "tail" events in network traces.
 
-\subsection{Content-Aware and Future-Aware Streaming}
-Recent studies have emphasized the importance of context in streaming. Some works incorporate VMAF predictions to optimize perceptual quality rather than bitrate. Others have proposed integrating auxiliary information such as eye-tracking data or 360-degree viewpoints.
-However, few works have explicitly addressed the \textbf{"Stability-Quality Trade-off"} through the lens of \textit{Future Awareness}. While some methods attempt to predict long-term bandwidth (which is error-prone), our approach takes a different path: we provide the agent with deterministic knowledge of the \textit{immediate next chunk's size}. This acts as a reliable "ground truth" for the near future, allowing the agent to make risk-averse decisions that minimize switching frequency without the computational complexity of long-horizon MPC. To the best of our knowledge, this is the first work to demonstrate that simple 1-step look-ahead in a PPO agent can surpass the stability of robust control methods while maintaining SOTA RL quality.
-% --- Section III: System Model and Problem Formulation ---
+\subsection{Lyapunov-Based Stability}
+Lyapunov optimization provides a theoretical framework for stabilizing queueing systems. Traditionally, it has been used in energy harvesting and generic packet scheduling. Recently, \textit{Fumos} (2024) \cite{fumos2024} successfully applied Lyapunov optimization to volumetric video streaming to manage massive bandwidth fluctuations.
+However, pure Lyapunov methods often rely on simplified system models that do not capture the complex interplay of QoE metrics (e.g., visual smoothness vs. buffer risk). 
+
+\subsection{Our Contribution: The Hybrid Approach}
+Our work bridges the gap between the adaptability of RL and the rigorous stability of control theory. Unlike \textit{Kairos}, we do not rely on heavy throughput forecasting models. Unlike \textit{Pensieve 5G}, we do not blindly trust the neural network; instead, we inject a \textit{Lyapunov-guided drift penalty} into the reward function. This enforces a "soft constraint" that mathematically discourages the agent from entering dangerous buffer states, ensuring robustness without sacrificing the learning capability of PPO.
+
 % --- Section III: System Model ---
 % Replace the existing Section III with this block
 
@@ -213,14 +210,30 @@ Training Steps & $1 \times 10^6$ \\ \hline
 % --- Section IV: Evaluation ---
 \section{Performance Evaluation}
 \label{sec:evaluation}
+% --- Insert this AFTER \section{Experimental Evaluation} ---
 
 \subsection{Experimental Setup}
-We trained the agent using a simulator with real-world network traces (FCC and HSDPA) and tested on a diverse set of videos: \textit{BigBuckBunny, CrowdRun, Sintel, TearsOfSteel}. We compare against:
+\label{subsec:setup}
+
+\subsubsection{Network Traces and Video Dataset}
+We evaluate our proposed method using a diverse set of network traces to ensure generalization across different environments:
 \begin{itemize}
-    \item \textbf{Pensieve:} State-of-the-art RL.
-    \item \textbf{RobustMPC:} Model Predictive Control.
-    \item \textbf{BBA:} Buffer-Based Approach.
-    \item \textbf{Genie:} An offline optimal upper bound (theoretical maximum).
+    \item \textbf{FCC Broadband Dataset:} A standard dataset comprising over 1 million throughput traces from broadband connections, representing stable but variable network conditions.
+    \item \textbf{HSDPA (Norway) Dataset:} To test the agent's robustness in highly volatile scenarios, we utilized 3G/HSDPA mobile network traces collected from mobile scenarios (bus, train, ferry). These traces are characterized by sudden bandwidth drops and high variance.
+\end{itemize}
+For video content, we used the standard DASH reference dataset, including \textit{Big Buck Bunny}, \textit{Sintel}, and \textit{Tears of Steel}. Videos are encoded at multiple bitrate levels $\{300, 750, 1200, 1850, 2850, 4300\}$ kbps using the H.264/MPEG-4 codec. The chunk duration is fixed at 4 seconds.
+
+\subsubsection{Implementation Details}
+The proposed \textit{Lyapunov-Guided PPO} agent is implemented using PyTorch and the \textit{Stable-Baselines3} library. The actor and critic networks share a Multi-Layer Perceptron (MLP) feature extractor with two hidden layers of 64 units each and \textit{tanh} activation functions.
+We trained the agent for 100,000 episodes using the Adam optimizer with a learning rate of $2.5 \times 10^{-4}$. The entropy coefficient was set to $0.01$ to encourage exploration during the early training phases. The clipping parameter $\epsilon$ for PPO was set to 0.2.
+The Lyapunov penalty coefficient $\beta$ in the reward function was empirically tuned to $1.5$ to balance the trade-off between maximizing VMAF and minimizing buffer drift.
+
+\subsubsection{Baselines}
+We compare our approach against the following state-of-the-art algorithms:
+\begin{itemize}
+    \item \textbf{Pensieve (RL-based) \cite{mao2017neural}:} The standard A3C-based agent. We use the pre-trained model provided by the authors as a reference for pure RL performance.
+    \item \textbf{RobustMPC (Control-based) \cite{yin2015control}:} A model predictive control method that optimizes QoE over a sliding horizon, accounting for throughput prediction errors.
+    \item \textbf{BBA (Heuristic) \cite{huang2014buffer}:} A buffer-based algorithm that linearly maps buffer occupancy to bitrate selection, serving as a baseline for stability.
 \end{itemize}
 
 \subsection{Overall Results}
