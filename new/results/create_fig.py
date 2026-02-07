@@ -7,13 +7,10 @@ import os
 # ==========================================
 # CONFIGURATION & FILE PATHS
 # ==========================================
-# مسیر فایل‌های خود را اینجا تنظیم کنید
-DETAILED_RESULTS_PATH = 'new/results/detailed_stats_multi_video_final.csv'
-ABLATION_RESULTS_PATH = 'new/results/ablation_results.csv'
-# برای نمودار زمانی، مسیر لاگ دقیق چانک‌ها را بدهید
-TIME_SERIES_LOG_PATH = 'new/results/logs/evaluation_v22/Proposed_crowd_run_chunks.csv'
+DETAILED_RESULTS_PATH = 'detailed_stats_multi_video_final.csv'
+ABLATION_RESULTS_PATH = 'ablation_results.csv'
+TIME_SERIES_LOG_PATH = 'logs/evaluation_v22/Proposed_crowd_run_chunks.csv'
 
-# تنظیمات گرافیکی برای نمودارهای علمی
 sns.set(style="whitegrid", context="paper", font_scale=1.2)
 plt.rcParams.update({
     'font.family': 'serif',
@@ -58,14 +55,12 @@ def plot_cdf_qoe(df):
     plt.figure(figsize=(6, 4))
     
     methods = df['Method'].unique()
-    # مرتب‌سازی برای اینکه Proposed در آخر و رو باشد
     methods = sorted(methods, key=lambda x: 1 if 'Proposed' in x else 0)
 
     for method in methods:
         qoe_scores = df[df['Method'] == method]['QoE'].dropna().sort_values()
         y_vals = np.arange(1, len(qoe_scores) + 1) / len(qoe_scores)
         
-        # استایل خاص برای متد پیشنهادی
         if 'Proposed' in method:
             plt.plot(qoe_scores, y_vals, label=method, linewidth=2.5, color='red', linestyle='-')
         else:
@@ -199,7 +194,14 @@ def plot_tradeoff(df):
         'VMAF': 'mean'
     }).reset_index()
 
-    sns.scatterplot(x='Rebuffer', y='VMAF', hue='Method', style='Method', s=200, data=summary, palette="bright")
+    ax = plt.gca()
+    sns.scatterplot(x='Rebuffer', y='VMAF', hue='Method', style='Method', s=200, data=summary, palette="bright", ax=ax)
+    
+    # تاکید روی روش Proposed در گوشهٔ بالا-چپ: حلقهٔ بیرونی و برچسب واضح‌تر
+    proposed = summary[summary['Method'].str.contains('Proposed', case=False, na=False)]
+    if not proposed.empty:
+        xp, yp = proposed['Rebuffer'].values[0], proposed['VMAF'].values[0]
+        ax.scatter([xp], [yp], s=400, facecolors='none', edgecolors='red', linewidths=2.5, zorder=5)
     
     # برچسب زدن روی نقاط
     for i, row in summary.iterrows():
@@ -208,9 +210,15 @@ def plot_tradeoff(df):
     plt.xlabel('Rebuffering Impact (Lower is Better)')
     plt.ylabel('Visual Quality (VMAF) (Higher is Better)')
     plt.title('QoE Trade-off Analysis')
-    
-    # معکوس کردن محور X اگر نیاز است (معمولا Rebuffer کمتر بهتر است و سمت چپ باید باشد)
-    # matplotlib به طور پیش‌فرض کم به زیاد است، پس سمت چپ یعنی Rebuffer کم (خوب)
+
+    # تنظیم محورها تا روش Proposed در گوشهٔ بالا-چپ (بهترین: Rebuffer کم، VMAF بالا) متمایز دیده شود
+    x_min, x_max = summary['Rebuffer'].min(), summary['Rebuffer'].max()
+    y_min, y_max = summary['VMAF'].min(), summary['VMAF'].max()
+    x_range = max(x_max - x_min, 1.0)
+    y_range = max(y_max - y_min, 5.0)
+    # فضای اضافه در سمت راست و پایین تا گوشهٔ بالا-چپ (نقطهٔ Proposed) برجسته شود
+    plt.xlim(max(0, x_min - 0.05 * x_range), x_max + 0.25 * x_range)
+    plt.ylim(y_min - 0.08 * y_range, min(100, y_max + 0.15 * y_range))
     
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
