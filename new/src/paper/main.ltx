@@ -203,13 +203,13 @@ The outputs of these branches are concatenated and fed into the shared hidden la
     \item \textbf{Critic Head:} Outputs the estimated value function $V(s)$ used to compute the advantage function.
 \end{enumerate}
 
-% --- Figure: Architecture ---
-\begin{figure}[t]
+% --- Figure: Architecture (full-width for readability) ---
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=\linewidth]{fig_system_arch.png}
+    \includegraphics[width=0.95\textwidth]{fig_system_arch.png}
     \caption{\textbf{Deep Neural Network Architecture.} The state inputs are processed by 1D-CNN layers to extract temporal features from network history, while future chunk information is injected directly into the fully connected layers. The Lyapunov module dynamically penalizes the reward based on buffer drift.}
     \label{fig:arch}
-\end{figure}
+\end{figure*}
 
 \subsection{Lyapunov-Regularized PPO Training}
 Standard PPO optimizes a clipped surrogate objective function. We modify this objective by integrating the Lyapunov drift. The reward function $r_t$ is dynamically adjusted based on the "Virtual Queue" drift derived in Section III:
@@ -397,13 +397,14 @@ Finally, to understand the agent's risk profile, Figure \ref{fig:action_dist} il
     \caption{\textbf{Bitrate Selection Policy.} The distribution of actions shows the agent's preference for stable qualities, avoiding risky transitions to the maximum level when network conditions are uncertain.}
     \label{fig:action_dist}
 \end{figure}
-
+\subsection{Impact of Lyapunov Penalty Factor ($\beta$)}
+To understand the sensitivity of the Lyapunov penalty factor $\beta$, we note that setting $\beta$ too high results in an overly conservative policy that sacrifices visual quality (VMAF) to maintain a full buffer. Conversely, a near-zero $\beta$ negates the safety constraint, increasing the risk of rebuffering. Our empirical tuning demonstrated that $\beta = 1.5$ strikes the optimal balance between maximizing QoE and ensuring playback stability across diverse network conditions.
 % =========================================
 % SECTION VI: CONCLUSION
 % =========================================
 \section{Conclusion}
 \label{sec:conclusion}
-We presented a Future-Aware PPO agent for adaptive video streaming. By incorporating immediate future chunk sizes into the state space and utilizing Lyapunov optimization, our agent learns a robust policy that balances visual quality and playback stability. Experimental results demonstrate that our method outperforms standard RL baselines in QoE by 2.1\% while offering a 3x reduction in switching frequency compared to control-theoretic approaches. This work highlights the importance of "short-term foresight" in reinforcement learning for systems control.
+We presented a Future-Aware PPO agent for adaptive video streaming. By incorporating immediate future chunk sizes into the state space and utilizing Lyapunov optimization, our agent learns a robust policy that balances visual quality and playback stability. Experimental results demonstrate that our method outperforms standard RL baselines in QoE by 2.1\% while offering a 3x reduction in switching frequency compared to control-theoretic approaches. This work highlights the importance of "short-term foresight" in reinforcement learning for systems control. In future work, we plan to extend this hybrid framework to live video streaming scenarios, where future chunk sizes are not deterministically known in advance and must be dynamically forecasted.
 
 \clearpage
 \bibliographystyle{IEEEtran}
