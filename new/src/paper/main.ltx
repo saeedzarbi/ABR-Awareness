@@ -109,6 +109,12 @@ To address the instability of pure RL without relying on edge infrastructure, th
     \textbf{Pensieve} \cite{mao2017neural} & Pure DRL (A3C) & None (Reward-driven) & No & Client-Side \\
     \textbf{Oboe} \cite{akhtar2018oboe} & Auto-Tuning & Reactive Tuning & No & Client-Side \\
     \textbf{Ours} & \textbf{Hybrid (DRL+Lya)} & \textbf{Penalty-Guided (Heuristic)} & \textbf{Yes (Explicit)} & \textbf{Client-Side} \\ \bottomrule
+    \textbf{Algorithm} & \textbf{Core Paradigm} & \textbf{Stability Mechanism} & \textbf{Future-Awareness} & \textbf{Deployment} \\ \midrule
+    \textbf{BBA} \cite{huang2014buffer} & Heuristic (Buffer) & Hard Thresholds & No & Client-Side \\
+    \textbf{RobustMPC} \cite{yin2015control} & Control Theory & Model-Dependent & No & Client-Side \\
+    \textbf{Pensieve} \cite{mao2017neural} & Pure DRL (A3C) & None (Reward-driven) & No & Client-Side \\
+    \textbf{Oboe} \cite{akhtar2018oboe} & Auto-Tuning & Reactive Tuning & No & Client-Side \\
+    \textbf{Ours} & \textbf{Hybrid (DRL+Lya)} & \textbf{Penalty-Guided (Heuristic)} & \textbf{Yes (Explicit)} & \textbf{Client-Side} \\ \bottomrule
     \end{tabular}%
     }
 \end{table}
@@ -154,6 +160,7 @@ While standard RL maximizes Eq. (5) directly, it offers no explicit protection a
 Inspired by Lyapunov Optimization Theory \cite{neely2010stochastic}, where minimizing the ``Drift-plus-Penalty'' bounds the queue, we adopt a practical heuristic approximation. To map this into an unconstrained PPO framework smoothly, we formulate a regularized reward $r^{Lya}_k$ using a linear penalty for buffer deficit:
 \begin{equation}
     r^{Lya}_k = QoE_k - \beta \cdot \max(0, B_{ref} - B_k)
+    r^{Lya}_k = QoE_k - \beta \cdot \max(0, B_{ref} - B_k)
 \end{equation}
 where $\beta$ acts as a static regularization multiplier. Rather than guaranteeing absolute cell-level stability, this formulation heuristically guides the RL policy. By explicitly penalizing states with a buffer deficit, it discourages actions that increase the expected Lyapunov drift.
 
@@ -185,6 +192,8 @@ where:
     \item $f_{next}$: \textbf{(Novelty)} The exact file sizes of the next chunk at all available bitrates (e.g., sizes for 360p, 720p, 1080p...). This helps the agent avoid selecting a high bitrate if the specific chunk is unusually large (complex scene).
     \item $v_{next}$: The VMAF scores of the next chunk for all bitrates, enabling content-aware decisions.
 \end{itemize}
+
+In practice, obtaining this "future knowledge" does not require predicting the video content. In the MPEG-DASH standard, the server provides a Media Presentation Description (MPD) manifest file to the client. Content providers can easily augment this manifest to include the exact byte sizes and pre-computed VMAF scores of the upcoming chunks for all representation levels. The client simply parses this manifest to construct the $f_{next}$ and $v_{next}$ state inputs.
 
 In practice, obtaining this "future knowledge" does not require predicting the video content. In the MPEG-DASH standard, the server provides a Media Presentation Description (MPD) manifest file to the client. Content providers can easily augment this manifest to include the exact byte sizes and pre-computed VMAF scores of the upcoming chunks for all representation levels. The client simply parses this manifest to construct the $f_{next}$ and $v_{next}$ state inputs.
 
@@ -245,6 +254,7 @@ The detailed training procedure is summarized in \textbf{Algorithm 1}.
 
 \subsection{Hyperparameter Settings}
 The PPO agent was trained for $50,000$ episodes (approximately $10^6$ steps) until the cumulative reward converged, utilizing the FCC training trace split to ensure sufficient exposure to diverse network dynamics. To ensure reproducibility, the key hyperparameters used in our training and architecture are listed in Table \ref{tab:hyperparameters}. The value of $\beta$ was empirically tuned to balance the trade-off between VMAF improvement and rebuffering reduction.
+The PPO agent was trained for $50,000$ episodes (approximately $10^6$ steps) until the cumulative reward converged, utilizing the FCC training trace split to ensure sufficient exposure to diverse network dynamics. To ensure reproducibility, the key hyperparameters used in our training and architecture are listed in Table \ref{tab:hyperparameters}. The value of $\beta$ was empirically tuned to balance the trade-off between VMAF improvement and rebuffering reduction.
 
 % --- Table: Hyperparameters (Pensieve-style: compact 2-col) ---
 \begin{table}[t]
@@ -277,6 +287,7 @@ Reference Buffer ($B_{ref}$) & 4.0 s \\ \bottomrule
 In this section, we provide a comprehensive evaluation of the proposed Lyapunov-Guided Future-Aware PPO agent. We aim to answer three key research questions:
 \begin{itemize}
     \item \textbf{RQ1 (Tail-Risk and Overall Performance):} Can a stability-guided RL agent achieve highly competitive QoE while significantly suppressing catastrophic stall risks compared to aggressive optimization baselines?
+    \item \textbf{RQ1 (Tail-Risk and Overall Performance):} Can a stability-guided RL agent achieve highly competitive QoE while significantly suppressing catastrophic stall risks compared to aggressive optimization baselines?
     \item \textbf{RQ2 (Stability \& Safety):} Can the Lyapunov constraint effectively reduce catastrophic rebuffering events and bitrate oscillations compared to pure RL and control-theoretic methods?
     \item \textbf{RQ3 (Component Efficacy):} What is the individual contribution of "Future Awareness" and "Lyapunov Shaping" to the final performance?
 \end{itemize}
@@ -291,6 +302,8 @@ To ensure robustness, we utilized two distinct network datasets:
     \item \textbf{Norway HSDPA Dataset:} A highly volatile 3G/HSDPA dataset characterized by sudden bandwidth drops. This was reserved strictly for \textit{testing} to evaluate generalization to unseen, harsh environments.
 \end{itemize}
 \subsubsection{Video Content}
+We used the reference DASH video \textit{"Enve"} and \textit{"Big Buck Bunny"}, encoded at $\{300, 750, 1200, 1850, 2850, 4300\}$ kbps. The chunk duration is fixed at 4 seconds. For the QoE calculation (Eq. 4), we adopt the standard penalty weights widely used in the literature (e.g., Pensieve): $\lambda = 1$ for switching penalties, and a heavy penalty of $\mu = 4.3$ (scaled appropriately for VMAF) for rebuffering, ensuring a fair and standardized comparison across all baselines.
+
 We used the reference DASH video \textit{"Enve"} and \textit{"Big Buck Bunny"}, encoded at $\{300, 750, 1200, 1850, 2850, 4300\}$ kbps. The chunk duration is fixed at 4 seconds. For the QoE calculation (Eq. 4), we adopt the standard penalty weights widely used in the literature (e.g., Pensieve): $\lambda = 1$ for switching penalties, and a heavy penalty of $\mu = 4.3$ (scaled appropriately for VMAF) for rebuffering, ensuring a fair and standardized comparison across all baselines.
 
 \subsubsection{Baselines}
@@ -345,6 +358,7 @@ Stability is where our Lyapunov-guided approach shines. \textbf{Switching Freque
 \end{figure}
 
 \textbf{Safety and Pareto Optimality:} Fig. \ref{fig:tradeoff} visualizes the multi-objective Quality-Risk trade-off space, effectively forming an empirical Pareto frontier. RobustMPC lies on the extreme right (highest VMAF) but is heavily penalized on the vertical risk axis (prone to stalls when throughput prediction fails). While Pensieve is slightly more conservative in rebuffering (9.53\% vs 10.69\%), it suffers a massive degradation in visual quality (VMAF 68.31 vs 70.63). Our method (marked with a Star) avoids these strict extremes and occupies the most desirable "knee" region of the Pareto front. It proves that our agent achieves a near-optimal QoE score while firmly restricting the severe rebuffering risks associated with MPC, making it the most balanced choice in a risk-aware streaming context.
+\textbf{Safety and Pareto Optimality:} Fig. \ref{fig:tradeoff} visualizes the multi-objective Quality-Risk trade-off space, effectively forming an empirical Pareto frontier. RobustMPC lies on the extreme right (highest VMAF) but is heavily penalized on the vertical risk axis (prone to stalls when throughput prediction fails). While Pensieve is slightly more conservative in rebuffering (9.53\% vs 10.69\%), it suffers a massive degradation in visual quality (VMAF 68.31 vs 70.63). Our method (marked with a Star) avoids these strict extremes and occupies the most desirable "knee" region of the Pareto front. It proves that our agent achieves a near-optimal QoE score while firmly restricting the severe rebuffering risks associated with MPC, making it the most balanced choice in a risk-aware streaming context.
 
 \begin{figure}[t]
     \centering
@@ -387,6 +401,7 @@ Finally, to understand the agent's risk profile, Figure \ref{fig:action_dist} il
     \caption{\textbf{Bitrate Selection Policy.} The distribution of actions shows the agent's preference for stable qualities, avoiding risky transitions to the maximum level when network conditions are uncertain.}
     \label{fig:action_dist}
 \end{figure}
+
 
 \subsection{Impact of Lyapunov Penalty Factor ($\beta$)}
 To understand the sensitivity of the Lyapunov penalty factor $\beta$, we evaluated the agent's performance across varying $\beta$ values ($\beta \in \{0.1, 0.5, 1.0, 1.5, 3.0\}$). As illustrated in Fig. \ref{fig:beta}, setting $\beta$ too high (e.g., $\beta > 3.0$) results in an overly conservative policy that sacrifices visual quality (VMAF) to maintain a full buffer. Conversely, a near-zero $\beta$ negates the safety constraint, increasing the risk of rebuffering to levels similar to pure PPO. Our empirical tuning demonstrates that $\beta = 1.5$ strikes the optimal Pareto balance between maximizing QoE and ensuring playback stability.
