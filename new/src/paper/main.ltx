@@ -21,7 +21,7 @@
 % =========================================
 \begin{document}
 
-\title{Lyapunov-Guided Deep Reinforcement Learning for Stable and Future-Aware Adaptive Video Streaming}
+\title{Lyapunov-Inspired Future-Aware Deep Reinforcement Learning for Stable Adaptive Video Streaming}
 
 \author{Saeed Zarbi, \IEEEmembership{Student Member, IEEE}
 \thanks{Manuscript received February 2026.}
@@ -36,9 +36,9 @@
 % ABSTRACT
 % =========================================
 \begin{abstract}
-    Adaptive Bitrate (ABR) streaming algorithms face a fundamental "plasticity-stability" dilemma: Reinforcement Learning (RL) methods adapt well but lack stability guarantees, while control-theoretic approaches ensure stability but struggle with complex network dynamics. 
-    In this paper, we propose a \textit{Lyapunov-Guided Future-Aware PPO} agent that bridges this gap. Unlike standard RL that blindly optimizes rewards, our method incorporates a Lyapunov-inspired reward shaping mechanism. Instead of solving computationally heavy Constrained MDPs (CMDP), we inject a virtual queue drift penalty directly into the reward function to implicitly bias the policy toward buffer-safe regimes without adding inference-time overhead. Furthermore, we augment the state space with "immediate future knowledge" (next-chunk sizes and scene complexity), enabling the agent to anticipate stochastic throughput drops.
-    Extensive experiments on real-world FCC network traces demonstrate that rather than blindly maximizing raw linear QoE—a metric where QoE-oriented control-theoretic methods like RobustMPC score marginally higher by operating closer to the buffer depletion boundary—our approach achieves highly competitive visual quality while prioritizing the suppression of catastrophic switching tail-risks. Specifically, it strictly outperforms the pure DRL baseline (Pensieve) by 2.1\% in overall QoE. Furthermore, compared to RobustMPC, it reduces bitrate switching frequency by approximately 70\% while maintaining a near-MPC QoE level with an acceptable stall-risk trade-off. This work proves that integrating lightweight control-theoretic penalties with short-term look-ahead effectively discourages buffer-unsafe actions, significantly enhancing the perceptual stability of neural adaptive streaming.
+    Adaptive Bitrate (ABR) streaming algorithms face a fundamental ``plasticity--stability'' dilemma: Reinforcement Learning (RL) methods adapt well but lack stability guarantees, while control-theoretic approaches ensure stability but struggle with complex network dynamics. 
+    In this paper, we propose a \textit{Lyapunov-Inspired Future-Aware PPO} agent that bridges this gap. Unlike standard RL that blindly optimizes rewards, our method incorporates a Lyapunov-inspired reward shaping mechanism. Instead of solving computationally heavy Constrained MDPs (CMDP), we inject a virtual queue drift penalty directly into the reward function to implicitly bias the policy toward buffer-safe regimes without adding inference-time overhead. Furthermore, we augment the state space with ``immediate future knowledge'' (next-chunk sizes and scene complexity), enabling the agent to anticipate stochastic throughput drops.
+    Extensive experiments on real-world FCC network traces demonstrate that, rather than blindly maximizing raw linear QoE---a metric where QoE-oriented control-theoretic methods such as RobustMPC score marginally higher by operating closer to the buffer depletion boundary---our approach achieves highly competitive visual quality while prioritizing the suppression of catastrophic switching tail-risks. Specifically, it consistently outperforms the pure DRL baseline (Pensieve) by 2.1\% in overall QoE. Furthermore, compared to RobustMPC, it reduces bitrate switching frequency by approximately 70\% while maintaining a near-MPC QoE level with an acceptable stall-risk trade-off. This work demonstrates that integrating lightweight control-theoretic penalties with short-term look-ahead effectively discourages buffer-unsafe actions, significantly enhancing the perceptual stability of neural adaptive streaming.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -53,23 +53,23 @@ Adaptive Bitrate Streaming, Deep Reinforcement Learning, Lyapunov Optimization, 
 
 \IEEEPARstart{T}{he} exponential growth of video traffic, projected to account for over 82\% of global internet traffic \cite{cisco2023}, has fundamentally transformed the digital landscape. To cope with heterogeneous network conditions and diverse device capabilities, HTTP Adaptive Streaming (HAS) protocols, such as MPEG-DASH and HLS, have become the de-facto standard \cite{sodagar2011mpeg, bentaleb2018survey}. In HAS, a video is segmented into short chunks (e.g., 2-4 seconds), each encoded at multiple discrete bitrate levels. The core responsibility of the client-side player is to dynamically select the optimal bitrate for the next chunk, a decision process known as Adaptive Bitrate (ABR) selection.
 
-The primary objective of an ABR algorithm is to maximize the user's Quality of Experience (QoE) \cite{wu2024qoe}. However, this is a complex optimization problem involving conflicting goals: (1) maximizing the average visual quality (bitrate/VMAF), (2) minimizing rebuffering events (video stalls due to empty buffer), and (3) minimizing playback instability (frequent quality switching). Achieving a balance is particularly challenging in modern heterogeneous networks, such as \textbf{mmWave 5G \cite{meng2024mmwave} and Low Earth Orbit (LEO) satellite constellations (e.g., Starlink) \cite{zhang2024satellite}}. In these environments, throughput is highly stochastic and exhibits rapid, extreme fluctuations that traditional methods struggle to predict.
+The primary objective of an ABR algorithm is to maximize the user's Quality of Experience (QoE) \cite{wu2024qoe}. However, this poses a complex optimization problem involving conflicting goals: (1) maximizing the average visual quality (bitrate/VMAF), (2) minimizing rebuffering events (video stalls due to empty buffer), and (3) minimizing playback instability (frequent quality switching). Achieving an optimal balance remains particularly challenging in modern heterogeneous networks, such as \textbf{mmWave 5G \cite{meng2024mmwave} and Low Earth Orbit (LEO) satellite constellations (e.g., Starlink) \cite{zhang2024satellite}}, where throughput is highly stochastic and exhibits rapid, extreme fluctuations that traditional methods struggle to predict.
 
 Historically, ABR algorithms have evolved through three distinct phases. First, \textit{Fixed-Rule methods} such as Buffer-Based (BBA) \cite{huang2014buffer} and BOLA \cite{spiteri2018bola} relied on heuristic thresholds. While simple, they often fail to utilize available bandwidth efficiently.
-Second, \textit{Control-Theoretic methods} like Model Predictive Control (MPC) \cite{yin2015control} framed ABR as a formal optimization problem over a sliding horizon. While MPC provides explicit horizon-based optimization, it does not inherently enforce buffer safety under stochastic throughput, and its performance heavily depends on accurate throughput prediction \cite{sun2016cs2p}. In volatile networks (like 5G or LEO), prediction errors lead to suboptimal decisions—either overly conservative (low quality) or overly aggressive (rebuffering).
+Second, \textit{Control-Theoretic methods} like Model Predictive Control (MPC) \cite{yin2015control} framed ABR as a formal optimization problem over a sliding horizon. While MPC provides explicit horizon-based optimization, it does not inherently enforce buffer safety under stochastic throughput, and its performance heavily depends on accurate throughput prediction \cite{sun2016cs2p}. In volatile networks (e.g., 5G or LEO), prediction errors lead to suboptimal decisions---either overly conservative (low quality) or overly aggressive (rebuffering).
 
 Recently, \textit{Deep Reinforcement Learning (DRL)} \cite{sutton2018reinforcement} has emerged as a promising paradigm. Systems like Pensieve \cite{mao2017neural} and Oboe \cite{akhtar2018oboe} employ neural networks to learn ABR policies directly from experience, capturing complex patterns without explicit modeling.
-However, pure DRL approaches suffer from the \textit{"Plasticity-Stability Dilemma"}. While they are highly plastic (adaptable) to maximizing average reward, they lack inherent stability guarantees. A standard RL agent, driven solely by reward maximization, may learn aggressive behaviors that risk buffer depletion in "tail" scenarios, leading to catastrophic stalls. Furthermore, most existing agents are "future-blind"; they rely solely on past observations and are unaware of the varying sizes or complexity of upcoming video chunks.
+However, pure DRL approaches suffer from the \textit{``Plasticity--Stability Dilemma''}. While they are highly plastic (adaptable) to maximizing average reward, they lack inherent stability guarantees. A standard RL agent, driven solely by reward maximization, may learn aggressive behaviors that risk buffer depletion in ``tail'' scenarios, leading to catastrophic stalls. Furthermore, most existing agents are ``future-blind''; they rely solely on past observations and remain unaware of the varying sizes or complexity of upcoming video chunks.
 
 In this paper, we address these limitations by proposing a \textbf{Hybrid Control-RL Framework}. We argue that robust ABR streaming requires bridging the gap between the adaptability of learning-based methods and the safety guarantees of control theory. Specifically, we utilize \textit{Lyapunov Optimization Theory} \cite{neely2010stochastic}, a powerful tool for stabilizing queueing systems, to guide the exploration of a PPO (Proximal Policy Optimization) \cite{schulman2017proximal} agent.
 Our specific contributions are as follows:
 
 \begin{itemize}
-    \item \textbf{Lyapunov-Inspired Safety Regularization:} We introduce a Lyapunov-inspired penalty derived from queue deficit considerations. Instead of treating rebuffering merely as a negative scalar in the QoE formulation, this mechanism implicitly penalizes unsafe queue deviations. As proven via Proposition 1, this regularization mathematically bounds the expected buffer deficit, creating a "Safe Zone" for the RL agent without the computational burden of complex dual-variable CMDP solvers.
+    \item \textbf{Lyapunov-Inspired Safety Regularization:} We introduce a Lyapunov-inspired penalty derived from queue deficit considerations. Instead of treating rebuffering merely as a negative scalar in the QoE formulation, this mechanism implicitly penalizes unsafe queue deviations. As shown in Proposition 1, this regularization promotes stability through bounded deficit regularization, creating a ``safe zone'' for the RL agent without the computational burden of complex dual-variable CMDP solvers.
     
-    \item \textbf{Future-Aware State Space:} We address the "blindness" of standard RL by augmenting the state space with immediate future knowledge. By feeding the exact sizes and complexity indices (SI/TI) of the next $M$ chunks into the neural network, we eliminate uncertainty regarding content variations, allowing the agent to distinguish between network-induced and content-induced buffer fluctuations.
+    \item \textbf{Future-Aware State Space:} We address the ``blindness'' of standard RL by augmenting the state space with immediate future knowledge. By feeding the exact sizes and complexity indices (SI/TI) of the next $M$ chunks into the neural network, we eliminate uncertainty regarding content variations, allowing the agent to distinguish between network-induced and content-induced buffer fluctuations.
     
-    \item \textbf{State-of-the-Art Performance:} We conduct extensive trace-driven evaluations using the FCC broadband and Norway HSDPA datasets. Our results demonstrate that the proposed method strictly outperforms Pensieve by 2.1\% in average QoE. More importantly, it significantly enhances perceptual robustness, lowering bitrate switching frequency by approximately 70\% compared to RobustMPC while maintaining near-MPC QoE levels, verifying the efficacy of our risk-aware design.
+    \item \textbf{State-of-the-Art Performance:} We conduct extensive trace-driven evaluations using the FCC broadband and Norway HSDPA datasets. Our results demonstrate that the proposed method consistently outperforms Pensieve by 2.1\% in average QoE. More importantly, it significantly enhances perceptual robustness, lowering bitrate switching frequency by approximately 70\% compared to RobustMPC while maintaining near-MPC QoE levels, verifying the efficacy of our risk-aware design.
 \end{itemize}
 
 % =========================================
@@ -82,18 +82,18 @@ The optimization of Adaptive Bitrate (ABR) streaming has evolved from rigid heur
 
 \subsection{Heuristics and Control-Theoretic Methods}
 Early ABR algorithms relied on fixed control laws derived from observable metrics. \textit{Buffer-Based Algorithms (BBA)} \cite{huang2014buffer} prioritize buffer occupancy, selecting bitrates to maintain the reservoir within a pre-defined safety range. While robust to throughput estimation errors, BBA often exhibits slow convergence during bandwidth ramp-ups and induces unnecessary switching when the buffer is near saturation.
-To address this, \textit{Control-Theoretic methods} such as MPC \cite{yin2015control} and hybrid models \cite{liu2023hybrid} frame ABR as a resource allocation problem over a sliding horizon. Sobhani et al. \cite{sobhani2015video} proposed a fuzzy logic-based controller to handle bandwidth uncertainties proactively. However, these model-based approaches rely heavily on accurate throughput predictors. In modern stochastic networks (e.g., 5G mmWave), the "model mismatch" between idealized equations and real-world dynamics often results in suboptimal performance.
+To address this, \textit{Control-Theoretic methods} such as MPC \cite{yin2015control} and hybrid models \cite{liu2023hybrid} frame ABR as a resource allocation problem over a sliding horizon. Sobhani et al. \cite{sobhani2015video} proposed a fuzzy logic-based controller to handle bandwidth uncertainties proactively. However, these model-based approaches rely heavily on accurate throughput predictors. In modern stochastic networks (e.g., 5G mmWave), the ``model mismatch'' between idealized equations and real-world dynamics often results in suboptimal performance.
 
 \subsection{Deep Reinforcement Learning (DRL) in ABR}
-The advent of DRL shifted the focus from "modeling" to "learning". Gadaleta et al. introduced \textit{D-DASH} \cite{gadaleta2017ddash}, a framework utilizing Deep Q-Networks (DQN) to map state features to quality decisions. Similarly, the seminal work \textit{Pensieve} \cite{mao2017neural} employed an A3C (Asynchronous Advantage Actor-Critic) agent to learn policies directly from raw experience, demonstrating superior performance over MPC. Subsequent works like Fugu \cite{yan2019learning} further refined learning environments using real-world deployments.
-Despite their success, these pure DRL approaches suffer from the \textit{"Black Box" challenge}. They lack inherent safety guarantees; a reward-driven agent might learn aggressive policies that maximize average bitrate but risk catastrophic buffer depletion during rare "tail" events. Furthermore, standard agents are "future-blind," reacting only to past observations without awareness of upcoming chunk size variations.
+The advent of DRL shifted the focus from ``modeling'' to ``learning''. Gadaleta et al. introduced \textit{D-DASH} \cite{gadaleta2017ddash}, a framework utilizing Deep Q-Networks (DQN) to map state features to quality decisions. Similarly, the seminal work \textit{Pensieve} \cite{mao2017neural} employed an A3C (Asynchronous Advantage Actor-Critic) agent to learn policies directly from raw experience, demonstrating superior performance over MPC. Subsequent works like Fugu \cite{yan2019learning} further refined learning environments using real-world deployments.
+Despite their success, these pure DRL approaches suffer from the \textit{``black box'' challenge}. They lack inherent safety guarantees; a reward-driven agent might learn aggressive policies that maximize average bitrate but risk catastrophic buffer depletion during rare ``tail'' events. Furthermore, standard agents are ``future-blind'', reacting only to past observations without awareness of upcoming chunk size variations.
 
 \subsection{Edge-Assisted and Network-Aware Streaming}
 Recognizing the limitations of client-only adaptation, recent works have explored shifting complexity to the network edge. Mehrabi et al. \cite{mehrabi2019edge} proposed an Edge Computing Assisted adaptation scheme, utilizing MEC (Multi-Access Edge Computing) servers to perform throughput prediction and bitrate selection on behalf of mobile clients. Similarly, Kim and Chung \cite{kim2023http} and Kang and Chung \cite{kang2023adaptive} leveraged edge computing to improve fairness among multiple competing clients using RL-based schedulers.
 While edge-assisted solutions offer global optimization capabilities, they require significant infrastructure upgrades and server-side deployment. In contrast, our work focuses on empowering the \textit{client-side} logic. We argue that a robust client should not depend on external infrastructure assistance. By integrating \textit{Lyapunov optimization}, we achieve stability comparable to edge-assisted methods, but within a purely client-centric, deployable framework.
 
 \subsection{Safe Reinforcement Learning}
-To address the instability of pure RL without relying on edge infrastructure, the concept of "Safe RL" has gained significant traction \cite{wang2025safe}. This involves constraining the agent's exploration to avoid dangerous states (e.g., empty buffer). Recent studies \cite{tian2022towards, xiao2025qoe} have explored injecting safety constraints into the learning loop. Our work aligns with this emerging trend but introduces a novel mechanism: instead of simple action masking, we inject a \textit{Lyapunov-guided virtual queue constraint} directly into the PPO reward function. Combined with our explicit \textit{Future-Awareness} (feeding next-chunk sizes), this hybrid design bridges the gap between the adaptability of DRL and the mathematical robustness of control theory.
+To address the instability of pure RL without relying on edge infrastructure, the concept of ``Safe RL'' has gained significant traction \cite{wang2025safe}. This involves constraining the agent's exploration to avoid dangerous states (e.g., empty buffer). Recent studies \cite{tian2022towards, xiao2025qoe} have explored injecting safety constraints into the learning loop. Our work aligns with this emerging trend but introduces a novel mechanism: instead of simple action masking, we inject a \textit{Lyapunov-guided virtual queue constraint} directly into the PPO reward function. Combined with our explicit \textit{Future-Awareness} (feeding next-chunk sizes), this hybrid design bridges the gap between the adaptability of DRL and the mathematical robustness of control theory.
 
 % --- Table: Qualitative Comparison ---
 \begin{table}[t]
@@ -103,12 +103,6 @@ To address the instability of pure RL without relying on edge infrastructure, th
     \resizebox{\columnwidth}{!}{%
     \begin{tabular}{@{}lcccc@{}}
     \toprule
-    \textbf{Algorithm} & \textbf{Core Paradigm} & \textbf{Stability Mechanism} & \textbf{Future-Awareness} & \textbf{Deployment} \\ \midrule
-    \textbf{BBA} \cite{huang2014buffer} & Heuristic (Buffer) & Hard Thresholds & No & Client-Side \\
-    \textbf{RobustMPC} \cite{yin2015control} & Control Theory & Model-Dependent & No & Client-Side \\
-    \textbf{Pensieve} \cite{mao2017neural} & Pure DRL (A3C) & None (Reward-driven) & No & Client-Side \\
-    \textbf{Oboe} \cite{akhtar2018oboe} & Auto-Tuning & Reactive Tuning & No & Client-Side \\
-    \textbf{Ours} & \textbf{Hybrid (DRL+Lya)} & \textbf{Penalty-Guided (Heuristic)} & \textbf{Yes (Explicit)} & \textbf{Client-Side} \\ \bottomrule
     \textbf{Algorithm} & \textbf{Core Paradigm} & \textbf{Stability Mechanism} & \textbf{Future-Awareness} & \textbf{Deployment} \\ \midrule
     \textbf{BBA} \cite{huang2014buffer} & Heuristic (Buffer) & Hard Thresholds & No & Client-Side \\
     \textbf{RobustMPC} \cite{yin2015control} & Control Theory & Model-Dependent & No & Client-Side \\
@@ -153,22 +147,21 @@ where $q(r_k)$ maps the bitrate to a visual quality metric (e.g., VMAF or bitrat
 
 \subsection{Lyapunov-Inspired Safety Regularization}
 \label{subsec:lyapunov}
-While standard RL maximizes Eq. (5) directly, it offers no explicit protection against buffer underflow ($B_k \to 0$). Instead of solving a strict CMDP—which requires complex dual-variable updates that are notoriously unstable in deep RL \cite{wang2025safe}—we propose a \textit{Lyapunov-Inspired Safety Regularization}. We define a virtual queue deficit function to keep the buffer level $B_k$ close to a target reference $B_{ref}$:
+While standard RL maximizes Eq. (5) directly, it offers no explicit protection against buffer underflow ($B_k \to 0$). Instead of solving a strict CMDP---which requires complex dual-variable updates that are notoriously unstable in deep RL \cite{wang2025safe}---we propose a \textit{Lyapunov-Inspired Safety Regularization}. We define a virtual queue deficit function to keep the buffer level $B_k$ close to a target reference $B_{ref}$:
 \begin{equation}
     L(B_k) = \frac{1}{2} (B_k - B_{ref})^2
 \end{equation}
 Inspired by Lyapunov Optimization Theory \cite{neely2010stochastic}, where minimizing the ``Drift-plus-Penalty'' bounds the queue, we adopt a practical heuristic approximation. To map this into an unconstrained PPO framework smoothly, we formulate a regularized reward $r^{Lya}_k$ using a linear penalty for buffer deficit:
 \begin{equation}
     r^{Lya}_k = QoE_k - \beta \cdot \max(0, B_{ref} - B_k)
-    r^{Lya}_k = QoE_k - \beta \cdot \max(0, B_{ref} - B_k)
 \end{equation}
-where $\beta$ acts as a static regularization multiplier. Rather than guaranteeing absolute cell-level stability, this formulation heuristically guides the RL policy. By explicitly penalizing states with a buffer deficit, it discourages actions that increase the expected Lyapunov drift.
+where $\beta$ acts as a static regularization multiplier. Rather than claiming absolute cell-level stability, this formulation heuristically guides the RL policy. By explicitly penalizing states with a buffer deficit, it discourages actions that increase the expected Lyapunov drift.
 
-Importantly, while this is a relaxed heuristic, it still implicitly guarantees a bounded expected queue deviation, as shown below.
+Importantly, while this is a relaxed heuristic, it still promotes bounded expected queue deviation, as shown below.
 
-\textbf{Proposition 1 (Bounded Expected Deficit):} \textit{Assume the bitrate action space is bounded, and the network throughput process is stationary. Under the regularized reward (Eq. 7), any learned policy $\pi$ that achieves a steady-state average reward bounded from below implicitly guarantees a bounded expected queue deficit $\limsup_{K \to \infty} \frac{1}{K} \sum_{k=1}^K \mathbb{E}[\max(0, B_{ref} - B_k)] \le D$, where $D$ is a constant proportional to $1/\beta$.}
+\textbf{Proposition 1 (Bounded Expected Deficit):} \textit{Assume the bitrate action space is bounded, and the network throughput process is stationary. Assuming ergodicity of the induced Markov chain under policy $\pi$, any learned policy that achieves a steady-state average reward bounded from below yields a bounded expected queue deficit $\limsup_{K \to \infty} \frac{1}{K} \sum_{k=1}^K \mathbb{E}[\max(0, B_{ref} - B_k)] \le D$, where $D$ is a constant proportional to $1/\beta$.}
 
-\textit{Proof Sketch:} Let $QoE_{max}$ be the maximum possible step QoE. The expected step reward is $\mathbb{E}[r^{Lya}_k] = \mathbb{E}[QoE_k] - \beta \mathbb{E}[\max(0, B_{ref} - B_k)]$. Since a converged RL agent achieves a cumulative reward strictly greater than a naive baseline (e.g., consistently selecting the lowest bitrate with reward $R_{min}$), we have $\mathbb{E}[r^{Lya}_k] \ge R_{min}$. Therefore, $\beta \mathbb{E}[\max(0, B_{ref} - B_k)] \le \mathbb{E}[QoE_k] - R_{min} \le QoE_{max} - R_{min}$. Rearranging yields the bounded deficit limit $D = (QoE_{max} - R_{min}) / \beta$. This proves that our regularization mathematically enforces a strict bound on the mean buffer deviation proportional to the inverse of $\beta$. \hfill $\blacksquare$
+\textit{Proof Sketch:} Let $QoE_{max}$ be the maximum possible step QoE. The expected step reward is $\mathbb{E}[r^{Lya}_k] = \mathbb{E}[QoE_k] - \beta \mathbb{E}[\max(0, B_{ref} - B_k)]$. Since a converged RL agent achieves a cumulative reward strictly greater than a naive baseline (e.g., consistently selecting the lowest bitrate with reward $R_{min}$), we have $\mathbb{E}[r^{Lya}_k] \ge R_{min}$. Therefore, $\beta \mathbb{E}[\max(0, B_{ref} - B_k)] \le \mathbb{E}[QoE_k] - R_{min} \le QoE_{max} - R_{min}$. Rearranging yields the bounded deficit limit $D = (QoE_{max} - R_{min}) / \beta$. This indicates that our regularization promotes bounded mean buffer deviation proportional to the inverse of $\beta$. \hfill $\blacksquare$
 
 % =========================================
 % SECTION IV: PROPOSED METHOD
@@ -176,7 +169,7 @@ Importantly, while this is a relaxed heuristic, it still implicitly guarantees a
 \section{Proposed Future-Aware PPO Agent}
 \label{sec:method}
 
-In this section, we present the architecture of our Lyapunov-Guided Future-Aware PPO agent. The system comprises three key modules: (1) The Future-Aware State Space construction, (2) The Neural Network Architecture (Actor-Critic), and (3) The Lyapunov-Regularized Reward Mechanism.
+In this section, we present the architecture of our Lyapunov-Inspired Future-Aware PPO agent. The system comprises three key modules: (1) The Future-Aware State Space construction, (2) The Neural Network Architecture (Actor-Critic), and (3) The Lyapunov-Regularized Reward Mechanism.
 
 \subsection{Future-Aware State Space}
 Unlike standard ABR agents (e.g., Pensieve) that rely solely on historical observations, our agent explicitly observes the immediate future characteristics of the video. The state vector at time $t$, denoted as $s_t$, is defined as:
@@ -193,9 +186,7 @@ where:
     \item $v_{next}$: The VMAF scores of the next chunk for all bitrates, enabling content-aware decisions.
 \end{itemize}
 
-In practice, obtaining this "future knowledge" does not require predicting the video content. In the MPEG-DASH standard, the server provides a Media Presentation Description (MPD) manifest file to the client. Content providers can easily augment this manifest to include the exact byte sizes and pre-computed VMAF scores of the upcoming chunks for all representation levels. The client simply parses this manifest to construct the $f_{next}$ and $v_{next}$ state inputs.
-
-In practice, obtaining this "future knowledge" does not require predicting the video content. In the MPEG-DASH standard, the server provides a Media Presentation Description (MPD) manifest file to the client. Content providers can easily augment this manifest to include the exact byte sizes and pre-computed VMAF scores of the upcoming chunks for all representation levels. The client simply parses this manifest to construct the $f_{next}$ and $v_{next}$ state inputs.
+In practice, obtaining this ``future knowledge'' does not require predicting the video content. In the MPEG-DASH standard, the server provides a Media Presentation Description (MPD) manifest file to the client. Content providers can easily augment this manifest to include the exact byte sizes and pre-computed VMAF scores of the upcoming chunks for all representation levels. The client simply parses this manifest to construct the $f_{next}$ and $v_{next}$ state inputs.
 
 \subsection{Network Architecture}
 We employ an Actor-Critic architecture based on Proximal Policy Optimization (PPO). 
@@ -219,7 +210,7 @@ The outputs of these branches are concatenated and fed into the shared hidden la
 \end{figure*}
 
 \subsection{Lyapunov-Regularized PPO Training}
-Standard PPO optimizes a clipped surrogate objective function. We modify this objective by integrating the Lyapunov drift. The reward function $r_t$ is dynamically adjusted based on the "Virtual Queue" drift derived in Section III:
+Standard PPO optimizes a clipped surrogate objective function. We modify this objective by integrating the Lyapunov drift. The reward function $r_t$ is dynamically adjusted based on the ``virtual queue'' drift derived in Section III:
 \begin{equation}
     r_t^{Lya} = \underbrace{QoE_t}_{\text{Performance}} - \underbrace{\beta \cdot \max(0, B_{ref} - B_t)}_{\text{Stability Constraint}}
 \end{equation}
@@ -228,7 +219,7 @@ The detailed training procedure is summarized in \textbf{Algorithm 1}.
 
 % --- Algorithm Pseudocode ---
 \begin{algorithm*}[t]
-\caption{Lyapunov-Guided Future-Aware PPO Training}
+\caption{Lyapunov-Inspired Future-Aware PPO Training}
 \label{alg:training}
 \begin{algorithmic}[1]
 \STATE \textbf{Initialize:} Actor $\pi_\theta$, Critic $V_\phi$, Buffer $B_0=0$
@@ -253,7 +244,6 @@ The detailed training procedure is summarized in \textbf{Algorithm 1}.
 \end{algorithm*}
 
 \subsection{Hyperparameter Settings}
-The PPO agent was trained for $50,000$ episodes (approximately $10^6$ steps) until the cumulative reward converged, utilizing the FCC training trace split to ensure sufficient exposure to diverse network dynamics. To ensure reproducibility, the key hyperparameters used in our training and architecture are listed in Table \ref{tab:hyperparameters}. The value of $\beta$ was empirically tuned to balance the trade-off between VMAF improvement and rebuffering reduction.
 The PPO agent was trained for $50,000$ episodes (approximately $10^6$ steps) until the cumulative reward converged, utilizing the FCC training trace split to ensure sufficient exposure to diverse network dynamics. To ensure reproducibility, the key hyperparameters used in our training and architecture are listed in Table \ref{tab:hyperparameters}. The value of $\beta$ was empirically tuned to balance the trade-off between VMAF improvement and rebuffering reduction.
 
 % --- Table: Hyperparameters (Pensieve-style: compact 2-col) ---
@@ -284,12 +274,11 @@ Reference Buffer ($B_{ref}$) & 4.0 s \\ \bottomrule
 \section{Experimental Evaluation}
 \label{sec:eval}
 
-In this section, we provide a comprehensive evaluation of the proposed Lyapunov-Guided Future-Aware PPO agent. We aim to answer three key research questions:
+In this section, we provide a comprehensive evaluation of the proposed Lyapunov-Inspired Future-Aware PPO agent. We aim to answer three key research questions:
 \begin{itemize}
     \item \textbf{RQ1 (Tail-Risk and Overall Performance):} Can a stability-guided RL agent achieve highly competitive QoE while significantly suppressing catastrophic stall risks compared to aggressive optimization baselines?
-    \item \textbf{RQ1 (Tail-Risk and Overall Performance):} Can a stability-guided RL agent achieve highly competitive QoE while significantly suppressing catastrophic stall risks compared to aggressive optimization baselines?
     \item \textbf{RQ2 (Stability \& Safety):} Can the Lyapunov constraint effectively reduce catastrophic rebuffering events and bitrate oscillations compared to pure RL and control-theoretic methods?
-    \item \textbf{RQ3 (Component Efficacy):} What is the individual contribution of "Future Awareness" and "Lyapunov Shaping" to the final performance?
+    \item \textbf{RQ3 (Component Efficacy):} What is the individual contribution of ``Future Awareness'' and ``Lyapunov Shaping'' to the final performance?
 \end{itemize}
 
 \subsection{Experimental Setup}
@@ -304,8 +293,6 @@ To ensure robustness, we utilized two distinct network datasets:
 \subsubsection{Video Content}
 We used the reference DASH video \textit{"Enve"} and \textit{"Big Buck Bunny"}, encoded at $\{300, 750, 1200, 1850, 2850, 4300\}$ kbps. The chunk duration is fixed at 4 seconds. For the QoE calculation (Eq. 4), we adopt the standard penalty weights widely used in the literature (e.g., Pensieve): $\lambda = 1$ for switching penalties, and a heavy penalty of $\mu = 4.3$ (scaled appropriately for VMAF) for rebuffering, ensuring a fair and standardized comparison across all baselines.
 
-We used the reference DASH video \textit{"Enve"} and \textit{"Big Buck Bunny"}, encoded at $\{300, 750, 1200, 1850, 2850, 4300\}$ kbps. The chunk duration is fixed at 4 seconds. For the QoE calculation (Eq. 4), we adopt the standard penalty weights widely used in the literature (e.g., Pensieve): $\lambda = 1$ for switching penalties, and a heavy penalty of $\mu = 4.3$ (scaled appropriately for VMAF) for rebuffering, ensuring a fair and standardized comparison across all baselines.
-
 \subsubsection{Baselines}
 We compare our method against widely adopted ABR standard algorithms:
 \begin{itemize}
@@ -314,10 +301,10 @@ We compare our method against widely adopted ABR standard algorithms:
     \item \textbf{BBA \cite{huang2014buffer}:} A heuristic buffer-based algorithm.
 \end{itemize}
 
-\textbf{Remark on Comparative Fairness and Information Asymmetry:} A critical reader might argue that providing explicit future MPD metadata (chunk sizes and VMAF) to our agent gives it an unfair "oracle" advantage over future-blind baselines like standard Pensieve or RobustMPC. However, identifying how to properly exploit this deterministic future metadata without destabilizing the agent is precisely our core structural contribution. To ensure scientific rigor and isolate the source of our performance gains, we rely on our \textit{Ablation Study (Section V.E)}. As shown later in Fig. \ref{fig:ablation}, simply feeding future knowledge to a standard PPO agent (without Lyapunov regularization) results in massive rebuffering (37.3\%), failing entirely to safely surpass blind baselines. It is exclusively the \textit{combination} of future-awareness and our proposed Lyapunov-inspired safety regularization that unlocks the reported performance, validating that the gain is not a mere artifact of information leakage but the result of a fundamentally safer architectural design.
+\textbf{Remark on Comparative Fairness and Information Asymmetry:} A critical reader might argue that providing explicit future MPD metadata (chunk sizes and VMAF) to our agent grants it an unfair ``oracle'' advantage over future-blind baselines like standard Pensieve or RobustMPC. However, identifying how to properly exploit this deterministic future metadata without destabilizing the agent is precisely our core structural contribution. To ensure scientific rigor and isolate the source of our performance gains, we rely on our \textit{Ablation Study (Section V.E)}. As shown later in Fig. \ref{fig:ablation}, simply feeding future knowledge to a standard PPO agent (without Lyapunov regularization) results in massive rebuffering (37.3\%), failing entirely to safely surpass blind baselines. It is exclusively the \textit{combination} of future-awareness and our proposed Lyapunov-inspired safety regularization that unlocks the reported performance, validating that the gain is not a mere artifact of information leakage but the result of a fundamentally safer architectural design.
 
 \subsection{Overall Performance Analysis (RQ1)}
-Table \ref{tab:performance} summarizes the mean performance metrics across all test traces. Our proposed agent strictly outperforms the pure DRL baseline, Pensieve (3185.2), by approximately \textbf{2.1\%} with an average QoE of \textbf{3253.2}. 
+Table \ref{tab:performance} summarizes the mean performance metrics across all test traces. Our proposed agent consistently outperforms the pure DRL baseline, Pensieve (3185.2), by approximately \textbf{2.1\%} with an average QoE of \textbf{3253.2}. 
 % --- Table: Quantitative Results (Pensieve-style) ---
 \begin{table}[t]
     \caption{Mean performance and Tail-Risk metrics across all test traces. The QoE metric is defined in Eq. (4).}
@@ -337,7 +324,7 @@ Table \ref{tab:performance} summarizes the mean performance metrics across all t
     \vspace{2pt}
     {\footnotesize Note: To explicitly address performance under the most volatile network conditions, we evaluated the 5th-percentile QoE and the Conditional Value at Risk (CVaR at 10\%), representing the average QoE of the worst 10\% of episodes (Table \ref{tab:performance}). Traditional RL (Pensieve) suffers a severe 5th-percentile QoE drop to 545.7, while the heuristic BBA collapses to 469.3. By contrast, our Lyapunov-regularized agent maintains a robust 5th-percentile QoE of 598.0, achieving a nearly 10\% improvement in extreme worst-case scenarios over the pure DRL baseline. 
 
-    While RobustMPC yields a marginally higher CVaR (563.3 vs 548.5), it achieves this minor 2.7\% gain at the severe cost of a 234\% increase in switching frequency (18.26 vs 5.46 switches per episode). This behavior explicitly trades buffer safety for aggressive bitrate oscillations—a strategy that severely degrades subjective viewing experience but is inadequately penalized by standard linear QoE models. As illustrated in the Cumulative Distribution Function (CDF) of QoE (Fig. \ref{fig:cdf}), our method exhibits a significantly tighter variance compared to baselines. To ensure statistical rigor, we conducted a Wilcoxon signed-rank test on the episode-wise results, confirming that the 70\% reduction in switching compared to RobustMPC is statistically significant ($p < 0.01$). By deliberately sacrificing marginal bitrate gains in highly volatile states, our agent effectively suppresses catastrophic tail-risks without resorting to erratic switching, achieving a strictly superior perceptual trade-off.}
+    While RobustMPC yields a marginally higher CVaR (563.3 vs 548.5), it achieves this minor 2.7\% gain at the severe cost of a 234\% increase in switching frequency (18.26 vs 5.46 switches per episode). This behavior explicitly trades buffer safety for aggressive bitrate oscillations---a strategy that severely degrades subjective viewing experience but is inadequately penalized by standard linear QoE models. As illustrated in the Cumulative Distribution Function (CDF) of QoE (Fig. \ref{fig:cdf}), our method exhibits a significantly tighter variance compared to baselines. To ensure statistical rigor, we conducted a Wilcoxon signed-rank test on the episode-wise results, confirming that the 70\% reduction in switching compared to RobustMPC is statistically significant ($p < 0.01$). By deliberately sacrificing marginal bitrate gains in highly volatile states, our agent effectively suppresses catastrophic switching tail-risks without resorting to erratic oscillations, achieving a strictly superior perceptual trade-off.}
     \end{table}
 
 \begin{figure}[t]
@@ -348,7 +335,7 @@ Table \ref{tab:performance} summarizes the mean performance metrics across all t
 \end{figure}
 
 \subsection{Stability and Safety Analysis (RQ2)}
-Stability is where our Lyapunov-guided approach shines. \textbf{Switching Frequency:} As shown in Table \ref{tab:performance} and Figure \ref{fig:stability}, RobustMPC and BBA exhibit erratic behavior with 18.26 and 21.80 switches per episode, respectively. This sawtooth quality pattern is visually annoying. In contrast, we find that our method reduces switching frequency to 5.46, a 70\% reduction compared to RobustMPC, ensuring a smooth visual experience.
+Visual stability is where our Lyapunov-guided approach truly shines. \textbf{Switching Frequency:} As shown in Table \ref{tab:performance} and Figure \ref{fig:stability}, RobustMPC and BBA exhibit erratic behavior with 18.26 and 21.80 switches per episode, respectively. This sawtooth quality pattern is visually annoying. In contrast, we find that our method reduces switching frequency to 5.46, a 70\% reduction compared to RobustMPC, ensuring a smooth visual experience.
 
 \begin{figure}[t]
     \centering
@@ -357,8 +344,7 @@ Stability is where our Lyapunov-guided approach shines. \textbf{Switching Freque
     \label{fig:stability}
 \end{figure}
 
-\textbf{Safety and Pareto Optimality:} Fig. \ref{fig:tradeoff} visualizes the multi-objective Quality-Risk trade-off space, effectively forming an empirical Pareto frontier. RobustMPC lies on the extreme right (highest VMAF) but is heavily penalized on the vertical risk axis (prone to stalls when throughput prediction fails). While Pensieve is slightly more conservative in rebuffering (9.53\% vs 10.69\%), it suffers a massive degradation in visual quality (VMAF 68.31 vs 70.63). Our method (marked with a Star) avoids these strict extremes and occupies the most desirable "knee" region of the Pareto front. It proves that our agent achieves a near-optimal QoE score while firmly restricting the severe rebuffering risks associated with MPC, making it the most balanced choice in a risk-aware streaming context.
-\textbf{Safety and Pareto Optimality:} Fig. \ref{fig:tradeoff} visualizes the multi-objective Quality-Risk trade-off space, effectively forming an empirical Pareto frontier. RobustMPC lies on the extreme right (highest VMAF) but is heavily penalized on the vertical risk axis (prone to stalls when throughput prediction fails). While Pensieve is slightly more conservative in rebuffering (9.53\% vs 10.69\%), it suffers a massive degradation in visual quality (VMAF 68.31 vs 70.63). Our method (marked with a Star) avoids these strict extremes and occupies the most desirable "knee" region of the Pareto front. It proves that our agent achieves a near-optimal QoE score while firmly restricting the severe rebuffering risks associated with MPC, making it the most balanced choice in a risk-aware streaming context.
+\textbf{Safety and Pareto Optimality:} Fig. \ref{fig:tradeoff} visualizes the multi-objective Quality-Risk trade-off space, effectively forming an empirical Pareto frontier. RobustMPC lies on the extreme right (highest VMAF) but is heavily penalized on the vertical risk axis (prone to stalls when throughput prediction fails). While Pensieve is slightly more conservative in rebuffering (9.53\% vs 10.69\%), it suffers a massive degradation in visual quality (VMAF 68.31 vs 70.63). Our method (marked with a star) avoids these strict extremes and occupies the most desirable ``knee'' region of the Pareto front. Our results suggest that the agent achieves a near-optimal QoE score while effectively mitigating the severe rebuffering risks associated with MPC, making it the most balanced choice in a risk-aware streaming context.
 
 \begin{figure}[t]
     \centering
@@ -393,7 +379,7 @@ Finally, we validate our design choices in Figure \ref{fig:ablation}.
 \end{figure}
 
 \subsection{Action Distribution Analysis}
-Finally, to understand the agent's risk profile, Figure \ref{fig:action_dist} illustrates the distribution of selected bitrates. Unlike greedy approaches that aggressively attempt to fetch the highest bitrate (often leading to stalls), our Lyapunov-Guided agent adopts a "Safe Zone" strategy. It predominantly selects stable mid-range bitrates (e.g., 1850 kbps) that offer good visual quality while maintaining a sufficient safety margin against bandwidth fluctuations.
+Finally, to understand the agent's risk profile, Figure \ref{fig:action_dist} illustrates the distribution of selected bitrates. Unlike greedy approaches that aggressively attempt to fetch the highest bitrate (often leading to stalls), our Lyapunov-Guided agent adopts a ``safe zone'' strategy. It predominantly selects stable mid-range bitrates (e.g., 1850 kbps) that offer good visual quality while maintaining a sufficient safety margin against bandwidth fluctuations.
 
 \begin{figure}[t]
     \centering
@@ -401,7 +387,6 @@ Finally, to understand the agent's risk profile, Figure \ref{fig:action_dist} il
     \caption{\textbf{Bitrate Selection Policy.} The distribution of actions shows the agent's preference for stable qualities, avoiding risky transitions to the maximum level when network conditions are uncertain.}
     \label{fig:action_dist}
 \end{figure}
-
 
 \subsection{Impact of Lyapunov Penalty Factor ($\beta$)}
 To understand the sensitivity of the Lyapunov penalty factor $\beta$, we evaluated the agent's performance across varying $\beta$ values ($\beta \in \{0.1, 0.5, 1.0, 1.5, 3.0\}$). As illustrated in Fig. \ref{fig:beta}, setting $\beta$ too high (e.g., $\beta > 3.0$) results in an overly conservative policy that sacrifices visual quality (VMAF) to maintain a full buffer. Conversely, a near-zero $\beta$ negates the safety constraint, increasing the risk of rebuffering to levels similar to pure PPO. Our empirical tuning demonstrates that $\beta = 1.5$ strikes the optimal Pareto balance between maximizing QoE and ensuring playback stability.
@@ -416,12 +401,12 @@ To understand the sensitivity of the Lyapunov penalty factor $\beta$, we evaluat
 \subsection{Computational Complexity and Overhead}
 A critical requirement for client-side ABR algorithms is computational efficiency, as they must execute on resource-constrained devices (e.g., smartphones, smart TVs) without causing battery drain or playback delays.
 
-To empirically validate the deployment feasibility of our approach, we benchmarked the inference time of our proposed Lyapunov-Guided Future-Aware PPO agent against the standard Pensieve (A3C) baseline. The evaluation was conducted on a commodity CPU mimicking a standard client device.
+To empirically validate the deployment feasibility of our approach, we benchmarked the inference time of our proposed Lyapunov-Inspired Future-Aware PPO agent against the standard Pensieve (A3C) baseline. The evaluation was conducted on a commodity CPU mimicking a standard client device.
 
 The computational overhead of our proposed method is remarkably low, driven by two architectural design choices:
 \begin{enumerate}
-    \item \textbf{Zero Inference-Time Overhead:} The Lyapunov module acts strictly as a reward shaper. Because rewards are only utilized during the offline training phase to update policy weights, the Lyapunov-inspired penalty does not introduce any additional computational overhead during online real-time inference.
-    \item \textbf{Lightweight Future-Awareness:} Processing future chunk sizes and VMAF scores requires only a small Multi-Layer Perceptron (MLP) branch. As shown in our benchmarks, the average inference time of our proposed agent is 0.49 ms per chunk, compared to 0.46 ms for the Pensieve baseline. The integration of explicit future-awareness adds a negligible overhead of merely $\sim$0.03 ms.
+    \item \textbf{Zero Inference-Time Overhead:} The Lyapunov module acts solely as a reward shaper. Because rewards are only utilized during the offline training phase to update policy weights, the Lyapunov-inspired penalty does not introduce any additional computational overhead during online real-time inference.
+    \item \textbf{Lightweight Future-Awareness:} Processing future chunk sizes and VMAF scores requires only a small Multi-Layer Perceptron (MLP) branch. As shown in our benchmarks, the average inference time of our proposed agent is 0.49 ms per chunk, compared to 0.46 ms for the Pensieve baseline. The integration of explicit future-awareness adds a negligible overhead of merely $\sim$0.03 ms. This total decision latency ($<0.5$ ms) is entirely negligible compared to typical network Round-Trip Times (RTT), which generally range from 30 to 80 ms.
 \end{enumerate}
 
 Given a standard video chunk duration of $T = 4$ seconds (4000 ms), the decision-making process consumes approximately $\approx 0.01\%$ of the chunk duration. This confirms that our agent delivers substantial QoE and stability improvements without compromising real-time execution, making it highly practical for modern edge devices and web browsers.
@@ -431,7 +416,7 @@ Given a standard video chunk duration of $T = 4$ seconds (4000 ms), the decision
 % =========================================
 \section{Conclusion}
 \label{sec:conclusion}
-We presented a Future-Aware PPO agent for adaptive video streaming. By incorporating immediate future chunk sizes into the state space and utilizing Lyapunov optimization, our agent learns a robust policy that balances visual quality and playback stability. Experimental results demonstrate that our method remains within 1.2\% of MPC in average QoE, but crucially reduces bitrate oscillations by approximately 70\% compared to RobustMPC while maintaining an acceptable stall-risk trade-off. Furthermore, it strictly outperforms standard pure RL baselines by 2.1\% in overall QoE. This work highlights the importance of "short-term foresight" combined with heuristic penalty-shaping in reinforcement learning for systems control. In future work, we plan to extend this hybrid framework to live video streaming scenarios where future chunk sizes must be dynamically forecasted, and explore the dynamic adaptation of the reference buffer threshold ($B_{ref}$) based on real-time network volatility.
+We presented a Future-Aware PPO agent for adaptive video streaming. By incorporating immediate future chunk sizes into the state space and utilizing Lyapunov optimization, our agent learns a robust policy that balances visual quality and playback stability. Experimental results demonstrate that our method remains within 1.2\% of MPC in average QoE, but crucially reduces bitrate oscillations by approximately 70\% compared to RobustMPC while maintaining an acceptable stall-risk trade-off. Furthermore, it consistently outperforms standard pure RL baselines by 2.1\% in overall QoE. This work highlights the importance of ``short-term foresight'' combined with heuristic penalty-shaping in reinforcement learning for systems control. In future work, we plan to extend this hybrid framework to live video streaming scenarios where future chunk sizes must be dynamically forecasted, and explore the dynamic adaptation of the reference buffer threshold ($B_{ref}$) based on real-time network volatility.
 
 \clearpage
 \bibliographystyle{IEEEtran}
