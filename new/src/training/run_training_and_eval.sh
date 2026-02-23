@@ -68,7 +68,7 @@ echo "📚 Training PPO Multi-Dynamic"
 echo "=========================================="
 send_slack_message "info" "Step 1 Started" "Training PPO Multi-Dynamic model..."
 
-if python3 train_final.py; then
+if python3 train_final.py --all; then
     echo "✅ PPO Multi-Dynamic training completed!"
     send_slack_message "success" "Step 1 Completed" "PPO Multi-Dynamic training completed successfully!"
 else

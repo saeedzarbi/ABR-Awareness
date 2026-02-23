@@ -2,24 +2,67 @@ import sys
 from pathlib import Path
 import os
 import json
-import urllib.request
+import random
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from stable_baselines3 import PPO
-from src.environment.abr_multi_env import ABREnv
-from src.baselines.mpc_vmaf import RobustMPC 
+from src.environment.abr_multi_env_l import ABREnv
+from src.baselines.mpc_vmaf import RobustMPC
 from src.baselines.genie import Genie
 from src.baselines.bba import BBA
-# اگر کلاس Fugu را در پروژه‌تان دارید، خط زیر را از کامنت در بیاورید:
-# from src.baselines.fugu import Fugu 
-
 from configs.paths import get_paths
 import numpy as np
 import pandas as pd
 import argparse
 
 PATHS = get_paths()
-SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK_URL', '')
+
+
+class SimulatedFugu:
+    """
+    Simulates a modern 'Learned Throughput Predictor' (Fugu-style).
+    Peeks at the real future throughput with realistic noise (~10% error).
+    Uses the same QoE weights as evaluation for internal MPC planning.
+    """
+    def __init__(self, env, noise_level=0.10):
+        self.env = env
+        self.noise_level = noise_level
+
+    def select_bitrate(self, buffer_level, last_throughput, last_vmaf):
+        true_tp = self.env.current_trace['throughput_kbps'][
+            int(self.env.chunk_idx * self.env.CHUNK_DURATION) % len(self.env.current_trace['throughput_kbps'])
+        ]
+        noise = random.uniform(1.0 - self.noise_level, 1.0 + self.noise_level)
+        predicted_tp = true_tp * noise
+
+        best_action = 0
+        max_qoe = -float('inf')
+        horizon = 5
+
+        for br_idx in range(len(self.env.BITRATE_LEVELS)):
+            tot_qoe = 0
+            curr_buffer = buffer_level
+            sim_last_vmaf = last_vmaf
+
+            for _ in range(horizon):
+                br = self.env.BITRATE_LEVELS[br_idx]
+                size = br * 1000 * self.env.CHUNK_DURATION
+                dl_time = size / (predicted_tp * 1000.0 + 1e-6)
+                rebuf = max(0, dl_time - curr_buffer)
+                curr_buffer = max(0, curr_buffer - dl_time) + self.env.CHUNK_DURATION
+
+                vmaf_est = self.env.vmaf_scores.get(int(br), 35.0)
+                qoe = vmaf_est \
+                      - self.env.REBUF_PENALTY_BASE * rebuf \
+                      - self.env.SMOOTH_PENALTY_WEIGHT * abs(vmaf_est - sim_last_vmaf)
+                tot_qoe += qoe
+                sim_last_vmaf = vmaf_est
+
+            if tot_qoe > max_qoe:
+                max_qoe = tot_qoe
+                best_action = br_idx
+
+        return best_action
 
 # ============================================================================
 # Evaluation Logger
@@ -74,8 +117,8 @@ class TCSVT_Evaluator:
         
         # 1. Full Proposed Model (V22)
         try:
-            path = PATHS['models'] / 'ppo_proposed_v2_fresh' / 'best_model' / 'best_model'
-            if not path.with_suffix('.zip').exists(): path = PATHS['models'] / 'ppo_proposed_v2_fresh' / 'final_model'
+            path = PATHS['models'] / 'ppo_proposed_v3_lyapunov' / 'best_model' / 'best_model'
+            if not path.with_suffix('.zip').exists(): path = PATHS['models'] / 'ppo_proposed_v3_lyapunov' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed (Full) from: {path}")
         except Exception as e: print(f"⚠️ Proposed missing: {e}")
@@ -101,14 +144,12 @@ class TCSVT_Evaluator:
             print(f"✅ Loaded Pensieve from: {path}")
         except Exception as e: print(f"⚠️ Pensieve missing: {e}")
 
-        # 4. Baselines
-        methods['RobustMPC'] = 'mpc_placeholder' 
-        methods['Genie'] = 'genie_placeholder'
+        # 4. Baselines (instantiated per-video in evaluate())
+        methods['RobustMPC'] = 'mpc'
+        methods['Genie'] = 'genie'
         methods['BBA'] = BBA(ABREnv.BITRATE_LEVELS)
-        
-        # 5. Fugu
-        methods['Fugu'] = 'fugu_placeholder' # Placeholder. If you have Fugu class, initialize it here.
-            
+        methods['Fugu'] = 'fugu'
+
         return methods
 
     def evaluate(self, methods, episodes_per_video=20, enable_logging=True):
@@ -135,6 +176,7 @@ class TCSVT_Evaluator:
                 active_model = model
                 if name == 'RobustMPC': active_model = RobustMPC(env)
                 elif name == 'Genie': active_model = Genie(env)
+                elif name == 'Fugu': active_model = SimulatedFugu(env)
                 
                 for ep in range(episodes_per_video):
                     obs, info = env.reset(seed=ep)
@@ -153,9 +195,8 @@ class TCSVT_Evaluator:
                         elif name == 'BBA':
                             action = active_model.select_bitrate(info['buffer_level'])
                         elif name == 'Fugu':
-                            # Fallback action for Fugu if class isn't implemented here yet
-                            try: action = active_model.select_bitrate(info['buffer_level'], last_tp)
-                            except: action = 0 
+                            cur_vmaf = getattr(env, 'last_vmaf', 35.0)
+                            action = active_model.select_bitrate(info['buffer_level'], last_tp, cur_vmaf)
                         else:
                             # --- DYNAMIC OBSERVATION SLICING ---
                             try:
@@ -204,7 +245,7 @@ class TCSVT_Evaluator:
     def save_statistics(self):
         if not self.results_detailed: return
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_new_final5g.csv'
+        path = PATHS['results'] / 'detailed_stats_proposed_v3_lyapunov.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved comprehensive results to: {path}")
         self.print_summary(df)

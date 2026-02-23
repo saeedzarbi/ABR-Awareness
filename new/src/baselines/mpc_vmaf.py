@@ -76,10 +76,9 @@ class RobustMPC:
                 # 3. Smoothness
                 smoothness = abs(vmaf - sim_last_vmaf)
                 
-                # Reward calculation (Matching your Environment's logic)
-                # Note: MPC doesn't use the dynamic risk factor usually, 
-                # it uses standard constants to be a "Baseline".
-                reward = vmaf - (50.0 * rebuffer) - (0.2 * smoothness)
+                reward = vmaf \
+                         - (self.env.REBUF_PENALTY_BASE * rebuffer) \
+                         - (self.env.SMOOTH_PENALTY_WEIGHT * smoothness)
                 
                 cumulative_reward += reward
                 sim_last_vmaf = vmaf

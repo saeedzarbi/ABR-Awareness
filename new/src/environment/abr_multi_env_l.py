@@ -26,9 +26,9 @@ class ABREnv(gym.Env):
     REBUF_PENALTY_BASE = 4.3 
     SMOOTH_PENALTY_WEIGHT = 1.0 
     
-    # --- Lyapunov Parameters ---
-    B_REF = 12.0 # Reference safe buffer level
-    LYAPUNOV_BETA = 2.5 # Penalty scaling factor
+    # --- Lyapunov Parameters (Table II in paper) ---
+    B_REF = 4.0
+    LYAPUNOV_BETA = 1.5
     
     MAX_NETWORK_THROUGHPUT = 20000.0
     MIN_NETWORK_THROUGHPUT = 10.0
