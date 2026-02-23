@@ -5,242 +5,139 @@ import numpy as np
 import os
 
 # ==========================================
-# CONFIGURATION & FILE PATHS
+# 0. Load Data
 # ==========================================
-DETAILED_RESULTS_PATH = 'detailed_stats_multi_video_final.csv'
-ABLATION_RESULTS_PATH = 'ablation_results.csv'
-TIME_SERIES_LOG_PATH = 'logs/evaluation_v22/Proposed_crowd_run_chunks.csv'
+# Make sure these two files are in the same folder as this script
+file_std = 'detailed_stats_new_final.csv'
+file_5g = 'detailed_stats_new_final5g.csv'
 
-sns.set(style="whitegrid", context="paper", font_scale=1.2)
-plt.rcParams.update({
-    'font.family': 'serif',
-    'axes.titlesize': 14,
-    'axes.labelsize': 12,
-    'xtick.labelsize': 10,
-    'ytick.labelsize': 10,
-    'legend.fontsize': 10,
-    'figure.dpi': 300
-})
+if not os.path.exists(file_std) or not os.path.exists(file_5g):
+    print("❌ Error: CSV files not found. Please ensure they are in the current directory.")
+    exit()
 
-COLORS = sns.color_palette("deep")
+df_std = pd.read_csv(file_std)
+df_5g = pd.read_csv(file_5g)
 
-def load_data():
-    """Load all necessary datasets gracefully."""
-    data = {}
-    try:
-        data['main'] = pd.read_csv(DETAILED_RESULTS_PATH)
-        print(f"✅ Loaded Main Results: {len(data['main'])} rows")
-    except FileNotFoundError:
-        print(f"❌ Error: Could not find {DETAILED_RESULTS_PATH}")
-    
-    try:
-        data['ablation'] = pd.read_csv(ABLATION_RESULTS_PATH)
-        print(f"✅ Loaded Ablation Results")
-    except FileNotFoundError:
-        print(f"❌ Error: Could not find {ABLATION_RESULTS_PATH}")
+# Style configuration for IEEE format
+sns.set_theme(style="whitegrid")
+plt.rcParams.update({'font.size': 12, 'axes.labelsize': 14, 'axes.titlesize': 15})
 
-    try:
-        data['time_series'] = pd.read_csv(TIME_SERIES_LOG_PATH)
-        print(f"✅ Loaded Time Series Log")
-    except FileNotFoundError:
-        print(f"❌ Warning: Could not find {TIME_SERIES_LOG_PATH} (Fig 2 will be skipped)")
-        
-    return data
+print("📊 Generating Figures...")
 
 # ==========================================
-# FIGURE 1: CDF of QoE
+# 1. Ablation Study Plot
 # ==========================================
-def plot_cdf_qoe(df):
-    if df is None: return
-    plt.figure(figsize=(6, 4))
-    
-    methods = df['Method'].unique()
-    methods = sorted(methods, key=lambda x: 1 if 'Proposed' in x else 0)
+summary_std = df_std.groupby('Method')['Rebuffer'].mean().reset_index()
+ablation_methods = ['Ablation_Base', 'Ablation_Future', 'Ablation_Lyap', 'Proposed']
+df_abl = summary_std[summary_std['Method'].isin(ablation_methods)].copy()
 
-    for method in methods:
-        qoe_scores = df[df['Method'] == method]['QoE'].dropna().sort_values()
-        y_vals = np.arange(1, len(qoe_scores) + 1) / len(qoe_scores)
-        
-        if 'Proposed' in method:
-            plt.plot(qoe_scores, y_vals, label=method, linewidth=2.5, color='red', linestyle='-')
-        else:
-            plt.plot(qoe_scores, y_vals, label=method, linewidth=1.5, linestyle='--')
+rename_abl = {
+    'Ablation_Base': 'Base PPO',
+    'Ablation_Future': 'PPO + Future',
+    'Ablation_Lyap': 'PPO + Lyap',
+    'Proposed': 'Proposed (Ours)'
+}
+df_abl['Method'] = df_abl['Method'].map(rename_abl)
+df_abl['Method'] = pd.Categorical(df_abl['Method'], categories=['Base PPO', 'PPO + Future', 'PPO + Lyap', 'Proposed (Ours)'], ordered=True)
+df_abl = df_abl.sort_values('Method')
 
-    plt.xlabel('Average QoE')
-    plt.ylabel('CDF')
-    plt.title('CDF of Average QoE (Performance Consistency)')
-    plt.legend(loc='lower right')
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig('fig_cdf_qoe.png')
-    print("Output: fig_cdf_qoe.png")
+plt.figure(figsize=(8, 5))
+ax = sns.barplot(x='Method', y='Rebuffer', data=df_abl, palette=['#e74c3c', '#f39c12', '#3498db', '#2ecc71'])
+plt.title('Ablation Study: Impact of Components on Rebuffering')
+plt.ylabel('Mean Rebuffering Rate (%)')
+plt.xlabel('Algorithm Variants')
+plt.ylim(0, max(df_abl['Rebuffer']) * 1.2)
 
-# ==========================================
-# FIGURE 2: Time Series Behavior
-# ==========================================
-def plot_time_series(df):
-    if df is None: return
-    # فقط اپیزود اول را برمی‌داریم
-    df_ep = df[df['episode'] == 0].copy()
-    
-    # تبدیل ایندکس چانک به زمان (هر چانک ۴ ثانیه)
-    df_ep['time'] = df_ep['chunk'] * 4.0
-    
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(8, 6))
-    
-    # نمودار بالا: بیت‌ریت و پهنای باند
-    # فرض بر این است که بیت‌ریت در فایل لاگ به kbps است -> تبدیل به Mbps
-    ax1.plot(df_ep['time'], df_ep['bitrate'] / 1000.0, color='#d62728', linewidth=2, label='Selected Bitrate')
-    ax1.plot(df_ep['time'], df_ep['throughput'] / 1000.0, color='gray', linestyle='--', alpha=0.6, label='Network Throughput')
-    ax1.set_ylabel('Rate (Mbps)')
-    ax1.set_title('Agent Response to Network Fluctuations')
-    ax1.legend(loc='upper right')
-    ax1.grid(True, alpha=0.3)
+for p in ax.patches:
+    ax.annotate(f'{p.get_height():.1f}%', (p.get_x() + p.get_width() / 2., p.get_height()), 
+                ha='center', va='bottom', fontweight='bold', fontsize=11, xytext=(0, 5), textcoords='offset points')
 
-    # نمودار پایین: بافر
-    ax2.fill_between(df_ep['time'], df_ep['buffer'], color='#2ca02c', alpha=0.2)
-    ax2.plot(df_ep['time'], df_ep['buffer'], color='#2ca02c', linewidth=2, label='Buffer Level')
-    ax2.axhline(y=4.0, color='black', linestyle=':', label='Rebuf Threshold')
-    ax2.set_ylabel('Buffer (sec)')
-    ax2.set_xlabel('Time (seconds)')
-    ax2.legend(loc='upper right')
-    ax2.grid(True, alpha=0.3)
-
-    plt.tight_layout()
-    plt.savefig('fig_time_series.png')
-    print("Output: fig_time_series.png")
+plt.tight_layout()
+plt.savefig('fig_1_ablation.png', dpi=300)
+plt.close()
+print(" ✅ Saved: fig_1_ablation.png")
 
 # ==========================================
-# FIGURE 3: Stability Boxplot
+# Data Prep for 5G vs Standard (Zero-Shot)
 # ==========================================
-def plot_stability(df):
-    if df is None: return
-    plt.figure(figsize=(6, 4))
-    
-    # حذف داده‌های پرت (Outliers) برای تمیزی نمودار
-    sns.boxplot(x='Method', y='Switch', data=df, showfliers=False, palette="Set2")
-    
-    plt.ylabel('Bitrate Switches per Session')
-    plt.xlabel('')
-    plt.title('Stability Comparison')
-    plt.grid(axis='y', alpha=0.3)
-    plt.tight_layout()
-    plt.savefig('fig_stability_boxplot.png')
-    print("Output: fig_stability_boxplot.png")
+main_methods = ['Fugu', 'BBA', 'RobustMPC', 'Pensieve', 'Proposed']
+rename_main = {'Proposed': 'Proposed (Ours)'}
 
-# ==========================================
-# FIGURE 4: Ablation Study
-# ==========================================
-def plot_ablation(df):
-    if df is None: return
-    
-    # نگاشت نام‌های فنی به نام‌های مقاله
-    name_map = {
-        'Baseline (V1)': 'Base PPO',
-        'Conservative (V2)': '+ Stability',
-        'No Buffer-Aware (V3)': '+ Future Info',
-        'Full (V4)': 'Proposed (All)'
-    }
-    # اگر ستون variant دارید از آن استفاده کنید، وگرنه نام ستون را چک کنید
-    col_name = 'variant' if 'variant' in df.columns else 'Configuration'
-    if col_name in df.columns:
-        df['clean_name'] = df[col_name].map(name_map).fillna(df[col_name])
-    else:
-        df['clean_name'] = df.iloc[:, 0] # فرض بر اینکه ستون اول نام است
+df_std_main = df_std[df_std['Method'].isin(main_methods)].copy()
+df_std_main['Method'] = df_std_main['Method'].replace(rename_main)
+df_std_main['Network'] = 'Standard (Broadband/4G)'
 
-    # مرتب‌سازی
-    df = df.sort_values('quality_mean') # یا Avg. VMAF
+df_5g_main = df_5g[df_5g['Method'].isin(main_methods)].copy()
+df_5g_main['Method'] = df_5g_main['Method'].replace(rename_main)
+df_5g_main['Network'] = '5G mmWave'
 
-    fig, ax1 = plt.subplots(figsize=(7, 5))
-
-    x = np.arange(len(df))
-    width = 0.35
-
-    # میله‌های VMAF (محور چپ)
-    ax1.bar(x - width/2, df['quality_mean'], width, label='VMAF', color='#1f77b4', alpha=0.8)
-    ax1.set_ylabel('Average VMAF', color='#1f77b4', fontsize=12)
-    ax1.tick_params(axis='y', labelcolor='#1f77b4')
-    ax1.set_ylim(bottom=40, top=100) 
-
-    # میله‌های Rebuffering (محور راست)
-    ax2 = ax1.twinx()
-    ax2.bar(x + width/2, df['rebuffer_mean'], width, label='Rebuffering', color='#d62728', alpha=0.8)
-    ax2.set_ylabel('Rebuffering Ratio (%)', color='#d62728', fontsize=12)
-    ax2.tick_params(axis='y', labelcolor='#d62728')
-
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(df['clean_name'], rotation=15)
-    ax1.set_title('Ablation Study: Feature Impact')
-
-    # Legend ترکیبی
-    lines, labels = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines + lines2, labels + labels2, loc='upper left')
-
-    plt.tight_layout()
-    plt.savefig('fig_ablation.png')
-    print("Output: fig_ablation.png")
+df_combined = pd.concat([df_std_main, df_5g_main])
+method_order = ['Fugu', 'BBA', 'RobustMPC', 'Pensieve', 'Proposed (Ours)']
+df_combined['Method'] = pd.Categorical(df_combined['Method'], categories=method_order, ordered=True)
 
 # ==========================================
-# FIGURE 5: Trade-off Scatter Plot
+# 2. Rebuffering: Standard vs 5G
 # ==========================================
-def plot_tradeoff(df):
-    if df is None: return
-    plt.figure(figsize=(6, 5))
-    
-    # محاسبه میانگین برای هر متد
-    summary = df.groupby('Method').agg({
-        'Rebuffer': 'mean',
-        'VMAF': 'mean'
-    }).reset_index()
+plt.figure(figsize=(10, 6))
+ax = sns.barplot(x='Method', y='Rebuffer', hue='Network', data=df_combined, 
+                 palette={'Standard (Broadband/4G)': '#3498db', '5G mmWave': '#e74c3c'}, errorbar=None)
+plt.title('Zero-Shot Generalization: Rebuffering Collapse in 5G Networks')
+plt.ylabel('Mean Rebuffering (s / %)')
+plt.xlabel('Algorithm')
+plt.ylim(0, 150) 
 
-    ax = plt.gca()
-    sns.scatterplot(x='Rebuffer', y='VMAF', hue='Method', style='Method', s=200, data=summary, palette="bright", ax=ax)
-    
-    # تاکید روی روش Proposed در گوشهٔ بالا-چپ: حلقهٔ بیرونی و برچسب واضح‌تر
-    proposed = summary[summary['Method'].str.contains('Proposed', case=False, na=False)]
-    if not proposed.empty:
-        xp, yp = proposed['Rebuffer'].values[0], proposed['VMAF'].values[0]
-        ax.scatter([xp], [yp], s=400, facecolors='none', edgecolors='red', linewidths=2.5, zorder=5)
-    
-    # برچسب زدن روی نقاط
-    for i, row in summary.iterrows():
-        plt.text(row['Rebuffer']+0.5, row['VMAF']+0.5, row['Method'], fontsize=9, fontweight='bold')
+for p in ax.patches:
+    height = p.get_height()
+    if not np.isnan(height) and height > 0:
+        ax.annotate(f'{height:.1f}', (p.get_x() + p.get_width() / 2., height), 
+                    ha='center', va='bottom', fontweight='bold', fontsize=10, xytext=(0, 3), textcoords='offset points')
 
-    plt.xlabel('Rebuffering Impact (Lower is Better)')
-    plt.ylabel('Visual Quality (VMAF) (Higher is Better)')
-    plt.title('QoE Trade-off Analysis')
-
-    # تنظیم محورها تا روش Proposed در گوشهٔ بالا-چپ (بهترین: Rebuffer کم، VMAF بالا) متمایز دیده شود
-    x_min, x_max = summary['Rebuffer'].min(), summary['Rebuffer'].max()
-    y_min, y_max = summary['VMAF'].min(), summary['VMAF'].max()
-    x_range = max(x_max - x_min, 1.0)
-    y_range = max(y_max - y_min, 5.0)
-    # فضای اضافه در سمت راست و پایین تا گوشهٔ بالا-چپ (نقطهٔ Proposed) برجسته شود
-    plt.xlim(max(0, x_min - 0.05 * x_range), x_max + 0.25 * x_range)
-    plt.ylim(y_min - 0.08 * y_range, min(100, y_max + 0.15 * y_range))
-    
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.tight_layout()
-    plt.savefig('fig_tradeoff.png')
-    print("Output: fig_tradeoff.png")
+plt.legend(title='Network Type', loc='upper left')
+plt.tight_layout()
+plt.savefig('fig_2_rebuffering_5g_vs_std.png', dpi=300)
+plt.close()
+print(" ✅ Saved: fig_2_rebuffering_5g_vs_std.png")
 
 # ==========================================
-# MAIN EXECUTION
+# 3. QoE: Standard vs 5G
 # ==========================================
-if __name__ == "__main__":
-    print("--- Starting Plot Generation ---")
-    data = load_data()
-    
-    if 'main' in data:
-        plot_cdf_qoe(data['main'])
-        plot_stability(data['main'])
-        plot_tradeoff(data['main'])
-    
-    if 'ablation' in data:
-        plot_ablation(data['ablation'])
-        
-    if 'time_series' in data:
-        plot_time_series(data['time_series'])
-        
-    print("--- All plots generated successfully! ---")
+plt.figure(figsize=(10, 6))
+ax = sns.barplot(x='Method', y='QoE', hue='Network', data=df_combined, 
+                 palette={'Standard (Broadband/4G)': '#2ecc71', '5G mmWave': '#9b59b6'}, errorbar=None)
+plt.title('Zero-Shot Generalization: Overall QoE Maintenance in 5G')
+plt.ylabel('Mean QoE Score')
+plt.xlabel('Algorithm')
+plt.ylim(0, 4200)
+
+for p in ax.patches:
+    height = p.get_height()
+    if not np.isnan(height) and height > 0:
+        ax.annotate(f'{height:.0f}', (p.get_x() + p.get_width() / 2., height), 
+                    ha='center', va='bottom', fontweight='bold', fontsize=10, xytext=(0, 3), textcoords='offset points')
+
+plt.legend(title='Network Type', loc='lower right')
+plt.tight_layout()
+plt.savefig('fig_3_qoe_5g_vs_std.png', dpi=300)
+plt.close()
+print(" ✅ Saved: fig_3_qoe_5g_vs_std.png")
+
+# ==========================================
+# 4. CDF of QoE (Standard Dataset)
+# ==========================================
+plt.figure(figsize=(8, 6))
+colors = ['#95a5a6', '#f39c12', '#e74c3c', '#3498db', '#2ecc71']
+for idx, method in enumerate(method_order):
+    data = df_std_main[df_std_main['Method'] == method]['QoE']
+    sns.ecdfplot(data, label=method, color=colors[idx], linewidth=2.5)
+
+plt.title('Cumulative Distribution Function (CDF) of QoE')
+plt.xlabel('QoE Score')
+plt.ylabel('CDF')
+plt.legend(title='Method', loc='lower right')
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.savefig('fig_4_qoe_cdf.png', dpi=300)
+plt.close()
+print(" ✅ Saved: fig_4_qoe_cdf.png")
+
+print("🎉 All 4 journal-quality figures have been successfully generated!")
