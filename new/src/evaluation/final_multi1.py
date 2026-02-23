@@ -53,9 +53,9 @@ class EvaluationLogger:
     
     def save_logs(self, method_name='method'):
         if self.chunk_logs:
-            pd.DataFrame(self.chunk_logs).to_csv(self.log_dir / f'{method_name}_chunks.csv', index=False)
+            pd.DataFrame(self.chunk_logs).to_csv(self.log_dir / f'{method_name}_chunks5g.csv', index=False)
         if self.episode_logs:
-            pd.DataFrame(self.episode_logs).to_csv(self.log_dir / f'{method_name}_episodes.csv', index=False)
+            pd.DataFrame(self.episode_logs).to_csv(self.log_dir / f'{method_name}_episodes5g.csv', index=False)
 
 def send_slack_message(status, step, message):
     pass # (Slack code kept clean for brevity, add back if you actively use it)
@@ -204,7 +204,7 @@ class TCSVT_Evaluator:
     def save_statistics(self):
         if not self.results_detailed: return
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_new_final.csv'
+        path = PATHS['results'] / 'detailed_stats_new_final5g.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved comprehensive results to: {path}")
         self.print_summary(df)
