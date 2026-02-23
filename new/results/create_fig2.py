@@ -5,7 +5,7 @@ import seaborn as sns
 
 # Load data (use script directory so it works from any cwd)
 script_dir = os.path.dirname(os.path.abspath(__file__))
-df = pd.read_csv(os.path.join(script_dir, 'detailed_stats_new_final.csv'))
+df = pd.read_csv(os.path.join(script_dir, 'detailed_stats_new_final5g.csv'))
 main_methods = ['Fugu', 'BBA', 'RobustMPC', 'Pensieve', 'Proposed']
 df_main = df[df['Method'].isin(main_methods)].copy()
 df_main['Method'] = df_main['Method'].replace({'Proposed': 'Proposed (Ours)'})

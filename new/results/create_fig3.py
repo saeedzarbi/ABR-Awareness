@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent))
+# Add new/ to path (src and configs live there)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from stable_baselines3 import PPO
 from src.environment.abr_multi_env import ABREnv
@@ -47,9 +48,9 @@ env = ABREnv(
 )
 
 # 2. Load Models
-path_proposed = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'best_model' / 'best_model.zip'
+path_proposed = PATHS['models'] / 'ppo_proposed_v2_fresh' / 'best_model' / 'best_model.zip'
 if not path_proposed.exists():
-    path_proposed = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'final_model.zip'
+    path_proposed = PATHS['models'] / 'ppo_proposed_v2_fresh' / 'final_model.zip'
 
 model_proposed = PPO.load(str(path_proposed))
 model_mpc = RobustMPC(env)
@@ -91,5 +92,6 @@ ax3.legend(loc='upper right')
 ax3.set_ylim(0, 32)
 
 plt.tight_layout()
-plt.savefig('fig_7_time_series.png', dpi=300)
+script_dir = Path(__file__).resolve().parent
+plt.savefig(script_dir / 'fig_7_time_series.png', dpi=300)
 print("✅ Saved: fig_7_time_series.png")
