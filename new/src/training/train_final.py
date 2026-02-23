@@ -32,7 +32,7 @@ PATHS = get_paths()
 
 VARIANTS = {
     'proposed': {
-        'folder': 'ppo_proposed_v2_fresh',
+        'folder': 'ppo_proposed_v3_lyapunov',
         'use_lyapunov': True,
         'use_future': True,
     },
