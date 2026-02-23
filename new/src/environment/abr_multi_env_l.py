@@ -35,9 +35,9 @@ class ABREnv(gym.Env):
     MAX_CHUNK_SIZE_BITS = 30000000.0 
     
     def __init__(self, video_names: Union[str, List[str]] = 'bigbuckbunny', 
-                 trace_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/standardized/train_traces', 
-                 vmaf_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/vmaf_scores', 
-                 siti_dir='/home/saeedzarbi95/test/ABR-Awareness/new/data/content_features', 
+                 trace_dir='/root/new/ABR-Awareness/new/data/standardized/train_traces', 
+                 vmaf_dir='/root/new/ABR-Awareness/new/data/vmaf_scores', 
+                 siti_dir='/root/new/ABR-Awareness/new/data/content_features', 
                  max_chunks=48, random_seed=None,
                  use_future=True, use_lyapunov=True): # <--- Toggles added here
         super().__init__()
