@@ -157,11 +157,17 @@ class TCSVT_Evaluator:
                             try: action = active_model.select_bitrate(info['buffer_level'], last_tp)
                             except: action = 0 
                         else:
-                            # --- OBSERVATION MASKING FOR ABLATION & PENSIEVE ---
-                            curr_obs = obs[:29].copy()
+                            # --- DYNAMIC OBSERVATION SLICING ---
+                            try:
+                                expected_dim = active_model.observation_space.shape[0]
+                            except:
+                                expected_dim = len(obs)
+
+                            # بُرش دادن آرایه دقیقاً به اندازه‌ای که مدل در زمان آموزش دیده است
+                            curr_obs = obs[:expected_dim].copy()
                             
-                            # If the model shouldn't see future chunk sizes, mask them (indices 23-28)
-                            if name in ['Pensieve', 'Ablation_Base', 'Ablation_Lyap']:
+                            # ماسک کردن اطلاعات آینده برای مدل‌های Ablation (اگر 29 تایی هستند)
+                            if expected_dim == 29 and name in ['Ablation_Base', 'Ablation_Lyap']:
                                 curr_obs[23:] = 0.0 
                             
                             action, _ = active_model.predict(curr_obs, deterministic=True)
