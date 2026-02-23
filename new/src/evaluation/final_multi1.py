@@ -74,8 +74,8 @@ class TCSVT_Evaluator:
         
         # 1. Full Proposed Model (V22)
         try:
-            path = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'best_model' / 'best_model'
-            if not path.with_suffix('.zip').exists(): path = PATHS['models'] / 'ppo_abr_multi_dynamic_22' / 'final_model'
+            path = PATHS['models'] / 'ppo_proposed_v2_fresh' / 'best_model' / 'best_model'
+            if not path.with_suffix('.zip').exists(): path = PATHS['models'] / 'ppo_proposed_v2_fresh' / 'final_model'
             methods['Proposed'] = PPO.load(str(path))
             print(f"✅ Loaded Proposed (Full) from: {path}")
         except Exception as e: print(f"⚠️ Proposed missing: {e}")
@@ -204,7 +204,7 @@ class TCSVT_Evaluator:
     def save_statistics(self):
         if not self.results_detailed: return
         df = pd.DataFrame(self.results_detailed)
-        path = PATHS['results'] / 'detailed_stats_master_final.csv'
+        path = PATHS['results'] / 'detailed_stats_new_final.csv'
         df.to_csv(path, index=False)
         print(f"\n✅ Saved comprehensive results to: {path}")
         self.print_summary(df)
