@@ -62,7 +62,7 @@ class Config:
     MAX_GRAD_NORM = 0.5
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-    TOTAL_TIMESTEPS_DEFAULT = 5_000_000
+    TOTAL_TIMESTEPS_DEFAULT = 3_000_000
     TOTAL_TIMESTEPS_PENSIEVE = 2_500_000
     SAVE_FREQ = 50_000
     EVAL_FREQ = 20_000
