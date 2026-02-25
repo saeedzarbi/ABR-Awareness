@@ -68,7 +68,7 @@ echo "📚 Training PPO Multi-Dynamic"
 echo "=========================================="
 send_slack_message "info" "Step 1 Started" "Training PPO Multi-Dynamic model..."
 
-if python3 train_final_v3.py --all; then
+if python3 train_all_models_v3.py --all; then
     echo "✅ PPO Multi-Dynamic training completed!"
     send_slack_message "success" "Step 1 Completed" "PPO Multi-Dynamic training completed successfully!"
 else
@@ -102,7 +102,7 @@ echo "=========================================="
 send_slack_message "info" "Step 3 Started" "Running final evaluation..."
 
 cd ../evaluation
-if python3 final_multi_v3.py; then
+if python3 evaluate_all_models_v3.py; then
     cd ../training
     echo "✅ Final evaluation completed!"
     send_slack_message "success" "Step 3 Completed" "Final evaluation completed successfully!"

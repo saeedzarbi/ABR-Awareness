@@ -34,6 +34,14 @@ MODEL_DIRS = {
     "Pensieve": "pensieve",
 }
 
+LEGACY_MODEL_DIRS = {
+    "Proposed": ["ppo_proposed_v4", "ppo_proposed_v3_lyapunov"],
+    "Ablation_Base": ["ablation_base_ppo_v2", "ablation_base_ppo"],
+    "Ablation_Future": ["ablation_ppo_future_v2", "ablation_ppo_future"],
+    "Ablation_Lyap": ["ablation_ppo_lyapunov_v2", "ablation_ppo_lyapunov"],
+    "Pensieve": ["pensieve_multi_vmaf_new_16", "pensieve_multi_vmaf_new_14"],
+}
+
 
 class VBRAwareGenie:
     def __init__(self, env):
@@ -51,13 +59,25 @@ class VBRAwareGenie:
         self.n_buf = int(self.buffer_max / self.buf_step) + 1
         self._policy = None
         self._last_action = 0
+        self._policy_cache = {}
 
     def _buf_idx(self, buf):
-        return int(np.clip(round(buf / self.buf_step), 0, self.n_buf - 1))
+        idx = int(round(buf / self.buf_step))
+        if idx < 0:
+            return 0
+        if idx >= self.n_buf:
+            return self.n_buf - 1
+        return idx
 
     def select_bitrate(self, chunk_idx, buffer_level, trace_throughput):
         if chunk_idx == 0:
-            self._solve_dp(trace_throughput)
+            cache_key = (
+                getattr(self.env, "current_video_name", "unknown"),
+                int(getattr(self.env, "current_trace_idx", -1)),
+            )
+            if cache_key not in self._policy_cache:
+                self._policy_cache[cache_key] = self._solve_dp(trace_throughput)
+            self._policy = self._policy_cache[cache_key]
             self._last_action = 0
         bi = self._buf_idx(buffer_level)
         action = int(self._policy[chunk_idx, self._last_action, bi])
@@ -79,7 +99,7 @@ class VBRAwareGenie:
                 dl_times[k, a] = min(chunk_bits / (tp * 1000.0), 60.0)
 
         V = np.zeros((n_a, self.n_buf))
-        self._policy = np.zeros((n_k, n_a, self.n_buf), dtype=np.int32)
+        policy = np.zeros((n_k, n_a, self.n_buf), dtype=np.int32)
 
         for k in range(n_k - 1, -1, -1):
             V_new = np.full((n_a, self.n_buf), -1e9)
@@ -101,8 +121,9 @@ class VBRAwareGenie:
                         if val > best_val:
                             best_val, best_act = val, a
                     V_new[last_a, bi] = best_val
-                    self._policy[k, last_a, bi] = best_act
+                    policy[k, last_a, bi] = best_act
             V = V_new
+        return policy
 
 
 class VBRAwareFugu:
@@ -146,20 +167,40 @@ class VBRAwareFugu:
         return best_action
 
 
-def load_rl_model(folder_name: str):
-    model_base = PATHS["models"] / "master_v3" / folder_name
+def _resolve_model_path(model_base: Path):
     best_path = model_base / "best_model" / "best_model"
+    if best_path.with_suffix(".zip").exists():
+        return best_path
     final_path = model_base / "final_model"
-    path = best_path if best_path.with_suffix(".zip").exists() else final_path
-    return PPO.load(str(path))
+    if final_path.with_suffix(".zip").exists():
+        return final_path
+    return None
+
+
+def load_rl_model(display_name: str, folder_name: str):
+    # 1) Preferred V3 directory
+    preferred = PATHS["models"] / "master_v3" / folder_name
+    resolved = _resolve_model_path(preferred)
+    if resolved is not None:
+        return PPO.load(str(resolved)), resolved
+
+    # 2) Legacy directories
+    for legacy in LEGACY_MODEL_DIRS.get(display_name, []):
+        legacy_base = PATHS["models"] / legacy
+        resolved = _resolve_model_path(legacy_base)
+        if resolved is not None:
+            return PPO.load(str(resolved)), resolved
+
+    raise FileNotFoundError(f"No model found for {display_name}")
 
 
 def build_methods():
     methods = {}
     for display_name, folder in MODEL_DIRS.items():
         try:
-            methods[display_name] = load_rl_model(folder)
-            print(f"Loaded {display_name}")
+            model, path = load_rl_model(display_name, folder)
+            methods[display_name] = model
+            print(f"Loaded {display_name} from {path}")
         except Exception as exc:
             print(f"[WARN] Missing {display_name}: {exc}")
 
