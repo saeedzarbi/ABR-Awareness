@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# Script to run training and evaluation pipeline
-# 1. Train PPO Multi-Dynamic
-# 2. Train Pensieve Multi
-# 3. Run Final Evaluation
+# Script to run training and evaluation pipeline V4
+# 1. Train all models (Proposed + Ablations + Pensieve)
+# 2. Run Final Evaluation (per-model env config, VBR-aware baselines)
 
 set -e  # Exit on error
 
@@ -38,7 +37,7 @@ send_slack_message() {
             "color": "$color",
             "title": "$emoji $step",
             "text": "$message",
-            "footer": "ABR Training Pipeline",
+            "footer": "ABR Training Pipeline V4",
             "ts": $(date +%s)
         }
     ]
@@ -52,65 +51,49 @@ EOF
 }
 
 echo "=========================================="
-echo "🚀 ABR Training and Evaluation Pipeline"
+echo "🚀 ABR Training and Evaluation Pipeline V4"
 echo "=========================================="
 
 # Get the script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
-send_slack_message "info" "Pipeline Started" "ABR Training and Evaluation pipeline has started"
+send_slack_message "info" "Pipeline V4 Started" "ABR Training and Evaluation V4 pipeline has started"
 
-# Step 1: Train PPO Multi-Dynamic
+# Step 1: Train all models with V4 script
 echo ""
 echo "=========================================="
-echo "📚 Training PPO Multi-Dynamic"
+echo "📚 Step 1: Training all models (V4)"
 echo "=========================================="
-send_slack_message "info" "Step 1 Started" "Training PPO Multi-Dynamic model..."
+send_slack_message "info" "Step 1 Started" "Training all models in parallel (Proposed 5M, Ablations 4M, Pensieve 3M)..."
 
-if python3 train_all_models_v3.py --all; then
-    echo "✅ PPO Multi-Dynamic training completed!"
-    send_slack_message "success" "Step 1 Completed" "PPO Multi-Dynamic training completed successfully!"
+if python3 train_all_models_v4.py --all --parallel 3; then
+    echo "✅ All model training completed!"
+    send_slack_message "success" "Step 1 Completed" "All model training completed successfully!"
 else
-    ERROR_MSG="PPO Multi-Dynamic training failed with exit code $?"
+    ERROR_MSG="Model training failed with exit code $?"
     echo "❌ $ERROR_MSG"
     send_slack_message "error" "Step 1 Failed" "$ERROR_MSG"
     exit 1
 fi
 
-# Step 2: Train Pensieve Multi
+# Step 2: Run evaluation with V4 script
 echo ""
 echo "=========================================="
-echo "📚 Step 2: Training Pensieve Multi"
+echo "🔬 Step 2: Running Final Evaluation (V4)"
 echo "=========================================="
-send_slack_message "info" "Step 2 Started" "Training Pensieve Multi model..."
-
-# if python3 train_pensieve_multi.py; then
-#     echo "✅ Pensieve Multi training completed!"
-#     send_slack_message "success" "Step 2 Completed" "Pensieve Multi training completed successfully!"
-# else
-#     ERROR_MSG="Pensieve Multi training failed with exit code $?"
-#     echo "❌ $ERROR_MSG"
-#     send_slack_message "error" "Step 2 Failed" "$ERROR_MSG"
-#     exit 1
-# fi
-
-echo ""
-echo "=========================================="
-echo "🔬 Step 3: Running Final Evaluation"
-echo "=========================================="
-send_slack_message "info" "Step 3 Started" "Running final evaluation..."
+send_slack_message "info" "Step 2 Started" "Running V4 evaluation (per-model env, VBR-aware baselines)..."
 
 cd ../evaluation
-if python3 evaluate_all_models_v3.py; then
+if python3 evaluate_all_models_v4.py; then
     cd ../training
     echo "✅ Final evaluation completed!"
-    send_slack_message "success" "Step 3 Completed" "Final evaluation completed successfully!"
+    send_slack_message "success" "Step 2 Completed" "Final V4 evaluation completed successfully!"
 else
     ERROR_MSG="Final evaluation failed with exit code $?"
     cd ../training
     echo "❌ $ERROR_MSG"
-    send_slack_message "error" "Step 3 Failed" "$ERROR_MSG"
+    send_slack_message "error" "Step 2 Failed" "$ERROR_MSG"
     exit 1
 fi
 
@@ -118,5 +101,4 @@ echo ""
 echo "=========================================="
 echo "🎉 All steps completed successfully!"
 echo "=========================================="
-send_slack_message "success" "Pipeline Completed" "All steps completed successfully! 🎉"
-
+send_slack_message "success" "Pipeline V4 Completed" "All V4 steps completed successfully! 🎉"
