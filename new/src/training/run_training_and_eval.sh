@@ -63,13 +63,13 @@ send_slack_message "info" "Pipeline V4 Started" "ABR Training and Evaluation V4 
 # Step 1: Train all models with V4 script
 echo ""
 echo "=========================================="
-echo "📚 Step 1: Training all models (V4)"
+echo "📚 Step 1: Training initial models (V4)"
 echo "=========================================="
-send_slack_message "info" "Step 1 Started" "Training all models in parallel (Proposed 5M, Ablations 4M, Pensieve 3M)..."
+send_slack_message "info" "Step 1 Started" "Training initial models (Proposed, Ablation_Base, Pensieve) on CPU..."
 
-if python3 train_all_models_v4.py --all --parallel 3; then
-    echo "✅ All model training completed!"
-    send_slack_message "success" "Step 1 Completed" "All model training completed successfully!"
+if python3 train_all_models_v4.py --models proposed,ablation_base,pensieve --parallel 1; then
+    echo "✅ Initial model training completed!"
+    send_slack_message "success" "Step 1 Completed" "Initial model training completed successfully!"
 else
     ERROR_MSG="Model training failed with exit code $?"
     echo "❌ $ERROR_MSG"
