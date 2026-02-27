@@ -68,11 +68,11 @@ class LagrangianRewardWrapper(gym.Wrapper):
         env: gym.Env,
         rebuf_target: float = 0.04,
         smooth_target: float = 4.0,
-        dual_lr_rebuf: float = 0.005,
+        dual_lr_rebuf: float = 0.007,
         dual_lr_smooth: float = 0.003,
-        lambda_rebuf_init: float = 5.0,
+        lambda_rebuf_init: float = 4.3,
         lambda_smooth_init: float = 0.9,
-        lambda_rebuf_range: tuple = (1.5, 12.0),
+        lambda_rebuf_range: tuple = (0.8, 12.0),
         lambda_smooth_range: tuple = (0.3, 2.5),
         buffer_dev_weight: float = 0.05,
         lyapunov_weight: float = 0.7,
@@ -158,8 +158,15 @@ class LagrangianRewardWrapper(gym.Wrapper):
         mean_rebuf = float(np.mean(self._recent_rebuf[-window:]))
         mean_smooth = float(np.mean(self._recent_smooth[-window:]))
 
-        self.lambda_rebuf += self.dual_lr_rebuf * (mean_rebuf - self.rebuf_target)
-        self.lambda_smooth += self.dual_lr_smooth * (mean_smooth - self.smooth_target)
+        rebuf_gap = mean_rebuf - self.rebuf_target
+        smooth_gap = mean_smooth - self.smooth_target
+
+        if rebuf_gap < 0:
+            self.lambda_rebuf += 2.0 * self.dual_lr_rebuf * rebuf_gap
+        else:
+            self.lambda_rebuf += self.dual_lr_rebuf * rebuf_gap
+
+        self.lambda_smooth += self.dual_lr_smooth * smooth_gap
 
         self.lambda_rebuf = float(np.clip(
             self.lambda_rebuf, *self.lambda_rebuf_range

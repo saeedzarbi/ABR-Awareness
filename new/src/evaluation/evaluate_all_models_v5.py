@@ -360,6 +360,45 @@ def _make_env(video_name: str, use_future: bool = False, use_lyapunov: bool = Fa
 
 
 # ---------------------------------------------------------------------------
+#  Inference-time safety guard for RL policies
+# ---------------------------------------------------------------------------
+
+SAFE_MARGIN = 1.0
+SAFETY_TP_SCALE = 0.85
+
+
+def _safe_adjust_action(env, action: int) -> int:
+    """
+    Conservative post-processing of the chosen action to avoid
+    catastrophic rebuffer events when the predicted download time
+    clearly exceeds the current buffer.
+    """
+    try:
+        buf = float(getattr(env, "buffer_level", 0.0))
+        if buf <= 0.5:
+            return max(0, min(int(action), len(env.BITRATE_LEVELS) - 1))
+
+        cur_idx = int(action)
+        cur_idx = max(0, min(cur_idx, len(env.BITRATE_LEVELS) - 1))
+
+        for _ in range(cur_idx):
+            br = int(env.BITRATE_LEVELS[cur_idx])
+            chunk_bits = env.get_chunk_size_bits(br, env.chunk_idx)
+            tp = getattr(env, "last_raw_throughput", 2000.0)
+            tp = max(tp * SAFETY_TP_SCALE, env.MIN_NETWORK_THROUGHPUT)
+            dl_time = min(chunk_bits / (tp * 1000.0 + 1e-6), 60.0)
+
+            if dl_time <= buf - SAFE_MARGIN:
+                break
+
+            cur_idx -= 1
+
+        return cur_idx
+    except Exception:
+        return int(action)
+
+
+# ---------------------------------------------------------------------------
 #  Main evaluation loop
 # ---------------------------------------------------------------------------
 
@@ -439,6 +478,9 @@ def run_eval(episodes_per_video: int = 20):
                         action = active_model.select_bitrate(info["buffer_level"], last_tp, cur_vmaf)
                     else:
                         action, _ = active_model.predict(obs, deterministic=True)
+
+                    if name in MODEL_ENV_CONFIG:
+                        action = _safe_adjust_action(env, action)
 
                     action = int(action)
                     if last_br is not None and action != last_br:
