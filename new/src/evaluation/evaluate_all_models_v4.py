@@ -461,7 +461,7 @@ def run_eval(episodes_per_video: int = 20):
                     step_vmaf = env.vmaf_scores.get(bitrate_kbps, 35.0)
                     step_rebuf = info.get("rebuffer", 0.0)
                     step_tp = info.get("throughput", last_tp)
-                    smooth_pen = abs(step_vmaf - prev_vmaf)
+                    smooth_pen = 0.0 if chunk_idx_before == 0 else abs(step_vmaf - prev_vmaf)
                     step_qoe = (
                         step_vmaf
                         - EVAL_REBUF_PENALTY * step_rebuf
