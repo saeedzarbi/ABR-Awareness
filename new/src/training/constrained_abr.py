@@ -71,11 +71,11 @@ class LagrangianRewardWrapper(gym.Wrapper):
         dual_lr_rebuf: float = 0.007,
         dual_lr_smooth: float = 0.003,
         lambda_rebuf_init: float = 4.3,
-        lambda_smooth_init: float = 0.9,
+        lambda_smooth_init: float = 0.7,
         lambda_rebuf_range: tuple = (0.8, 12.0),
-        lambda_smooth_range: tuple = (0.3, 2.5),
+        lambda_smooth_range: tuple = (0.2, 2.5),
         buffer_dev_weight: float = 0.05,
-        lyapunov_weight: float = 0.7,
+        lyapunov_weight: float = 0.5,
         warmup_episodes: int = 50,
     ):
         super().__init__(env)
@@ -166,7 +166,10 @@ class LagrangianRewardWrapper(gym.Wrapper):
         else:
             self.lambda_rebuf += self.dual_lr_rebuf * rebuf_gap
 
-        self.lambda_smooth += self.dual_lr_smooth * smooth_gap
+        if smooth_gap < 0:
+            self.lambda_smooth += 1.5 * self.dual_lr_smooth * smooth_gap
+        else:
+            self.lambda_smooth += self.dual_lr_smooth * smooth_gap
 
         self.lambda_rebuf = float(np.clip(
             self.lambda_rebuf, *self.lambda_rebuf_range

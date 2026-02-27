@@ -14,6 +14,7 @@ from training to maintain comparability with literature.
 """
 
 import argparse
+import os
 import random
 import sys
 from pathlib import Path
@@ -365,6 +366,7 @@ def _make_env(video_name: str, use_future: bool = False, use_lyapunov: bool = Fa
 
 SAFE_MARGIN = 1.0
 SAFETY_TP_SCALE = 0.85
+ENABLE_SAFETY_GUARD = os.environ.get("ABR_SAFETY_GUARD", "0").strip() in {"1", "true", "True", "yes", "YES"}
 
 
 def _safe_adjust_action(env, action: int) -> int:
@@ -479,7 +481,7 @@ def run_eval(episodes_per_video: int = 20):
                     else:
                         action, _ = active_model.predict(obs, deterministic=True)
 
-                    if name in MODEL_ENV_CONFIG:
+                    if ENABLE_SAFETY_GUARD:
                         action = _safe_adjust_action(env, action)
 
                     action = int(action)
