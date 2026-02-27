@@ -366,7 +366,11 @@ def _make_env(video_name: str, use_future: bool = False, use_lyapunov: bool = Fa
 
 SAFE_MARGIN = 1.0
 SAFETY_TP_SCALE = 0.85
-ENABLE_SAFETY_GUARD = os.environ.get("ABR_SAFETY_GUARD", "0").strip() in {"1", "true", "True", "yes", "YES"}
+
+
+def _safety_guard_enabled() -> bool:
+    flag = os.environ.get("ABR_SAFETY_GUARD", "0").strip().lower()
+    return flag in {"1", "true", "yes"}
 
 
 def _safe_adjust_action(env, action: int) -> int:
@@ -491,7 +495,7 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
                     else:
                         action, _ = active_model.predict(obs, deterministic=True)
 
-                    if ENABLE_SAFETY_GUARD:
+                    if _safety_guard_enabled():
                         action = _safe_adjust_action(env, action)
 
                     action = int(action)
