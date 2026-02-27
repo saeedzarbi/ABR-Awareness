@@ -404,7 +404,7 @@ def _safe_adjust_action(env, action: int) -> int:
 #  Main evaluation loop
 # ---------------------------------------------------------------------------
 
-def run_eval(episodes_per_video: int = 20):
+def run_eval(episodes_per_video: int = 20, suffix: str = ""):
     results = []
     chunk_decisions = []
     test_videos = ["bigbuckbunny", "crowd_run", "tearsofsteel_short", "sintel"]
@@ -546,18 +546,18 @@ def run_eval(episodes_per_video: int = 20):
 
     # ---- Save episode-level results ----
     df = pd.DataFrame(results)
-    out_csv = PATHS["results"] / "detailed_stats_master_v5.csv"
+    out_csv = PATHS["results"] / f"detailed_stats_master_v5{suffix}.csv"
     df.to_csv(out_csv, index=False)
     print(f"\nSaved episode results : {out_csv}")
 
     # ---- Save chunk-level decision log ----
     df_chunks = pd.DataFrame(chunk_decisions)
-    decisions_csv = PATHS["results"] / "decision_log_v5.csv"
+    decisions_csv = PATHS["results"] / f"decision_log_v5{suffix}.csv"
     df_chunks.to_csv(decisions_csv, index=False)
     print(f"Saved decision log    : {decisions_csv}")
 
     # ---- Build Proposed-vs-Genie comparison ----
-    _build_comparison(df_chunks)
+    _build_comparison(df_chunks, suffix=suffix)
 
     # ---- Print summaries ----
     print("\n" + "=" * 72)
@@ -584,7 +584,7 @@ def run_eval(episodes_per_video: int = 20):
     return df
 
 
-def _build_comparison(df_chunks: pd.DataFrame):
+def _build_comparison(df_chunks: pd.DataFrame, suffix: str = ""):
     if "Proposed" not in df_chunks["Method"].values:
         return
     if "Genie" not in df_chunks["Method"].values:
@@ -603,7 +603,7 @@ def _build_comparison(df_chunks: pd.DataFrame):
     cmp["Rebuf_diff"] = cmp["Rebuffer_s_proposed"] - cmp["Rebuffer_s_genie"]
     cmp["Action_match"] = (cmp["Action_proposed"] == cmp["Action_genie"]).astype(int)
 
-    cmp_csv = PATHS["results"] / "proposed_vs_genie_v5.csv"
+    cmp_csv = PATHS["results"] / f"proposed_vs_genie_v5{suffix}.csv"
     cmp.to_csv(cmp_csv, index=False)
     print(f"Saved comparison log  : {cmp_csv}")
 
@@ -632,8 +632,14 @@ def _build_comparison(df_chunks: pd.DataFrame):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--episodes", type=int, default=20)
+    parser.add_argument(
+        "--suffix",
+        type=str,
+        default="",
+        help="Optional suffix for output files, e.g. _raw or _safe",
+    )
     args = parser.parse_args()
-    run_eval(episodes_per_video=args.episodes)
+    run_eval(episodes_per_video=args.episodes, suffix=args.suffix)
 
 
 if __name__ == "__main__":
