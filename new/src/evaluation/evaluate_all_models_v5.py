@@ -374,11 +374,23 @@ def _safe_adjust_action(env, action: int) -> int:
     Conservative post-processing of the chosen action to avoid
     catastrophic rebuffer events when the predicted download time
     clearly exceeds the current buffer.
+    Uses trace throughput for the current chunk (available at eval time)
+    combined with last throughput, taking the pessimistic (lower) value.
     """
     try:
         buf = float(getattr(env, "buffer_level", 0.0))
         if buf <= 0.5:
             return max(0, min(int(action), len(env.BITRATE_LEVELS) - 1))
+
+        trace_tp = getattr(env, "current_trace", None)
+        if trace_tp and "throughput_kbps" in trace_tp:
+            tp_idx = int(env.chunk_idx * env.CHUNK_DURATION) % len(trace_tp["throughput_kbps"])
+            trace_tp_val = float(trace_tp["throughput_kbps"][tp_idx])
+        else:
+            trace_tp_val = 2000.0
+        last_tp = getattr(env, "last_raw_throughput", 2000.0)
+        tp = min(trace_tp_val, last_tp) * SAFETY_TP_SCALE
+        tp = max(tp, env.MIN_NETWORK_THROUGHPUT)
 
         cur_idx = int(action)
         cur_idx = max(0, min(cur_idx, len(env.BITRATE_LEVELS) - 1))
@@ -386,8 +398,6 @@ def _safe_adjust_action(env, action: int) -> int:
         for _ in range(cur_idx):
             br = int(env.BITRATE_LEVELS[cur_idx])
             chunk_bits = env.get_chunk_size_bits(br, env.chunk_idx)
-            tp = getattr(env, "last_raw_throughput", 2000.0)
-            tp = max(tp * SAFETY_TP_SCALE, env.MIN_NETWORK_THROUGHPUT)
             dl_time = min(chunk_bits / (tp * 1000.0 + 1e-6), 60.0)
 
             if dl_time <= buf - SAFE_MARGIN:
