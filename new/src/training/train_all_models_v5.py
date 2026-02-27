@@ -11,10 +11,10 @@ V5 changes over V4:
 - Proposed model uses Constrained MDP via Lagrangian primal-dual optimization:
   penalty weights (lambda_rebuf, lambda_smooth) are learned automatically
   instead of being fixed, eliminating manual tuning
-- Entropy coefficient 0.04 for Proposed (encourages bitrate exploration),
-  0.03 for others
-- CMDP targets relaxed (rebuf_target=0.05, smooth_target=5.0) to allow
-  higher bitrates; lyapunov_weight=0.5 reduces buffer conservatism
+- Entropy coefficient 0.035 for Proposed, 0.03 for others
+- CMDP v5.2 tuning (rebuf_target=0.04, smooth_target=4.0,
+  lambda_rebuf_init=5.0, lyapunov_weight=0.7): intermediate between
+  v5.0 (too conservative) and v5.1 (collapsed to 1200kbps)
 - Outputs under results/models/master_v5/ and results/logs/master_v5/
 """
 
@@ -83,7 +83,7 @@ MODEL_SPECS: Dict[str, Dict] = {
         "use_future": True,
         "blind_features": False,
         "use_lagrangian": True,
-        "ent_coef": 0.04,
+        "ent_coef": 0.035,
         "timesteps": 6_000_000,
     },
     "ablation_base": {

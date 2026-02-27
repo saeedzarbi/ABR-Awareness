@@ -26,10 +26,11 @@ the dual learning rate, and Π_Λ projects onto the feasible set [λ_min, λ_max
 Convergence follows from standard CMDP / Lagrangian duality theory
 (Altman 1999, Paternain et al. 2019).
 
-Tuned targets (v5.1): rebuf_target=0.05, smooth_target=5.0,
-lambda_rebuf_init=4.0, lyapunov_weight=0.5.  Analysis of v5.0 showed
-the agent over-satisfied the rebuffer constraint (4.84s vs Genie's 9.07s)
-while under-utilizing available bitrate headroom.
+Tuned targets (v5.2): rebuf_target=0.04, smooth_target=4.0,
+lambda_rebuf_init=5.0, lyapunov_weight=0.7.  v5.1 over-relaxed
+(rebuf_target=0.05, lambda_min=1.0, lyap_w=0.5) causing policy collapse
+to 1200kbps.  v5.0 was too conservative (rebuf=4.84s vs Genie 9.07s).
+v5.2 uses intermediate values to balance bitrate ambition with stability.
 
 Components
 ----------
@@ -65,16 +66,16 @@ class LagrangianRewardWrapper(gym.Wrapper):
     def __init__(
         self,
         env: gym.Env,
-        rebuf_target: float = 0.05,
-        smooth_target: float = 5.0,
+        rebuf_target: float = 0.04,
+        smooth_target: float = 4.0,
         dual_lr_rebuf: float = 0.005,
         dual_lr_smooth: float = 0.003,
-        lambda_rebuf_init: float = 4.0,
-        lambda_smooth_init: float = 0.8,
-        lambda_rebuf_range: tuple = (1.0, 12.0),
-        lambda_smooth_range: tuple = (0.2, 2.5),
+        lambda_rebuf_init: float = 5.0,
+        lambda_smooth_init: float = 0.9,
+        lambda_rebuf_range: tuple = (1.5, 12.0),
+        lambda_smooth_range: tuple = (0.3, 2.5),
         buffer_dev_weight: float = 0.05,
-        lyapunov_weight: float = 0.5,
+        lyapunov_weight: float = 0.7,
         warmup_episodes: int = 50,
     ):
         super().__init__(env)
