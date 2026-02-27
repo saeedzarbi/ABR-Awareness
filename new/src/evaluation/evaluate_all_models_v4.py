@@ -77,6 +77,36 @@ class ContentBlindWrapper(ObservationWrapper):
 
 
 # ---------------------------------------------------------------------------
+#  Legacy model adapter (29-dim → 35-dim obs)
+# ---------------------------------------------------------------------------
+
+
+class LegacyObsAdapter:
+    """
+    Wraps an older SB3 model that was trained with a 29-D observation space
+    so it can be evaluated in the new 35-D environment by truncating obs.
+    """
+
+    def __init__(self, model, target_dim: int):
+        self.model = model
+        self.target_dim = target_dim
+
+    def predict(self, observation, state=None, episode_start=None, deterministic: bool = True):
+        # SB3 expect shape (obs_dim,) or (n_env, obs_dim)
+        import numpy as np
+
+        obs = np.asarray(observation)
+        if obs.ndim == 1:
+            obs = obs[: self.target_dim]
+        elif obs.ndim == 2:
+            obs = obs[:, : self.target_dim]
+        else:
+            raise ValueError(f"Unexpected observation ndim={obs.ndim} in LegacyObsAdapter")
+
+        return self.model.predict(obs, state=state, episode_start=episode_start, deterministic=deterministic)
+
+
+# ---------------------------------------------------------------------------
 #  Baselines
 # ---------------------------------------------------------------------------
 
@@ -304,6 +334,16 @@ def build_methods():
     for display_name, folder in MODEL_DIRS.items():
         try:
             model, path = load_rl_model(display_name, folder)
+
+            # If this is an older model trained with 29-D observations,
+            # wrap it so it can accept the new 35-D obs by truncation.
+            obs_shape = getattr(model, "observation_space", None)
+            if obs_shape is not None and hasattr(obs_shape, "shape"):
+                dim = obs_shape.shape[0]
+                if dim < 35:
+                    print(f"[INFO] Wrapping legacy {display_name} model (obs_dim={dim}) with LegacyObsAdapter")
+                    model = LegacyObsAdapter(model, target_dim=dim)
+
             methods[display_name] = model
             print(f"Loaded {display_name} from {path}")
         except Exception as exc:
