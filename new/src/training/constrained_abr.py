@@ -26,6 +26,11 @@ the dual learning rate, and Π_Λ projects onto the feasible set [λ_min, λ_max
 Convergence follows from standard CMDP / Lagrangian duality theory
 (Altman 1999, Paternain et al. 2019).
 
+Tuned targets (v5.1): rebuf_target=0.05, smooth_target=5.0,
+lambda_rebuf_init=4.0, lyapunov_weight=0.5.  Analysis of v5.0 showed
+the agent over-satisfied the rebuffer constraint (4.84s vs Genie's 9.07s)
+while under-utilizing available bitrate headroom.
+
 Components
 ----------
 LagrangianRewardWrapper : gym.Wrapper
@@ -60,15 +65,16 @@ class LagrangianRewardWrapper(gym.Wrapper):
     def __init__(
         self,
         env: gym.Env,
-        rebuf_target: float = 0.03,
-        smooth_target: float = 3.0,
+        rebuf_target: float = 0.05,
+        smooth_target: float = 5.0,
         dual_lr_rebuf: float = 0.005,
         dual_lr_smooth: float = 0.003,
-        lambda_rebuf_init: float = 6.0,
-        lambda_smooth_init: float = 1.0,
-        lambda_rebuf_range: tuple = (2.0, 15.0),
-        lambda_smooth_range: tuple = (0.3, 3.0),
+        lambda_rebuf_init: float = 4.0,
+        lambda_smooth_init: float = 0.8,
+        lambda_rebuf_range: tuple = (1.0, 12.0),
+        lambda_smooth_range: tuple = (0.2, 2.5),
         buffer_dev_weight: float = 0.05,
+        lyapunov_weight: float = 0.5,
         warmup_episodes: int = 50,
     ):
         super().__init__(env)
@@ -81,6 +87,7 @@ class LagrangianRewardWrapper(gym.Wrapper):
         self.lambda_rebuf_range = lambda_rebuf_range
         self.lambda_smooth_range = lambda_smooth_range
         self.buffer_dev_weight = buffer_dev_weight
+        self.lyapunov_weight = lyapunov_weight
         self.warmup_episodes = warmup_episodes
 
         self._ep_rebuf = 0.0
@@ -114,7 +121,7 @@ class LagrangianRewardWrapper(gym.Wrapper):
             - self.lambda_rebuf * rebuf
             - self.lambda_smooth * smooth
             - self.buffer_dev_weight * buf_dev
-            - lyap
+            - self.lyapunov_weight * lyap
         ) / 100.0
 
         self._ep_rebuf += rebuf

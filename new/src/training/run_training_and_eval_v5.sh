@@ -65,7 +65,7 @@ echo "📚 Step 1: Training all models (V5)"
 echo "=========================================="
 send_slack_message "info" "Step 1 Started" "Training all models (Proposed with CMDP, Ablations, Pensieve)..."
 
-if python3 train_all_models_v5.py --all --parallel 1; then
+if python3 train_all_models_v5.py --models proposed; then
     echo "✅ All model training completed!"
     send_slack_message "success" "Step 1 Completed" "All V5 model training completed successfully!"
 else
