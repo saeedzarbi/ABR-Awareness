@@ -389,7 +389,8 @@ def _make_env(video_name: str, use_future: bool = False, use_lyapunov: bool = Fa
 SAFE_MARGIN_LIGHT = 0.5
 SAFE_MARGIN_STRONG = 1.5
 SAFETY_TP_SCALE = 0.90
-CATASTROPHIC_RATIO = 2.5
+# 2.0: intervene earlier when dl_time > 2*buffer (was 2.5; avoids severe stalls)
+CATASTROPHIC_RATIO = 2.0
 
 
 def _safety_guard_level() -> str:

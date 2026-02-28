@@ -6,11 +6,12 @@ Unified training script (V6) for all learning-based models:
 - Ablation Lyap (Lyapunov only)
 - Pensieve (content/future blind PPO baseline)
 
-V6 builds directly on top of the V5 setup with the following changes:
-- Uses `ABREnv` from `abr_multi_env_v6` (slightly relaxed rebuffer /
-  Lyapunov / buffer-deviation weights).
-- Uses `LagrangianRewardWrapperV6` with tuned CMDP targets:
-  rebuf_target=0.07, smooth_target=3.5, lambda_rebuf_range=(2, 8), etc.
+V6 builds directly on top of the V5 setup. V6.1 fixes (post-diagnosis):
+- Uses `ABREnv` from `abr_multi_env_v6` (REBUF_PENALTY_BASE=6.0).
+- Uses `LagrangianRewardWrapperV6` with tightened CMDP targets:
+  rebuf_target=0.05, lambda_rebuf_range=(4.3, 12.0) so rebuffer penalty
+  never goes below eval weight and can grow when needed. Base dual update
+  in constrained_abr.py is adjusted (increase lambda faster when over target).
 - Increases entropy coefficient and training steps for Proposed:
   ent_coef = 0.04, timesteps = 8M (to avoid premature collapse to
   ultra-conservative policies).

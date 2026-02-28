@@ -161,10 +161,13 @@ class LagrangianRewardWrapper(gym.Wrapper):
         rebuf_gap = mean_rebuf - self.rebuf_target
         smooth_gap = mean_smooth - self.smooth_target
 
+        # Asymmetric update: when over target (rebuf_gap > 0), increase lambda faster
+        # so we react strongly to violations; when under target, decrease slowly
+        # to avoid lambda drifting down and making the policy too aggressive.
         if rebuf_gap < 0:
-            self.lambda_rebuf += 2.0 * self.dual_lr_rebuf * rebuf_gap
+            self.lambda_rebuf += 1.0 * self.dual_lr_rebuf * rebuf_gap
         else:
-            self.lambda_rebuf += self.dual_lr_rebuf * rebuf_gap
+            self.lambda_rebuf += 2.0 * self.dual_lr_rebuf * rebuf_gap
 
         if smooth_gap < 0:
             self.lambda_smooth += 1.5 * self.dual_lr_smooth * smooth_gap
