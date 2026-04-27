@@ -40,7 +40,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from configs.paths import get_paths
 from src.baselines.bba import BBA
-from src.environment.abr_multi_env_v6 import ABREnv
+from src.environment.abr_multi_env_v7 import ABREnv
 
 PATHS = get_paths()
 
@@ -407,6 +407,35 @@ def _safety_guard_enabled() -> bool:
     return _safety_guard_level() != "off"
 
 
+def _guard_scope() -> str:
+    """
+    Determine which methods should be post-processed by the safety guard.
+
+    - 'rl'   : only learned (RL) policies (default; fairer comparisons)
+    - 'all'  : apply to all methods (treat as a shared system-level guard)
+    - 'none' : never apply guard regardless of ABR_SAFETY_GUARD
+    """
+    scope = os.environ.get("ABR_GUARD_SCOPE", "rl").strip().lower()
+    if scope in {"none", "off", "0"}:
+        return "none"
+    if scope in {"all", "everything"}:
+        return "all"
+    return "rl"
+
+
+def _is_rl_method(method_name: str) -> bool:
+    return method_name in MODEL_DIRS
+
+
+def _should_apply_guard(method_name: str) -> bool:
+    scope = _guard_scope()
+    if scope == "none":
+        return False
+    if scope == "all":
+        return True
+    return _is_rl_method(method_name)
+
+
 def _safe_adjust_action(env, action: int) -> int:
     """
     Graduated safety post-processing:
@@ -479,7 +508,7 @@ def _safe_adjust_action(env, action: int) -> int:
 # ---------------------------------------------------------------------------
 
 
-def run_eval(episodes_per_video: int = 20, suffix: str = ""):
+def run_eval(episodes_per_video: int = 20, suffix: str = "", guard_scope: str | None = None):
     results = []
     chunk_decisions = []
     test_videos = ["bigbuckbunny", "crowd_run", "tearsofsteel_short", "sintel"]
@@ -556,7 +585,10 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
                     else:
                         action, _ = active_model.predict(obs, deterministic=True)
 
-                    if _safety_guard_enabled():
+                    if guard_scope is not None:
+                        os.environ["ABR_GUARD_SCOPE"] = str(guard_scope)
+
+                    if _safety_guard_enabled() and _should_apply_guard(name):
                         action = _safe_adjust_action(env, action)
 
                     action = int(action)
@@ -675,24 +707,26 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
     print(agg)
 
     if sp_stats is not None and len(df) > 20 and "Genie" in df["Method"].values:
-        methods_to_test = [m for m in df["Method"].unique() if m != "Genie"]
-        genie_qoes = df[df["Method"] == "Genie"]["QoE"].values
-        if len(genie_qoes) > 0:
-            print("\n--- Wilcoxon signed-rank test vs Genie (QoE, v7) ---")
-            for m in methods_to_test:
-                m_qoes = df[df["Method"] == m]["QoE"].values
-                if len(m_qoes) == len(genie_qoes):
-                    try:
-                        stat, pval = sp_stats.wilcoxon(m_qoes, genie_qoes)
-                        sig = (
-                            "***" if pval < 0.001
-                            else "**" if pval < 0.01
-                            else "*" if pval < 0.05
-                            else "ns"
-                        )
-                        print(f"  {m:20s}: p={pval:.4f} {sig}")
-                    except Exception as exc:
-                        print(f"  {m:20s}: Wilcoxon failed ({exc})")
+        print("\n--- Wilcoxon signed-rank test vs Genie (QoE, paired by Video+Episode, v7) ---")
+
+        genie = df[df["Method"] == "Genie"][["Video", "Episode", "QoE"]].rename(columns={"QoE": "QoE_genie"})
+        for m in sorted([x for x in df["Method"].unique() if x != "Genie"]):
+            mdf = df[df["Method"] == m][["Video", "Episode", "QoE"]].rename(columns={"QoE": "QoE_m"})
+            paired = mdf.merge(genie, on=["Video", "Episode"], how="inner")
+            if len(paired) < 10:
+                print(f"  {m:20s}: not enough paired samples (n={len(paired)})")
+                continue
+            try:
+                stat, pval = sp_stats.wilcoxon(paired["QoE_m"].values, paired["QoE_genie"].values)
+                sig = (
+                    "***" if pval < 0.001
+                    else "**" if pval < 0.01
+                    else "*" if pval < 0.05
+                    else "ns"
+                )
+                print(f"  {m:20s}: n={len(paired):3d} p={pval:.4f} {sig}")
+            except Exception as exc:
+                print(f"  {m:20s}: Wilcoxon failed ({exc})")
 
     return df
 
@@ -753,8 +787,15 @@ def main():
         default="",
         help="Optional suffix for output files, e.g. _raw or _safe",
     )
+    parser.add_argument(
+        "--guard-scope",
+        type=str,
+        default=os.environ.get("ABR_GUARD_SCOPE", "rl"),
+        choices=["rl", "all", "none"],
+        help="Apply safety guard to: rl (default), all, or none.",
+    )
     args = parser.parse_args()
-    run_eval(episodes_per_video=args.episodes, suffix=args.suffix)
+    run_eval(episodes_per_video=args.episodes, suffix=args.suffix, guard_scope=args.guard_scope)
 
 
 if __name__ == "__main__":

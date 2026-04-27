@@ -44,10 +44,10 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from configs.paths import get_paths
-from src.environment.abr_multi_env_v6 import ABREnv
-from src.training.constrained_abr_v6 import (
+from src.environment.abr_multi_env_v7 import ABREnv
+from src.training.constrained_abr_v7 import (
     DualVariableLogger,
-    LagrangianRewardWrapperV6,
+    LagrangianRewardWrapperV7,
 )
 
 PATHS = get_paths()
@@ -229,7 +229,7 @@ def make_env(rank: int, model_key: str, seed: int = 0, is_eval: bool = False):
             use_future=spec["use_future"],
         )
         if spec.get("use_lagrangian") and not is_eval:
-            env = LagrangianRewardWrapperV6(env)
+            env = LagrangianRewardWrapperV7(env)
         if spec["blind_features"]:
             env = ContentBlindWrapper(env)
         return Monitor(env, info_keywords=("avg_quality", "total_rebuffer"))

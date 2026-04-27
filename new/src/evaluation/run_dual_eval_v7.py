@@ -15,7 +15,11 @@ def main():
         print(f"Running V7 evaluation ({label}, ABR_SAFETY_GUARD={guard})")
         print("=" * 72)
         os.environ["ABR_SAFETY_GUARD"] = guard
-        run_eval(episodes_per_video=20, suffix=suffix)
+        # Default: apply guard only to RL methods (fair comparisons).
+        # To treat the guard as a shared system-level component, set:
+        #   set ABR_GUARD_SCOPE=all
+        os.environ.setdefault("ABR_GUARD_SCOPE", "rl")
+        run_eval(episodes_per_video=20, suffix=suffix, guard_scope=os.environ["ABR_GUARD_SCOPE"])
 
 
 if __name__ == "__main__":
