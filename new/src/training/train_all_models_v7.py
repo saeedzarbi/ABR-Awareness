@@ -1,14 +1,14 @@
 """
-Unified training script (V6) for all learning-based models:
-- Proposed (Lyapunov + Future + Lagrangian CMDP, V6 tuning)
+Unified training script (v7) for all learning-based models:
+- Proposed (Lyapunov + Future + Lagrangian CMDP, v7 tuning)
 - Ablation Base (no Lyapunov, no Future, no CMDP)
 - Ablation Future (Future only)
 - Ablation Lyap (Lyapunov only)
 - Pensieve (content/future blind PPO baseline)
 
-V6 builds directly on top of the V5 setup. V6.1 fixes (post-diagnosis):
-- Uses `ABREnv` from `abr_multi_env_v6` (REBUF_PENALTY_BASE=6.0).
-- Uses `LagrangianRewardWrapperV6` with tightened CMDP targets:
+v7 builds directly on top of the V5 setup. v7.1 fixes (post-diagnosis):
+- Uses `ABREnv` from `abr_multi_env_v7` (REBUF_PENALTY_BASE=6.0).
+- Uses `LagrangianRewardWrapperv7` with tightened CMDP targets:
   rebuf_target=0.05, lambda_rebuf_range=(4.3, 12.0) so rebuffer penalty
   never goes below eval weight and can grow when needed. Base dual update
   in constrained_abr.py is adjusted (increase lambda faster when over target).
@@ -83,7 +83,7 @@ class Config:
 
 MODEL_SPECS: Dict[str, Dict] = {
     "proposed": {
-        "folder": "proposed_v6",
+        "folder": "proposed_v7",
         "use_lyapunov": True,
         "use_future": True,
         "blind_features": False,
@@ -92,7 +92,7 @@ MODEL_SPECS: Dict[str, Dict] = {
         "timesteps": 8_000_000,
     },
     "ablation_base": {
-        "folder": "ablation_base_v6",
+        "folder": "ablation_base_v7",
         "use_lyapunov": False,
         "use_future": False,
         "blind_features": False,
@@ -101,7 +101,7 @@ MODEL_SPECS: Dict[str, Dict] = {
         "timesteps": 4_000_000,
     },
     "ablation_future": {
-        "folder": "ablation_future_v6",
+        "folder": "ablation_future_v7",
         "use_lyapunov": False,
         "use_future": True,
         "blind_features": False,
@@ -110,7 +110,7 @@ MODEL_SPECS: Dict[str, Dict] = {
         "timesteps": 4_000_000,
     },
     "ablation_lyap": {
-        "folder": "ablation_lyap_v6",
+        "folder": "ablation_lyap_v7",
         "use_lyapunov": True,
         "use_future": False,
         "blind_features": False,
@@ -119,7 +119,7 @@ MODEL_SPECS: Dict[str, Dict] = {
         "timesteps": 4_000_000,
     },
     "pensieve": {
-        "folder": "pensieve_v6",
+        "folder": "pensieve_v7",
         "use_lyapunov": False,
         "use_future": False,
         "blind_features": True,
@@ -239,14 +239,14 @@ def make_env(rank: int, model_key: str, seed: int = 0, is_eval: bool = False):
 
 def train_one_model(model_key: str):
     spec = MODEL_SPECS[model_key]
-    model_root = PATHS["models"] / "master_v6" / spec["folder"]
-    log_root = PATHS["logs"] / "master_v6" / spec["folder"]
+    model_root = PATHS["models"] / "master_v7" / spec["folder"]
+    log_root = PATHS["logs"] / "master_v7" / spec["folder"]
     model_root.mkdir(parents=True, exist_ok=True)
     log_root.mkdir(parents=True, exist_ok=True)
 
     print("\n" + "=" * 72)
     print(
-        f"Training {model_key.upper()} (V6) | lyap={spec['use_lyapunov']} "
+        f"Training {model_key.upper()} (v7) | lyap={spec['use_lyapunov']} "
         f"| future={spec['use_future']} | blind={spec['blind_features']} "
         f"| lagrangian={spec.get('use_lagrangian', False)} "
         f"| ent={spec['ent_coef']} | steps={spec['timesteps']:,}"
@@ -314,10 +314,10 @@ def train_one_model(model_key: str):
             progress_bar=True,
         )
         model.save(model_root / "final_model")
-        print(f"[DONE] {model_key} V6 training completed.")
+        print(f"[DONE] {model_key} v7 training completed.")
     except KeyboardInterrupt:
         model.save(model_root / "interrupted_model")
-        print(f"[INTERRUPTED] {model_key} V6 checkpoint saved.")
+        print(f"[INTERRUPTED] {model_key} v7 checkpoint saved.")
     finally:
         train_env.close()
         eval_env.close()
@@ -343,9 +343,9 @@ def _run_parallel(model_keys: List[str], max_workers: int, gpu_ids: List[int] = 
     completed, failed = [], []
     gpu_slot = 0
 
-    print(f"\n[PARALLEL V6] Launching {len(remaining)} models, max {max_workers} concurrent")
+    print(f"\n[PARALLEL v7] Launching {len(remaining)} models, max {max_workers} concurrent")
     if gpu_ids:
-        print(f"[PARALLEL V6] GPU pool: {gpu_ids}")
+        print(f"[PARALLEL v7] GPU pool: {gpu_ids}")
 
     while remaining or running:
         while remaining and len(running) < max_workers:
@@ -355,7 +355,7 @@ def _run_parallel(model_keys: List[str], max_workers: int, gpu_ids: List[int] = 
                 env["CUDA_VISIBLE_DEVICES"] = str(gpu_ids[gpu_slot % len(gpu_ids)])
                 gpu_slot += 1
 
-            log_file = PATHS["logs"] / "master_v6" / f"{key}_parallel.log"
+            log_file = PATHS["logs"] / "master_v7" / f"{key}_parallel.log"
             log_file.parent.mkdir(parents=True, exist_ok=True)
             fh = open(log_file, "w", encoding="utf-8")
 
@@ -367,7 +367,7 @@ def _run_parallel(model_keys: List[str], max_workers: int, gpu_ids: List[int] = 
             )
             running[key] = (proc, fh)
             gpu_tag = f" [GPU {env.get('CUDA_VISIBLE_DEVICES', 'default')}]" if gpu_ids else ""
-            print(f"[PARALLEL V6] Started {key.upper()} (PID {proc.pid}){gpu_tag}  -> {log_file}")
+            print(f"[PARALLEL v7] Started {key.upper()} (PID {proc.pid}){gpu_tag}  -> {log_file}")
 
         for key in list(running):
             proc, fh = running[key]
@@ -377,26 +377,26 @@ def _run_parallel(model_keys: List[str], max_workers: int, gpu_ids: List[int] = 
                 del running[key]
                 if ret == 0:
                     completed.append(key)
-                    print(f"[PARALLEL V6] {key.upper()} finished successfully")
+                    print(f"[PARALLEL v7] {key.upper()} finished successfully")
                 else:
                     failed.append(key)
-                    print(f"[PARALLEL V6] {key.upper()} FAILED (exit code {ret})")
+                    print(f"[PARALLEL v7] {key.upper()} FAILED (exit code {ret})")
 
         if running:
             time.sleep(15)
 
     print("\n" + "=" * 72)
-    print(f"[PARALLEL V6] Completed: {completed}")
+    print(f"[PARALLEL v7] Completed: {completed}")
     if failed:
-        print(f"[PARALLEL V6] FAILED:    {failed}")
+        print(f"[PARALLEL v7] FAILED:    {failed}")
         sys.exit(1)
-    print("All parallel V6 trainings finished.")
+    print("All parallel v7 trainings finished.")
     print("=" * 72)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Train all ABR RL models V6 (CMDP + Lagrangian tuning)."
+        description="Train all ABR RL models v7 (CMDP + Lagrangian tuning)."
     )
     parser.add_argument("--all", action="store_true", help="Train all 5 models.")
     parser.add_argument(
@@ -422,7 +422,7 @@ def main():
         for model_key in order:
             train_one_model(model_key)
         print("\n" + "=" * 72)
-        print("All requested V6 trainings finished.")
+        print("All requested v7 trainings finished.")
         print("=" * 72)
 
 

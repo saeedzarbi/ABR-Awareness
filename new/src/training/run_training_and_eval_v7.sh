@@ -61,16 +61,16 @@ echo "=========================================="
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
-send_slack_message "info" "Pipeline V6 Started" "ABR Training V6 (CMDP + Lagrangian tuning) pipeline has started"
+send_slack_message "info" "Pipeline V6 Started" "ABR Training V7 (CMDP + Lagrangian tuning) pipeline has started"
 
 # Step 1: Train Proposed-V6 model
 echo ""
 echo "=========================================="
-echo "📚 Step 1: Training Proposed model (V6)"
+echo "📚 Step 1: Training Proposed model (V7)"
 echo "=========================================="
 send_slack_message "info" "Step 1 Started" "Training Proposed model with V6 environment and CMDP tuning..."
 
-if python3 train_all_models_v6.py --models proposed; then
+if python3 train_all_models_v7.py --models proposed; then
     echo "✅ Proposed V6 training completed!"
     send_slack_message "success" "Step 1 Completed" "Proposed V6 training completed successfully!"
 else
@@ -88,10 +88,10 @@ echo "=========================================="
 send_slack_message "info" "Step 2 Started" "Running V6 evaluation (raw, light-guard, strong-guard)..."
 
 cd ../evaluation
-if python3 run_dual_eval_v6.py; then
+if python3 run_dual_eval_v7.py; then
     cd ../training
     echo "✅ Final V6 evaluation completed!"
-    send_slack_message "success" "Step 2 Completed" "Final V6 evaluation (raw/light/strong) completed successfully!"
+    send_slack_message "success" "Step 2 Completed" "Final V7 evaluation (raw/light/strong) completed successfully!"
 else
     ERROR_MSG="Final V6 evaluation failed with exit code $?"
     cd ../training

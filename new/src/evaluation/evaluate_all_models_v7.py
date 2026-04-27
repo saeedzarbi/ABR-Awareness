@@ -1,17 +1,17 @@
 """
-Master evaluation script (V6) for all methods:
+Master evaluation script (v7) for all methods:
 - Proposed, Ablation_Base, Ablation_Future, Ablation_Lyap, Pensieve
 - RobustMPC (VBR-aware), Genie, BBA, Fugu
 
-V6 changes over V5:
-1. Uses `ABREnv` from `abr_multi_env_v6` (slightly relaxed Lyapunov /
+v7 changes over V5:
+1. Uses `ABREnv` from `abr_multi_env_v7` (slightly relaxed Lyapunov /
    buffer-deviation / rebuffer weights used during training).
 2. Adds a multi-level safety guard:
    - ABR_SAFETY_GUARD=0 / off     : no guard (raw policies).
    - ABR_SAFETY_GUARD=1 / light   : only intercepts clearly catastrophic
      decisions where predicted download time >> buffer.
    - ABR_SAFETY_GUARD=2 / strong  : strong guard similar to V5 behavior.
-3. Writes results to *_v6*.csv files (detailed_stats, decision_log,
+3. Writes results to *_v7*.csv files (detailed_stats, decision_log,
    proposed_vs_genie).
 4. Adds a multi-objective summary and (if SciPy is available) Wilcoxon
    signed-rank tests vs Genie to quantify statistical significance.
@@ -48,11 +48,11 @@ EVAL_REBUF_PENALTY = 4.3
 EVAL_SMOOTH_PENALTY = 1.0
 
 MODEL_DIRS = {
-    "Proposed": "proposed_v6",
-    "Ablation_Base": "ablation_base_v6",
-    "Ablation_Future": "ablation_future_v6",
-    "Ablation_Lyap": "ablation_lyap_v6",
-    "Pensieve": "pensieve_v6",
+    "Proposed": "proposed_v7",
+    "Ablation_Base": "ablation_base_v7",
+    "Ablation_Future": "ablation_future_v7",
+    "Ablation_Lyap": "ablation_lyap_v7",
+    "Pensieve": "pensieve_v7",
 }
 
 MODEL_ENV_CONFIG = {
@@ -314,23 +314,23 @@ def _resolve_model_path(model_base: Path):
 
 
 def load_rl_model(display_name: str, folder_name: str):
-    preferred = PATHS["models"] / "master_v6" / folder_name
+    preferred = PATHS["models"] / "master_v7" / folder_name
     resolved = _resolve_model_path(preferred)
     if resolved is not None:
         return PPO.load(str(resolved)), resolved
 
-    # Fallback to V5 / legacy checkpoints if V6 is missing for ablations, etc.
-    preferred_v5 = PATHS["models"] / "master_v5" / folder_name.replace("_v6", "")
+    # Fallback to V5 / legacy checkpoints if v7 is missing for ablations, etc.
+    preferred_v5 = PATHS["models"] / "master_v5" / folder_name.replace("_v7", "")
     resolved = _resolve_model_path(preferred_v5)
     if resolved is not None:
         return PPO.load(str(resolved)), resolved
 
-    preferred_v4 = PATHS["models"] / "master_v4" / folder_name.replace("_v6", "")
+    preferred_v4 = PATHS["models"] / "master_v4" / folder_name.replace("_v7", "")
     resolved = _resolve_model_path(preferred_v4)
     if resolved is not None:
         return PPO.load(str(resolved)), resolved
 
-    preferred_v3 = PATHS["models"] / "master_v3" / folder_name.replace("_v6", "")
+    preferred_v3 = PATHS["models"] / "master_v3" / folder_name.replace("_v7", "")
     resolved = _resolve_model_path(preferred_v3)
     if resolved is not None:
         return PPO.load(str(resolved)), resolved
@@ -383,7 +383,7 @@ def _make_env(video_name: str, use_future: bool = False, use_lyapunov: bool = Fa
 
 
 # ---------------------------------------------------------------------------
-#  Inference-time safety guard for RL policies (V6)
+#  Inference-time safety guard for RL policies (v7)
 # ---------------------------------------------------------------------------
 
 SAFE_MARGIN_LIGHT = 0.5
@@ -621,13 +621,13 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
 
     # ---- Save episode-level results ----
     df = pd.DataFrame(results)
-    out_csv = PATHS["results"] / f"detailed_stats_master_v6{suffix}.csv"
+    out_csv = PATHS["results"] / f"detailed_stats_master_v7{suffix}.csv"
     df.to_csv(out_csv, index=False)
     print(f"\nSaved episode results : {out_csv}")
 
     # ---- Save chunk-level decision log ----
     df_chunks = pd.DataFrame(chunk_decisions)
-    decisions_csv = PATHS["results"] / f"decision_log_v6{suffix}.csv"
+    decisions_csv = PATHS["results"] / f"decision_log_v7{suffix}.csv"
     df_chunks.to_csv(decisions_csv, index=False)
     print(f"Saved decision log    : {decisions_csv}")
 
@@ -636,7 +636,7 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
 
     # ---- Print summaries ----
     print("\n" + "=" * 72)
-    print("PER-VIDEO SUMMARY (V6):")
+    print("PER-VIDEO SUMMARY (v7):")
     print("=" * 72)
     for vid in test_videos:
         vdf = df[df["Video"] == vid]
@@ -647,7 +647,7 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
         print(summary_v)
 
     print("\n" + "=" * 72)
-    print("OVERALL STATISTICAL SUMMARY (V6):")
+    print("OVERALL STATISTICAL SUMMARY (v7):")
     print("=" * 72)
     summary = df.groupby("Method").agg({
         "QoE": ["mean", "std"],
@@ -658,7 +658,7 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
     print(summary)
 
     print("\n" + "=" * 72)
-    print("MULTI-OBJECTIVE SUMMARY (V6):")
+    print("MULTI-OBJECTIVE SUMMARY (v7):")
     print("=" * 72)
     agg = df.groupby("Method").agg(
         QoE_mean=("QoE", "mean"),
@@ -678,7 +678,7 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
         methods_to_test = [m for m in df["Method"].unique() if m != "Genie"]
         genie_qoes = df[df["Method"] == "Genie"]["QoE"].values
         if len(genie_qoes) > 0:
-            print("\n--- Wilcoxon signed-rank test vs Genie (QoE, V6) ---")
+            print("\n--- Wilcoxon signed-rank test vs Genie (QoE, v7) ---")
             for m in methods_to_test:
                 m_qoes = df[df["Method"] == m]["QoE"].values
                 if len(m_qoes) == len(genie_qoes):
@@ -718,13 +718,13 @@ def _build_comparison(df_chunks: pd.DataFrame, suffix: str = ""):
     cmp["Rebuf_diff"] = cmp["Rebuffer_s_proposed"] - cmp["Rebuffer_s_genie"]
     cmp["Action_match"] = (cmp["Action_proposed"] == cmp["Action_genie"]).astype(int)
 
-    cmp_csv = PATHS["results"] / f"proposed_vs_genie_v6{suffix}.csv"
+    cmp_csv = PATHS["results"] / f"proposed_vs_genie_v7{suffix}.csv"
     cmp.to_csv(cmp_csv, index=False)
     print(f"Saved comparison log  : {cmp_csv}")
 
     bad = cmp[cmp["Rebuffer_s_proposed"] > 0.1]
     if len(bad) > 0:
-        print(f"\n[DIAGNOSIS V6] Proposed rebuffered on {len(bad)} / {len(cmp)} chunks "
+        print(f"\n[DIAGNOSIS v7] Proposed rebuffered on {len(bad)} / {len(cmp)} chunks "
               f"({100 * len(bad) / len(cmp):.1f}%)")
 
         by_video = bad.groupby("Video").agg({
@@ -732,7 +732,7 @@ def _build_comparison(df_chunks: pd.DataFrame, suffix: str = ""):
             "Bitrate_kbps_proposed": "mean",
             "Bitrate_kbps_genie": "mean",
         }).round(2)
-        print("\n  Per-video breakdown of Proposed rebuffer chunks (V6):")
+        print("\n  Per-video breakdown of Proposed rebuffer chunks (v7):")
         print(by_video.to_string())
 
         worst = bad.nlargest(10, "Rebuffer_s_proposed")[
@@ -740,7 +740,7 @@ def _build_comparison(df_chunks: pd.DataFrame, suffix: str = ""):
              "Buffer_Before", "Bitrate_kbps_proposed", "Rebuffer_s_proposed",
              "Bitrate_kbps_genie", "Rebuffer_s_genie"]
         ]
-        print("\n  Top-10 worst rebuffer decisions by Proposed (V6):")
+        print("\n  Top-10 worst rebuffer decisions by Proposed (v7):")
         print(worst.to_string(index=False))
 
 
