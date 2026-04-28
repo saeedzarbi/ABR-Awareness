@@ -573,6 +573,28 @@ def run_eval(episodes_per_video: int = 20, suffix: str = "", guard_scope: Option
             except Exception as exc:
                 print(f"  {m:20s}: Wilcoxon failed ({exc})")
 
+    # Paired bootstrap confidence intervals vs Genie (effect sizes)
+    if "Genie" in df["Method"].values:
+        print("\n--- Paired bootstrap vs Genie (QoE diff, 95% CI, v8) ---")
+        rng = np.random.default_rng(12345)
+        genie = df[df["Method"] == "Genie"][["Video", "Episode", "QoE"]].rename(columns={"QoE": "QoE_genie"})
+        for m in sorted([x for x in df["Method"].unique() if x != "Genie"]):
+            mdf = df[df["Method"] == m][["Video", "Episode", "QoE"]].rename(columns={"QoE": "QoE_m"})
+            paired = mdf.merge(genie, on=["Video", "Episode"], how="inner")
+            if len(paired) < 10:
+                print(f"  {m:20s}: not enough paired samples (n={len(paired)})")
+                continue
+
+            diff = (paired["QoE_m"].values - paired["QoE_genie"].values).astype(float)
+            mean_diff = float(diff.mean())
+
+            # bootstrap over paired episodes
+            B = 2000
+            idx = rng.integers(0, len(diff), size=(B, len(diff)))
+            boot_means = diff[idx].mean(axis=1)
+            lo, hi = np.percentile(boot_means, [2.5, 97.5]).tolist()
+            print(f"  {m:20s}: n={len(diff):3d} mean={mean_diff:+.2f}  CI95=[{lo:+.2f}, {hi:+.2f}]")
+
     return df
 
 
