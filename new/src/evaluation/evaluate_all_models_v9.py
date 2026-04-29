@@ -324,7 +324,24 @@ def _apply_global_guard(env, action: int) -> int:
     level = _safety_guard_level()
     if level == "off":
         return int(action)
-    safe_action, _ = safe_adjust_action(env, int(action), ShieldConfig(level=level))
+
+    # Allow tuning guard aggressiveness from env vars (no retraining needed).
+    # Defaults match the method-level shield config.
+    def _get_float(name: str, default: float) -> float:
+        try:
+            return float(os.environ.get(name, default))
+        except Exception:
+            return float(default)
+
+    cfg = ShieldConfig(
+        level=level,
+        catastrophic_ratio=_get_float("ABR_GUARD_CATASTROPHIC_RATIO", 2.0),
+        safe_margin_light=_get_float("ABR_GUARD_SAFE_MARGIN_LIGHT", 0.5),
+        safe_margin_strong=_get_float("ABR_GUARD_SAFE_MARGIN_STRONG", 1.5),
+        safety_tp_scale=_get_float("ABR_GUARD_TP_SCALE", 0.90),
+    )
+
+    safe_action, _ = safe_adjust_action(env, int(action), cfg)
     return int(safe_action)
 
 
