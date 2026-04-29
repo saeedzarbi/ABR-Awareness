@@ -36,7 +36,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from configs.paths import get_paths
 from src.baselines.bba import BBA
 from src.environment.abr_multi_env_v9 import ABREnv
-from src.training.safety_shield_v9 import SafetyShieldWrapper, ShieldConfig
+from src.training.safety_shield_v9 import SafetyShieldWrapper, ShieldConfig, safe_adjust_action
 
 PATHS = get_paths()
 
@@ -314,6 +314,20 @@ def _safety_guard_level() -> str:
     return "off"
 
 
+def _apply_global_guard(env, action: int) -> int:
+    """
+    System-level safety guard (optional).
+
+    Important: this is separate from the method-level shield used by
+    `Proposed_Shielded`.
+    """
+    level = _safety_guard_level()
+    if level == "off":
+        return int(action)
+    safe_action, _ = safe_adjust_action(env, int(action), ShieldConfig(level=level))
+    return int(safe_action)
+
+
 def _guard_scope() -> str:
     scope = os.environ.get("ABR_GUARD_SCOPE", "none").strip().lower()
     if scope in {"none", "off", "0"}:
@@ -413,8 +427,7 @@ def run_eval(episodes_per_video: int = 20, suffix: str = "", guard_scope: Option
 
                     # Global guard (optional, system-level). For paper policy-only keep off.
                     if _safety_guard_level() != "off" and _should_apply_guard(name) and name != "Proposed_Shielded":
-                        # Keep global guard separate from method-level shield
-                        pass
+                        action = _apply_global_guard(env, action)
 
                     action = int(action)
 
