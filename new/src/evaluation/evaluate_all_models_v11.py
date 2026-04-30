@@ -392,7 +392,9 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
     df_chunks.to_csv(decisions_csv, index=False)
     print(f"Saved decision log    : {decisions_csv}")
 
-    _build_comparison(df_chunks, suffix=suffix)
+    # Build method-vs-Genie comparison logs (if present)
+    for m in ["Proposed", "Proposed_Shielded", "Proposed_ShieldedQoE"]:
+        _build_comparison(df_chunks, method_name=m, suffix=suffix)
 
     if sp_stats is not None and "Genie" in df["Method"].values:
         genie = df[df["Method"] == "Genie"][["Video", "Episode", "QoE"]].rename(columns={"QoE": "QoE_genie"})
@@ -411,10 +413,10 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
     return df
 
 
-def _build_comparison(df_chunks: pd.DataFrame, suffix: str = ""):
-    if "Proposed" not in df_chunks["Method"].values or "Genie" not in df_chunks["Method"].values:
+def _build_comparison(df_chunks: pd.DataFrame, method_name: str, suffix: str = ""):
+    if method_name not in df_chunks["Method"].values or "Genie" not in df_chunks["Method"].values:
         return
-    proposed = df_chunks[df_chunks["Method"] == "Proposed"].copy()
+    proposed = df_chunks[df_chunks["Method"] == method_name].copy()
     genie = df_chunks[df_chunks["Method"] == "Genie"].copy()
     merge_keys = ["Video", "Episode", "Chunk"]
     cmp = proposed.merge(
@@ -426,7 +428,8 @@ def _build_comparison(df_chunks: pd.DataFrame, suffix: str = ""):
     cmp["QoE_diff"] = cmp["Step_QoE_proposed"] - cmp["Step_QoE_genie"]
     cmp["Rebuf_diff"] = cmp["Rebuffer_s_proposed"] - cmp["Rebuffer_s_genie"]
     cmp["Action_match"] = (cmp["Applied_Action"] == cmp["Action_genie"]).astype(int)
-    cmp_csv = PATHS["results"] / f"proposed_vs_genie_v11{suffix}.csv"
+    safe_name = method_name.lower()
+    cmp_csv = PATHS["results"] / f"{safe_name}_vs_genie_v11{suffix}.csv"
     cmp.to_csv(cmp_csv, index=False)
     print(f"Saved comparison log  : {cmp_csv}")
 
