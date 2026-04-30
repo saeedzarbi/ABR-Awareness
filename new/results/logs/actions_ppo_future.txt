@@ -1,2 +1,0 @@
-Step, Mean_Bitrate_Index, Last_Actions_Sample
-320000, 2.00, [np.int64(2), np.int64(2), np.int64(0), np.int64(2), np.int64(4), np.int64(2), np.int64(2), np.int64(2)]
