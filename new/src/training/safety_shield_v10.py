@@ -99,6 +99,13 @@ class SafetyShieldWrapper(gym.Wrapper):
         self.interventions = 0
         self.steps = 0
 
+    def __getattr__(self, name):
+        """
+        Forward unknown attributes (e.g., chunk_idx/buffer_level) to the wrapped env.
+        Gymnasium's Wrapper doesn't reliably proxy custom fields used by ABR envs.
+        """
+        return getattr(self.env, name)
+
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
         self.interventions = 0
