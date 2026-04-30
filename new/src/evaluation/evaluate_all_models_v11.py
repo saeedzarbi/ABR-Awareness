@@ -31,6 +31,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from configs.paths import get_paths
 from src.baselines.bba import BBA
 from src.environment.abr_multi_env_v11 import ABREnv
+from src.training.safety_shield_v11 import SafetyShieldWrapper, ShieldConfig
+from src.training.shield_aware_wrappers_v11 import HysteresisActionWrapper, HysteresisConfig
 
 PATHS = get_paths()
 
@@ -277,6 +279,40 @@ def _make_env(video_name: str, use_future: bool = False, use_lyapunov: bool = Fa
     )
 
 
+def _shield_cfg_from_env() -> ShieldConfig:
+    level = os.environ.get("ABR_SHIELD_LEVEL", "light").strip().lower()
+    if level not in {"off", "light", "strong"}:
+        level = "light"
+    only_when_risky = os.environ.get("ABR_V11_RISK_GATE", "0").strip().lower() in {"1", "true", "yes"}
+    try:
+        risky_ratio = float(os.environ.get("ABR_V11_RISK_RATIO", "1.10"))
+    except Exception:
+        risky_ratio = 1.10
+    return ShieldConfig(level=level, only_when_risky=only_when_risky, risky_dl_over_buf_ratio=risky_ratio)
+
+
+def _wrap_method_env(method_name: str, env):
+    """
+    Ensure evaluation matches the deployed method.
+
+    - Shielded methods must be wrapped with the same SafetyShieldWrapper that
+      was used in training (otherwise results are meaningless).
+    - The QoE variant also uses hysteresis at inference-time.
+    """
+    if method_name == "Proposed_ShieldedQoE":
+        cfg = HysteresisConfig(
+            max_up_step=int(os.environ.get("ABR_HYST_UP", "1")),
+            max_down_step=int(os.environ.get("ABR_HYST_DOWN", "2")),
+            min_buffer_for_up=float(os.environ.get("ABR_HYST_MIN_BUF", "3.0")),
+        )
+        env = HysteresisActionWrapper(env, cfg=cfg)
+        env = SafetyShieldWrapper(env, cfg=_shield_cfg_from_env())
+        return env
+    if method_name == "Proposed_Shielded":
+        return SafetyShieldWrapper(env, cfg=_shield_cfg_from_env())
+    return env
+
+
 def run_eval(episodes_per_video: int = 20, suffix: str = ""):
     results = []
     chunk_decisions = []
@@ -290,7 +326,10 @@ def run_eval(episodes_per_video: int = 20, suffix: str = ""):
         for name, model in methods.items():
             env_cfg = MODEL_ENV_CONFIG.get(name, {"use_future": False, "use_lyapunov": False})
             env = _make_env(video_name, **env_cfg)
-            eval_env = ContentBlindWrapper(env) if name == "Pensieve" else env
+            eval_env = env
+            eval_env = _wrap_method_env(name, eval_env)
+            if name == "Pensieve":
+                eval_env = ContentBlindWrapper(eval_env)
 
             for ep in range(episodes_per_video):
                 obs, info = eval_env.reset(seed=ep)
