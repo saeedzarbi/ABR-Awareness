@@ -208,7 +208,7 @@ def fig_tradeoff_with_ci(df: pd.DataFrame, out_dir: Path) -> None:
 
     ax.set_xlabel("Mean rebuffer ratio (% of session)")
     ax.set_ylabel("Session QoE (sum)")
-    ax.set_title("Safety–QoE trade-off (v12, bootstrap 95% CI)")
+    ax.set_title("Safety–QoE trade-off (bootstrap 95% CI)")
     ax.grid(True, alpha=0.45, linestyle="--")
     ax.legend(
         loc="lower left",
@@ -232,7 +232,7 @@ def fig_ecdf(df: pd.DataFrame, out_dir: Path, column: str, xlabel: str, stem: st
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Empirical CDF")
     ttl = "Episode QoE" if column == "QoE" else "Episode rebuffer %"
-    ax.set_title(f"CDF of {ttl} (v12)")
+    ax.set_title(f"CDF of {ttl}")
     ax.grid(True, alpha=0.45, linestyle="--")
     ax.legend(loc="lower right", fontsize=7.0, ncol=1)
     fig.tight_layout()
@@ -241,65 +241,54 @@ def fig_ecdf(df: pd.DataFrame, out_dir: Path, column: str, xlabel: str, stem: st
 
 
 def fig_switches_violin(df: pd.DataFrame, out_dir: Path) -> None:
-    try:
-        import seaborn as sns  # type: ignore
-    except ImportError:
-        fig_switches_box(df, out_dir)
+    """Horizontal mean switches per episode with bootstrap 95% CI (matplotlib-only).
+
+    Filename remains ``fig_switches_violin`` for stable LaTeX includes.
+    """
+    methods = [m for m in ORDER_MAIN if m in set(df["Method"].unique())]
+    if not methods:
         return
 
-    methods = [m for m in ORDER_MAIN if m in set(df["Method"].unique())]
-    plot_df = df[df["Method"].isin(methods)].copy()
-    plot_df["Label"] = plot_df["Method"].map(lambda m: DISPLAY_NAME.get(m, m))
-    order_labels = [DISPLAY_NAME[m] for m in methods]
-
-    fig, ax = plt.subplots(figsize=(6.4, 3.8))
-    pal = {DISPLAY_NAME[m]: COLORS[m] for m in methods}
-    sns.violinplot(
-        data=plot_df,
-        x="Label",
-        y="Switch",
-        order=order_labels,
-        hue="Label",
-        hue_order=order_labels,
-        palette=pal,
-        dodge=False,
-        ax=ax,
-        inner="box",
-        linewidth=0.8,
-        cut=0,
-        saturation=0.85,
-        legend=False,
-    )
-    ax.set_xlabel("")
-    ax.set_ylabel("Bitrate switches per episode")
-    ax.set_title("Switching distribution (v12)")
-    ax.tick_params(axis="x", rotation=22, labelsize=7.2)
-    ax.grid(True, axis="y", alpha=0.45, linestyle="--")
-    fig.tight_layout()
-    _save(fig, out_dir, "fig_switches_violin")
-    plt.close(fig)
-
-
-def fig_switches_box(df: pd.DataFrame, out_dir: Path) -> None:
-    methods = [m for m in ORDER_MAIN if m in set(df["Method"].unique())]
-    data = [df[df["Method"] == m]["Switch"].values for m in methods]
+    rng = np.random.default_rng(42)
     labels = [DISPLAY_NAME[m] for m in methods]
-    fig, ax = plt.subplots(figsize=(6.4, 3.8))
-    bp = ax.boxplot(
-        data,
-        tick_labels=labels,
-        patch_artist=True,
-        medianprops=dict(color="#222222", linewidth=1.2),
-        whiskerprops=dict(linewidth=0.9),
-        capprops=dict(linewidth=0.9),
-    )
-    for patch, m in zip(bp["boxes"], methods):
-        patch.set_facecolor(COLORS.get(m, "#CCCCCC"))
-        patch.set_alpha(0.75)
-    ax.set_ylabel("Bitrate switches per episode")
-    ax.set_title("Switching distribution (v12)")
-    ax.tick_params(axis="x", rotation=22, labelsize=7.2)
-    ax.grid(True, axis="y", alpha=0.45, linestyle="--")
+    means: list[float] = []
+    err_lo: list[float] = []
+    err_hi: list[float] = []
+    for m in methods:
+        sub = df[df["Method"] == m]["Switch"].values.astype(float)
+        mu, lo, hi = _bootstrap_ci(sub, rng=rng)
+        means.append(mu)
+        err_lo.append(mu - lo)
+        err_hi.append(hi - mu)
+
+    y = np.arange(len(methods), dtype=float)
+    fig_h = max(4.2, 0.38 * len(methods) + 1.2)
+    fig, ax = plt.subplots(figsize=(5.85, fig_h))
+
+    for i, m in enumerate(methods):
+        c = COLORS.get(m, "#444444")
+        ax.errorbar(
+            means[i],
+            y[i],
+            xerr=np.array([[err_lo[i]], [err_hi[i]]]),
+            fmt="o",
+            color=c,
+            ecolor=c,
+            capsize=2.8,
+            markersize=5.8,
+            elinewidth=1.05,
+            markeredgecolor="white",
+            markeredgewidth=0.55,
+            zorder=3,
+        )
+
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels, fontsize=7.4)
+    ax.set_xlabel("Bitrate switches per episode")
+    ax.set_title("Mean bitrate switches (bootstrap 95% CI)")
+    ax.grid(True, axis="x", alpha=0.45, linestyle="--")
+    pad = 0.55
+    ax.set_ylim(y.min() - pad, y.max() + pad)
     fig.tight_layout()
     _save(fig, out_dir, "fig_switches_violin")
     plt.close(fig)
@@ -326,7 +315,7 @@ def fig_shield_intervention(decisions: pd.DataFrame, out_dir: Path) -> None:
     fig, ax = plt.subplots(figsize=(5.0, 3.2))
     ax.barh(labels, vals, color=colors, edgecolor="white", linewidth=0.6, height=0.65)
     ax.set_xlabel("Shield intervention rate (% of chunk steps)")
-    ax.set_title("Runtime shield activity (v12)")
+    ax.set_title("Runtime shield activity")
     ax.grid(True, axis="x", alpha=0.45, linestyle="--")
     fig.tight_layout()
     _save(fig, out_dir, "fig_shield_intervention_rate")
@@ -355,7 +344,7 @@ def fig_ablation_bars(df: pd.DataFrame, out_dir: Path) -> None:
         ax.set_title(title)
         ax.tick_params(axis="x", rotation=18, labelsize=7.5)
         ax.grid(True, axis="y", alpha=0.45, linestyle="--")
-    fig.suptitle("Ablations vs. full proposed (v12 means)", fontsize=11, fontweight="600", y=1.02)
+    fig.suptitle("Ablations vs. full proposed (episode means)", fontsize=11, fontweight="600", y=1.02)
     fig.tight_layout()
     _save(fig, out_dir, "fig_ablation_qoe_rebuffer")
     plt.close(fig)
@@ -379,7 +368,7 @@ def fig_per_video_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
     ax.set_xticklabels([DISPLAY_NAME.get(c, c) for c in pv.columns], rotation=35, ha="right", fontsize=6.8)
     ax.set_yticks(range(len(pv.index)))
     ax.set_yticklabels(list(pv.index), fontsize=8)
-    ax.set_title("Mean QoE by test video (v12)")
+    ax.set_title("Mean QoE by test video")
     cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
     cbar.set_label("QoE")
     fig.tight_layout()
@@ -608,7 +597,7 @@ def export_latex_main_table(summary_wide: pd.DataFrame, tex_dir: Path) -> None:
     lines += [
         r"\bottomrule",
         r"\multicolumn{6}{l}{\footnotesize Interval: bootstrap 95\% CI on episode means ($n{=}80$ per row). "
-        r"$^{\dagger}$Shield-aware variant (higher switches in v12).}\\",
+        r"$^{\dagger}$Shield-aware variant (elevated bitrate switches).}\\",
         r"\end{tabular}",
     ]
     path = tex_dir / "table_main_results_ci.tex"

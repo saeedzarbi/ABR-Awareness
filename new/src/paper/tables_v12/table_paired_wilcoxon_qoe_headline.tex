@@ -1,0 +1,13 @@
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Method & \multicolumn{2}{c}{vs.\ Pensieve} & \multicolumn{2}{c}{vs.\ RobustMPC} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+ & med.\ $\Delta$QoE & $p$ & med.\ $\Delta$QoE & $p$ \\
+\midrule
+Ours: CMDP (no shield) & $6.0$ & $0.259$ & $8.6$ & $0.124$ \\
+Ours: + shield & $-59.4$ & $3.42\times10^{-10}$ & $-55.7$ & $1.34\times10^{-9}$ \\
+Ours: + risk-gate & $-42.6$ & $7.07\times10^{-7}$ & $-37.9$ & $6.90\times10^{-7}$ \\
+Ours: + shield-QoE$^{\dagger}$ & $-35.3$ & $4.94\times10^{-8}$ & $-40.9$ & $7.31\times10^{-6}$ \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize Two-sided paired Wilcoxon signed-rank; $\Delta$QoE is the per-episode paired difference (method minus baseline).} \\
+\end{tabular}

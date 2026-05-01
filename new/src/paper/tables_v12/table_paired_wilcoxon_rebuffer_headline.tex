@@ -1,0 +1,13 @@
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Method & \multicolumn{2}{c}{vs.\ Pensieve} & \multicolumn{2}{c}{vs.\ RobustMPC} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+ & med.\ $\Delta$Rebuf.\ (\%) & $p$ & med.\ $\Delta$Rebuf.\ (\%) & $p$ \\
+\midrule
+Ours: CMDP (no shield) & $-0.11$ & $0.310$ & $-11.11$ & $2.27\times10^{-12}$ \\
+Ours: + shield & $-10.25$ & $4.58\times10^{-14}$ & $-29.86$ & $7.85\times10^{-15}$ \\
+Ours: + risk-gate & $-10.39$ & $4.23\times10^{-14}$ & $-29.86$ & $7.85\times10^{-15}$ \\
+Ours: + shield-QoE$^{\dagger}$ & $-10.73$ & $7.90\times10^{-14}$ & $-30.23$ & $7.85\times10^{-15}$ \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize Same paired episodes; $\Delta$Rebuffer is the per-episode difference in reported mean rebuffer ratio (\%). Negative values favor the row method (fewer stalls).} \\
+\end{tabular}
