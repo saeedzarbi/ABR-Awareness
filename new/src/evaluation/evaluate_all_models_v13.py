@@ -146,6 +146,7 @@ def _soft_guard_cfg() -> ShieldConfigV13:
     return ShieldConfigV13(
         level="qoe",
         safety_tp_scale=_env_float("ABR_V13_TP_SCALE", 0.97),
+        min_guard_action=_env_int("ABR_V13_MIN_GUARD_ACTION", 1),
         risky_dl_over_buf_ratio=_env_float("ABR_V13_RISK_RATIO", 1.35),
         max_predicted_stall_s=_env_float("ABR_V13_ALLOWED_STALL", 0.25),
         max_downgrade_steps=_env_int("ABR_V13_MAX_DOWNGRADE", 2),
@@ -160,6 +161,7 @@ def _tight_guard_cfg() -> ShieldConfigV13:
     return ShieldConfigV13(
         level="qoe",
         safety_tp_scale=_env_float("ABR_V13_TIGHT_TP_SCALE", 0.95),
+        min_guard_action=_env_int("ABR_V13_TIGHT_MIN_GUARD_ACTION", 1),
         risky_dl_over_buf_ratio=_env_float("ABR_V13_TIGHT_RISK_RATIO", 1.15),
         max_predicted_stall_s=_env_float("ABR_V13_TIGHT_ALLOWED_STALL", 0.10),
         max_downgrade_steps=_env_int("ABR_V13_TIGHT_MAX_DOWNGRADE", 3),

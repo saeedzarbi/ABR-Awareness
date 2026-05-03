@@ -21,6 +21,7 @@ class ShieldConfigV13:
     safe_margin_strong: float = 0.75
     safety_tp_scale: float = 0.97
     critical_buffer_s: float = 0.20
+    min_guard_action: int = 1
 
     # Risk gate: leave the raw action untouched unless estimated download time
     # meaningfully exceeds buffered slack.
@@ -60,6 +61,8 @@ def safe_adjust_action_v13(env, action: int, cfg: ShieldConfigV13) -> tuple[int,
         if buf <= cfg.critical_buffer_s:
             return 0, int(raw_idx != 0), {"shield_reason": "critical_buffer", "shield_est_dl": None}
 
+        min_guard_action = max(0, min(int(cfg.min_guard_action), len(env.BITRATE_LEVELS) - 1))
+
         last_tp = float(getattr(env, "last_raw_throughput", 2000.0))
         tp_est = min(_trace_throughput_kbps(env), last_tp) * float(cfg.safety_tp_scale)
         tp_est = max(tp_est, float(env.MIN_NETWORK_THROUGHPUT))
@@ -90,26 +93,26 @@ def safe_adjust_action_v13(env, action: int, cfg: ShieldConfigV13) -> tuple[int,
 
             # If a bounded downgrade cannot satisfy the small-stall budget, fall
             # back to the highest representation that does.
-            for candidate in range(floor_idx - 1, -1, -1):
+            for candidate in range(floor_idx - 1, min_guard_action - 1, -1):
                 if dl_time_for(candidate) <= buf + max_stall:
                     diag["shield_reason"] = "qoe_fallback"
                     return candidate, int(candidate != raw_idx), diag
             diag["shield_reason"] = "qoe_safest"
-            return 0, int(raw_idx != 0), diag
+            return min_guard_action, int(raw_idx != min_guard_action), diag
 
         if cfg.level == "light":
             if raw_dl <= buf * cfg.catastrophic_ratio:
                 return raw_idx, 0, diag
-            for candidate in range(raw_idx - 1, -1, -1):
+            for candidate in range(raw_idx - 1, min_guard_action - 1, -1):
                 if dl_time_for(candidate) <= max(buf - cfg.safe_margin_light, 0.0):
                     diag["shield_reason"] = "light_project"
                     return candidate, 1, diag
             diag["shield_reason"] = "light_safest"
-            return 0, int(raw_idx != 0), diag
+            return min_guard_action, int(raw_idx != min_guard_action), diag
 
         original = raw_idx
         cur_idx = raw_idx
-        while cur_idx > 0 and dl_time_for(cur_idx) > max(buf - cfg.safe_margin_strong, 0.0):
+        while cur_idx > min_guard_action and dl_time_for(cur_idx) > max(buf - cfg.safe_margin_strong, 0.0):
             cur_idx -= 1
         diag["shield_reason"] = "strong_project"
         return cur_idx, int(cur_idx != original), diag

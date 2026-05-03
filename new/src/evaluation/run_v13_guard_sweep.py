@@ -36,6 +36,7 @@ def _set_guard_env(cfg: dict):
     os.environ["ABR_V13_ALLOWED_STALL"] = str(cfg["stall"])
     os.environ["ABR_V13_TP_SCALE"] = str(cfg["tp"])
     os.environ["ABR_V13_MAX_DOWNGRADE"] = str(cfg["down"])
+    os.environ["ABR_V13_MIN_GUARD_ACTION"] = "1"
     os.environ["ABR_V13_SMOOTH_RECOVERY"] = "1" if cfg["recovery"] > 0 else "0"
     os.environ["ABR_V13_RECOVERY_WINDOW"] = str(cfg["recovery"])
 
