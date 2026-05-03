@@ -149,6 +149,10 @@ def _shield_cfg() -> ShieldConfigV13:
         risky_dl_over_buf_ratio=float(os.environ.get("ABR_V13_RISK_RATIO", "1.35")),
         max_predicted_stall_s=float(os.environ.get("ABR_V13_ALLOWED_STALL", "0.25")),
         max_downgrade_steps=int(os.environ.get("ABR_V13_MAX_DOWNGRADE", "2")),
+        smooth_recovery=os.environ.get("ABR_V13_SMOOTH_RECOVERY", "1").strip().lower() in {"1", "true", "yes"},
+        recovery_window=int(os.environ.get("ABR_V13_RECOVERY_WINDOW", "3")),
+        max_recovery_upshift=int(os.environ.get("ABR_V13_MAX_RECOVERY_UPSHIFT", "1")),
+        recovery_buffer_s=float(os.environ.get("ABR_V13_RECOVERY_BUFFER", "6.0")),
     )
 
 

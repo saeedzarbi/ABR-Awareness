@@ -23,9 +23,10 @@ PATHS = get_paths()
 
 
 SWEEP = [
-    {"name": "tight", "risk": 1.15, "stall": 0.10, "tp": 0.95, "down": 3},
-    {"name": "balanced", "risk": 1.35, "stall": 0.25, "tp": 0.97, "down": 2},
-    {"name": "qoe_hi", "risk": 1.55, "stall": 0.40, "tp": 1.00, "down": 1},
+    {"name": "tight", "risk": 1.15, "stall": 0.10, "tp": 0.95, "down": 3, "recovery": 3},
+    {"name": "balanced", "risk": 1.35, "stall": 0.25, "tp": 0.97, "down": 2, "recovery": 3},
+    {"name": "qoe_hi", "risk": 1.55, "stall": 0.40, "tp": 1.00, "down": 1, "recovery": 2},
+    {"name": "qoe_no_smooth", "risk": 1.55, "stall": 0.40, "tp": 1.00, "down": 1, "recovery": 0},
 ]
 
 
@@ -35,6 +36,8 @@ def _set_guard_env(cfg: dict):
     os.environ["ABR_V13_ALLOWED_STALL"] = str(cfg["stall"])
     os.environ["ABR_V13_TP_SCALE"] = str(cfg["tp"])
     os.environ["ABR_V13_MAX_DOWNGRADE"] = str(cfg["down"])
+    os.environ["ABR_V13_SMOOTH_RECOVERY"] = "1" if cfg["recovery"] > 0 else "0"
+    os.environ["ABR_V13_RECOVERY_WINDOW"] = str(cfg["recovery"])
 
 
 def main():

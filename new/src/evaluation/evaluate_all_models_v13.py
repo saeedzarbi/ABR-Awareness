@@ -135,6 +135,13 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _soft_guard_cfg() -> ShieldConfigV13:
     return ShieldConfigV13(
         level="qoe",
@@ -142,6 +149,10 @@ def _soft_guard_cfg() -> ShieldConfigV13:
         risky_dl_over_buf_ratio=_env_float("ABR_V13_RISK_RATIO", 1.35),
         max_predicted_stall_s=_env_float("ABR_V13_ALLOWED_STALL", 0.25),
         max_downgrade_steps=_env_int("ABR_V13_MAX_DOWNGRADE", 2),
+        smooth_recovery=_env_bool("ABR_V13_SMOOTH_RECOVERY", True),
+        recovery_window=_env_int("ABR_V13_RECOVERY_WINDOW", 3),
+        max_recovery_upshift=_env_int("ABR_V13_MAX_RECOVERY_UPSHIFT", 1),
+        recovery_buffer_s=_env_float("ABR_V13_RECOVERY_BUFFER", 6.0),
     )
 
 
@@ -152,6 +163,10 @@ def _tight_guard_cfg() -> ShieldConfigV13:
         risky_dl_over_buf_ratio=_env_float("ABR_V13_TIGHT_RISK_RATIO", 1.15),
         max_predicted_stall_s=_env_float("ABR_V13_TIGHT_ALLOWED_STALL", 0.10),
         max_downgrade_steps=_env_int("ABR_V13_TIGHT_MAX_DOWNGRADE", 3),
+        smooth_recovery=_env_bool("ABR_V13_TIGHT_SMOOTH_RECOVERY", True),
+        recovery_window=_env_int("ABR_V13_TIGHT_RECOVERY_WINDOW", 3),
+        max_recovery_upshift=_env_int("ABR_V13_TIGHT_MAX_RECOVERY_UPSHIFT", 1),
+        recovery_buffer_s=_env_float("ABR_V13_TIGHT_RECOVERY_BUFFER", 6.0),
     )
 
 

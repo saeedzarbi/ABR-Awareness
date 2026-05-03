@@ -31,6 +31,12 @@ class ShieldConfigV13:
     max_predicted_stall_s: float = 0.25
     max_downgrade_steps: int = 2
 
+    # Avoid bitrate ping-pong after a guard intervention.
+    smooth_recovery: bool = True
+    recovery_window: int = 3
+    max_recovery_upshift: int = 1
+    recovery_buffer_s: float = 6.0
+
 
 def _trace_throughput_kbps(env) -> float:
     trace_tp = getattr(env, "current_trace", None)
@@ -119,6 +125,8 @@ class SafetyShieldWrapperV13(gym.Wrapper):
         self.cfg = cfg
         self.interventions = 0
         self.steps = 0
+        self.last_safe_action = 0
+        self.recovery_steps = 0
 
     def __getattr__(self, name):
         return getattr(self.env, name)
@@ -127,14 +135,33 @@ class SafetyShieldWrapperV13(gym.Wrapper):
         obs, info = self.env.reset(**kwargs)
         self.interventions = 0
         self.steps = 0
+        self.last_safe_action = 0
+        self.recovery_steps = 0
         info = dict(info)
         info["shield_intervention_rate"] = 0.0
         return obs, info
 
     def step(self, action):
         safe_action, intervened, diag = safe_adjust_action_v13(self.env, action, self.cfg)
+
+        if self.cfg.smooth_recovery and self.steps > 0:
+            buf = float(getattr(self.env, "buffer_level", 0.0))
+            max_up = max(int(self.cfg.max_recovery_upshift), 1)
+            recovery_cap = min(len(self.env.BITRATE_LEVELS) - 1, int(self.last_safe_action) + max_up)
+            in_recovery = self.recovery_steps > 0 and buf < float(self.cfg.recovery_buffer_s)
+            if in_recovery and int(safe_action) > recovery_cap:
+                safe_action = recovery_cap
+                intervened = int(int(safe_action) != int(action))
+                diag["shield_reason"] = "smooth_recovery"
+
+        if intervened:
+            self.recovery_steps = max(int(self.cfg.recovery_window), 0)
+        elif self.recovery_steps > 0:
+            self.recovery_steps -= 1
+
         self.interventions += int(intervened)
         self.steps += 1
+        self.last_safe_action = int(safe_action)
 
         obs, reward, terminated, truncated, info = self.env.step(safe_action)
         info = dict(info)
