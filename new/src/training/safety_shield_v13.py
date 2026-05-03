@@ -85,7 +85,7 @@ def safe_adjust_action_v13(env, action: int, cfg: ShieldConfigV13) -> tuple[int,
 
         if cfg.level == "qoe":
             max_stall = max(float(cfg.max_predicted_stall_s), 0.0)
-            floor_idx = max(0, raw_idx - max(int(cfg.max_downgrade_steps), 0))
+            floor_idx = max(min_guard_action, raw_idx - max(int(cfg.max_downgrade_steps), 0))
             for candidate in range(raw_idx, floor_idx - 1, -1):
                 if dl_time_for(candidate) <= buf + max_stall:
                     diag["shield_reason"] = "qoe_budget"
