@@ -22,6 +22,8 @@ class ShieldConfigV13:
     safety_tp_scale: float = 0.97
     critical_buffer_s: float = 0.20
     min_guard_action: int = 1
+    emergency_zero: bool = True
+    emergency_zero_stall_s: float = 1.25
 
     # Risk gate: leave the raw action untouched unless estimated download time
     # meaningfully exceeds buffered slack.
@@ -97,6 +99,13 @@ def safe_adjust_action_v13(env, action: int, cfg: ShieldConfigV13) -> tuple[int,
                 if dl_time_for(candidate) <= buf + max_stall:
                     diag["shield_reason"] = "qoe_fallback"
                     return candidate, int(candidate != raw_idx), diag
+
+            if cfg.emergency_zero and min_guard_action > 0:
+                min_guard_stall = max(0.0, dl_time_for(min_guard_action) - buf)
+                if min_guard_stall > max(float(cfg.emergency_zero_stall_s), 0.0):
+                    diag["shield_reason"] = "emergency_zero"
+                    return 0, int(raw_idx != 0), diag
+
             diag["shield_reason"] = "qoe_safest"
             return min_guard_action, int(raw_idx != min_guard_action), diag
 

@@ -146,6 +146,8 @@ def _shield_cfg() -> ShieldConfigV13:
         safety_tp_scale=float(os.environ.get("ABR_V13_TP_SCALE", "0.97")),
         critical_buffer_s=float(os.environ.get("ABR_V13_CRITICAL_BUFFER", "0.20")),
         min_guard_action=int(os.environ.get("ABR_V13_MIN_GUARD_ACTION", "1")),
+        emergency_zero=os.environ.get("ABR_V13_EMERGENCY_ZERO", "1").strip().lower() in {"1", "true", "yes"},
+        emergency_zero_stall_s=float(os.environ.get("ABR_V13_EMERGENCY_ZERO_STALL", "1.25")),
         only_when_risky=os.environ.get("ABR_V13_RISK_GATE", "1").strip().lower() in {"1", "true", "yes"},
         risky_dl_over_buf_ratio=float(os.environ.get("ABR_V13_RISK_RATIO", "1.35")),
         max_predicted_stall_s=float(os.environ.get("ABR_V13_ALLOWED_STALL", "0.25")),

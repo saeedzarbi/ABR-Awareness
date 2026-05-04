@@ -23,10 +23,10 @@ PATHS = get_paths()
 
 
 SWEEP = [
-    {"name": "tight", "risk": 1.15, "stall": 0.10, "tp": 0.95, "down": 3, "recovery": 3},
-    {"name": "balanced", "risk": 1.35, "stall": 0.25, "tp": 0.97, "down": 2, "recovery": 3},
-    {"name": "qoe_hi", "risk": 1.55, "stall": 0.40, "tp": 1.00, "down": 1, "recovery": 2},
-    {"name": "qoe_no_smooth", "risk": 1.55, "stall": 0.40, "tp": 1.00, "down": 1, "recovery": 0},
+    {"name": "ez_strong", "risk": 1.25, "stall": 0.20, "tp": 0.97, "down": 2, "recovery": 2, "ez": 0.75},
+    {"name": "ez_mid", "risk": 1.35, "stall": 0.30, "tp": 0.98, "down": 2, "recovery": 2, "ez": 1.25},
+    {"name": "ez_qoe", "risk": 1.50, "stall": 0.40, "tp": 1.00, "down": 1, "recovery": 1, "ez": 2.00},
+    {"name": "no_zero_qoe", "risk": 1.55, "stall": 0.40, "tp": 1.00, "down": 1, "recovery": 0, "ez": None},
 ]
 
 
@@ -37,6 +37,9 @@ def _set_guard_env(cfg: dict):
     os.environ["ABR_V13_TP_SCALE"] = str(cfg["tp"])
     os.environ["ABR_V13_MAX_DOWNGRADE"] = str(cfg["down"])
     os.environ["ABR_V13_MIN_GUARD_ACTION"] = "1"
+    os.environ["ABR_V13_EMERGENCY_ZERO"] = "0" if cfg["ez"] is None else "1"
+    if cfg["ez"] is not None:
+        os.environ["ABR_V13_EMERGENCY_ZERO_STALL"] = str(cfg["ez"])
     os.environ["ABR_V13_SMOOTH_RECOVERY"] = "1" if cfg["recovery"] > 0 else "0"
     os.environ["ABR_V13_RECOVERY_WINDOW"] = str(cfg["recovery"])
 
@@ -60,6 +63,7 @@ def main():
         grouped.insert(2, "AllowedStall", cfg["stall"])
         grouped.insert(3, "TPScale", cfg["tp"])
         grouped.insert(4, "MaxDowngrade", cfg["down"])
+        grouped.insert(5, "EmergencyZeroStall", cfg["ez"] if cfg["ez"] is not None else "off")
         summaries.append(grouped)
 
     if summaries:
