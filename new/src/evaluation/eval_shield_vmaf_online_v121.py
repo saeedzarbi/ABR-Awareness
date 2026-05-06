@@ -199,6 +199,27 @@ def build_shield_grid(quick: bool = False) -> dict[str, ShieldConfig]:
             level="light", lookahead_horizon=int(h), lookahead_min_buffer=1.0,
             vmaf_aware=True, soft_tolerance=1.0, vmaf_loss_budget=8.0,
         )
+
+    # Threshold sweep (V12.3): make the shield more permissive by raising the
+    # catastrophic ratio and the risky-gate ratio. Goal: trade a small Rebuf
+    # increase for a big QoE recovery, walking the Pareto front.
+    for cat in [2.0, 3.0, 4.0, 5.0]:
+        key = f"thresh_cat{cat:.1f}"
+        cfgs[key] = ShieldConfig(level="light", catastrophic_ratio=float(cat))
+    for cat, rg in [(3.0, 1.30), (3.0, 1.50), (4.0, 1.50), (4.0, 2.00),
+                    (5.0, 1.50), (5.0, 2.00)]:
+        key = f"thresh_cat{cat:.1f}_rg{rg:.2f}"
+        cfgs[key] = ShieldConfig(
+            level="light", catastrophic_ratio=float(cat),
+            only_when_risky=True, risky_dl_over_buf_ratio=float(rg),
+        )
+    # Permissive shield + VMAF-aware fallback (best of both)
+    for cat in [3.0, 4.0]:
+        key = f"thresh_cat{cat:.1f}_vmafFB"
+        cfgs[key] = ShieldConfig(
+            level="light", catastrophic_ratio=float(cat),
+            vmaf_aware=True, soft_tolerance=1.2, vmaf_loss_budget=8.0,
+        )
     return cfgs
 
 
