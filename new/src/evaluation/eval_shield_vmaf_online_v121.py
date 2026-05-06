@@ -137,23 +137,29 @@ def build_shield_grid(quick: bool = False) -> dict[str, ShieldConfig]:
     )
 
     if quick:
-        # Compact grid: 3 representative VMAF-aware points
-        for tol, budget in [(1.0, 8.0), (1.2, 8.0), (1.2, 12.0)]:
+        # Compact grid: representative VMAF-aware and lookahead points
+        for tol, budget in [(1.0, 8.0), (1.2, 12.0)]:
             key = f"vmaf_aware_tol{tol:.1f}_bud{int(budget):02d}"
             cfgs[key] = ShieldConfig(
                 level="light", vmaf_aware=True,
                 soft_tolerance=float(tol), vmaf_loss_budget=float(budget),
             )
-        for tol, budget in [(1.2, 8.0), (1.2, 12.0)]:
-            key = f"vmaf_riskgate_tol{tol:.1f}_bud{int(budget):02d}"
+        # Lookahead-Rollout gates (V12.2)
+        for h, mb in [(2, 0.5), (3, 0.5), (3, 1.0), (5, 1.0)]:
+            key = f"lookahead_h{h}_mb{mb:.1f}"
             cfgs[key] = ShieldConfig(
-                level="light", vmaf_aware=True,
-                soft_tolerance=float(tol), vmaf_loss_budget=float(budget),
-                only_when_risky=True, risky_dl_over_buf_ratio=1.10,
+                level="light", lookahead_horizon=int(h),
+                lookahead_min_buffer=float(mb),
             )
+        # Lookahead + VMAF-aware fallback when rollout fails
+        cfgs["lookahead_h3_mb1.0_vmafFB"] = ShieldConfig(
+            level="light", lookahead_horizon=3, lookahead_min_buffer=1.0,
+            vmaf_aware=True, soft_tolerance=1.0, vmaf_loss_budget=8.0,
+        )
         return cfgs
 
-    # Full grid
+    # Full grid -------------------------------------------------------
+    # VMAF-aware sweep
     for tol in [0.8, 1.0, 1.2, 1.5]:
         for budget in [4.0, 8.0, 12.0]:
             key = f"vmaf_aware_tol{tol:.1f}_bud{int(budget):02d}"
@@ -169,6 +175,30 @@ def build_shield_grid(quick: bool = False) -> dict[str, ShieldConfig]:
                 soft_tolerance=float(tol), vmaf_loss_budget=float(budget),
                 only_when_risky=True, risky_dl_over_buf_ratio=1.10,
             )
+
+    # Lookahead-Rollout sweep (V12.2)
+    for h in [2, 3, 5]:
+        for mb in [0.5, 1.0, 1.5]:
+            key = f"lookahead_h{h}_mb{mb:.1f}"
+            cfgs[key] = ShieldConfig(
+                level="light", lookahead_horizon=int(h),
+                lookahead_min_buffer=float(mb),
+            )
+    # Lookahead with a less-pessimistic rollout throughput
+    for h in [3, 5]:
+        for ts in [1.0, 0.95]:
+            key = f"lookahead_h{h}_mb1.0_ts{ts:.2f}"
+            cfgs[key] = ShieldConfig(
+                level="light", lookahead_horizon=int(h),
+                lookahead_min_buffer=1.0, lookahead_tp_scale=float(ts),
+            )
+    # Lookahead + VMAF-aware fallback (composite)
+    for h in [2, 3, 5]:
+        key = f"lookahead_h{h}_mb1.0_vmafFB"
+        cfgs[key] = ShieldConfig(
+            level="light", lookahead_horizon=int(h), lookahead_min_buffer=1.0,
+            vmaf_aware=True, soft_tolerance=1.0, vmaf_loss_budget=8.0,
+        )
     return cfgs
 
 

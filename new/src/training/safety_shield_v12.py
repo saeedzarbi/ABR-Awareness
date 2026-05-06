@@ -43,6 +43,21 @@ class ShieldConfig:
     # candidate with smallest VMAF loss subject to soft safety.
     vmaf_loss_budget: float = 8.0
 
+    # ---- Lookahead-Rollout Gate (V12.2) ----
+    # When > 0 the shield first simulates the next `lookahead_horizon` chunks
+    # under the policy's raw action using pessimistic throughput. If buffer
+    # never drops below `lookahead_min_buffer` and no stall occurs, the raw
+    # action is passed through unchanged (no intervention). This reduces
+    # intervention frequency without weakening the fallback for truly risky
+    # actions, where the rest of the pipeline (vmaf_aware / legacy) still
+    # applies. Set to 0 to disable.
+    lookahead_horizon: int = 0
+    lookahead_min_buffer: float = 0.5
+    # Throughput pessimism specifically for the rollout. If <=0 we reuse
+    # `safety_tp_scale`. Otherwise this allows a slightly less pessimistic
+    # rollout (e.g. 1.0 = trust trace, 0.9 = -10%).
+    lookahead_tp_scale: float = 0.0
+
 
 def _vmaf_for_idx(env, idx: int) -> float:
     """Per-video VMAF lookup; falls back to a monotone proxy if unavailable."""
@@ -91,6 +106,35 @@ def safe_adjust_action(env, action: int, cfg: ShieldConfig) -> tuple[int, int]:
         if cfg.only_when_risky:
             dt_req = dl_time_for(cur_idx)
             if dt_req <= max(buf, 0.1) * cfg.risky_dl_over_buf_ratio:
+                return cur_idx, 0
+
+        # ============================================================
+        # Lookahead-Rollout Gate (V12.2)
+        # ------------------------------------------------------------
+        # Simulate the next H chunks under the policy's raw action with a
+        # pessimistic throughput estimate. If buffer never drops below the
+        # configured floor, accept the raw action. Otherwise fall through
+        # to the regular intervention pipeline below.
+        # ============================================================
+        if cfg.lookahead_horizon and cfg.lookahead_horizon > 0:
+            la_scale = cfg.lookahead_tp_scale if cfg.lookahead_tp_scale > 0 else cfg.safety_tp_scale
+            la_tp = min(trace_tp_val, last_tp) * la_scale
+            la_tp = max(la_tp, env.MIN_NETWORK_THROUGHPUT)
+            br_kbps = int(env.BITRATE_LEVELS[cur_idx])
+            buf_sim = float(buf)
+            safe_under_lookahead = True
+            for h in range(int(cfg.lookahead_horizon)):
+                cidx_h = min(env.chunk_idx + h, env.max_chunks - 1)
+                bits_h = env.get_chunk_size_bits(br_kbps, cidx_h)
+                dt_h = min(bits_h / (la_tp * 1000.0 + 1e-6), 60.0)
+                if dt_h > buf_sim:
+                    safe_under_lookahead = False
+                    break
+                buf_sim = max(0.0, buf_sim - dt_h) + env.CHUNK_DURATION
+                if buf_sim < cfg.lookahead_min_buffer:
+                    safe_under_lookahead = False
+                    break
+            if safe_under_lookahead:
                 return cur_idx, 0
 
         # ============================================================
