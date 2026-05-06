@@ -29,6 +29,33 @@ class ShieldConfig:
     only_when_risky: bool = False
     risky_dl_over_buf_ratio: float = 1.10
 
+    # ---- VMAF-Aware Soft Projection (V12.1) ----
+    # When True the shield uses a per-video VMAF-aware fallback:
+    #  (1) soft buffer tolerance instead of hard "buf - margin" threshold,
+    #  (2) VMAF-loss budget that prevents dropping bitrate too far when
+    #      the per-video VMAF curve is concave (e.g. crowd_run).
+    vmaf_aware: bool = False
+    # Soft tolerance: candidate j is acceptable if dl_time(j) <= buf * soft_tolerance.
+    # 1.0 = stay within current buffer; 1.2 = allow mild risk to keep VMAF.
+    soft_tolerance: float = 1.0
+    # Maximum VMAF the shield is allowed to give up vs the policy's raw choice.
+    # If no soft-safe candidate keeps VMAF within this budget, we pick the
+    # candidate with smallest VMAF loss subject to soft safety.
+    vmaf_loss_budget: float = 8.0
+
+
+def _vmaf_for_idx(env, idx: int) -> float:
+    """Per-video VMAF lookup; falls back to a monotone proxy if unavailable."""
+    try:
+        br = int(env.BITRATE_LEVELS[idx])
+        scores = getattr(env, "current_vmaf_scores", None)
+        if scores:
+            return float(scores.get(br, 35.0))
+    except Exception:
+        pass
+    # Monotone fallback: index-proportional score so logic still makes sense.
+    return float(idx) * 10.0
+
 
 def safe_adjust_action(env, action: int, cfg: ShieldConfig) -> tuple[int, int]:
     """
@@ -66,6 +93,51 @@ def safe_adjust_action(env, action: int, cfg: ShieldConfig) -> tuple[int, int]:
             if dt_req <= max(buf, 0.1) * cfg.risky_dl_over_buf_ratio:
                 return cur_idx, 0
 
+        # ============================================================
+        # VMAF-Aware Soft Projection (V12.1)
+        # ------------------------------------------------------------
+        # Replaces the linear "step-down with hard margin" fallback by:
+        #   1) soft tolerance: dl_time(j) <= buf * soft_tolerance
+        #      (instead of dl_time(j) <= buf - margin)
+        #   2) VMAF-loss budget: among candidates that pass (1), prefer
+        #      those whose per-video VMAF stays within `vmaf_loss_budget`
+        #      of the policy's raw choice. If none qualify, pick the one
+        #      with the smallest VMAF loss subject to soft safety.
+        # This addresses concave per-video VMAF curves where stepping
+        # down can be very cheap (sintel: 1850->1200 = -0.12 VMAF) or
+        # very expensive (crowd_run: 1850->1200 = -8.09 VMAF).
+        # ============================================================
+        if cfg.vmaf_aware:
+            cur_dt = dl_time_for(cur_idx)
+            if cur_dt <= buf * cfg.catastrophic_ratio:
+                # Already within catastrophic ratio: no intervention.
+                return cur_idx, 0
+
+            cur_vmaf = _vmaf_for_idx(env, cur_idx)
+            soft_thresh = buf * cfg.soft_tolerance
+
+            # Build candidates over indices [0, cur_idx]; never upgrade.
+            soft_safe = []  # (idx, dt, vmaf, vmaf_loss)
+            for j in range(cur_idx + 1):
+                dt_j = dl_time_for(j)
+                if dt_j <= soft_thresh:
+                    vmaf_j = _vmaf_for_idx(env, j)
+                    soft_safe.append((j, dt_j, vmaf_j, max(0.0, cur_vmaf - vmaf_j)))
+
+            if soft_safe:
+                # Prefer candidates within VMAF-loss budget; among those,
+                # pick the one with the highest index (== highest bitrate that
+                # is still soft-safe, == best VMAF in monotone ladders).
+                in_budget = [c for c in soft_safe if c[3] <= cfg.vmaf_loss_budget]
+                pool = in_budget if in_budget else soft_safe
+                # Tie-break: highest VMAF, then highest index, then smallest dt.
+                best = max(pool, key=lambda x: (x[2], x[0], -x[1]))
+                return best[0], int(best[0] != cur_idx)
+
+            # No soft-safe option in [0, cur_idx]: emergency fallback.
+            return 0, int(cur_idx != 0)
+
+        # ---- Legacy V12 logic (unchanged) ----
         if cfg.level == "light":
             dt = dl_time_for(cur_idx)
             if dt > buf * cfg.catastrophic_ratio:
