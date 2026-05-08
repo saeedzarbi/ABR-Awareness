@@ -16,8 +16,8 @@ import pandas as pd
 from scipy.stats import wilcoxon
 
 ROOT = Path(__file__).resolve().parents[2]
-EPISODES_CSV = ROOT / "results" / "v5g_shielded_qoe" / "online_episodes.csv"
-OUT_CSV = ROOT / "results" / "v5g_shielded_qoe" / "paired_wilcoxon.csv"
+EPISODES_CSV = ROOT / "results" / "v5g_stress_shielded_qoe" / "online_episodes.csv"
+OUT_CSV = ROOT / "results" / "v5g_stress_shielded_qoe" / "paired_wilcoxon.csv"
 
 ANCHORS = ["shield_legacy", "shield_off"]
 TARGETS = [
