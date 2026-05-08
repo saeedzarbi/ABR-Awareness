@@ -1,0 +1,9 @@
+target,anchor,n,delta_mean_QoE,delta_median_QoE,wilcoxon_p_QoE,delta_mean_Rebuffer,delta_median_Rebuffer,wilcoxon_p_Rebuffer,delta_mean_VMAF,delta_median_VMAF,wilcoxon_p_VMAF
+vmaf_aware_tol1.0_bud08,shield_legacy,80,34.599,17.2795,8.1026e-07,-2.26624,0,2.84655e-06,0.0634479,0,0.421949
+vmaf_aware_tol1.0_bud08,shield_off,80,455.147,474.006,2.51594e-11,-50.6219,-52.1376,5.14375e-11,-1.11729,-0.873958,8.47001e-11
+vmaf_aware_tol0.8_bud08,shield_legacy,80,39.8511,23.1183,3.87184e-05,-2.3757,-0.477656,4.42848e-06,0.0140521,0,0.714682
+vmaf_aware_tol0.8_bud08,shield_off,80,460.399,473.419,2.51594e-11,-50.7313,-52.5779,5.14375e-11,-1.16668,-1.03854,8.47001e-11
+thresh_cat3.0_vmafFB,shield_legacy,80,-52.6552,-33.7773,7.21567e-08,7.01995,3.16943,2.63593e-08,0.14788,0.0304167,1.65407e-05
+thresh_cat3.0_vmafFB,shield_off,80,367.892,313.48,3.50487e-11,-41.3357,-35.4779,5.14375e-11,-1.03285,-0.812083,4.10047e-11
+thresh_cat4.0_vmafFB,shield_legacy,80,-126.28,-99.9159,1.23651e-10,14.9583,13.3452,1.62507e-10,0.215411,0.0445833,1.65395e-06
+thresh_cat4.0_vmafFB,shield_off,80,294.267,215.331,1.44099e-10,-33.3974,-25.5541,1.17055e-10,-0.965323,-0.846458,1.29433e-10

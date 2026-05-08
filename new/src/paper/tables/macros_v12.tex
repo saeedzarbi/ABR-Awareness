@@ -16,31 +16,31 @@
 
 % ---- Same-policy shield variants (this paper, v123) ----
 % Anchor (legacy index-decrement projection, same policy, same traces).
-\providecommand{\VQoLegacy}{2498.63}
-\providecommand{\VRbLegacy}{6.05}
-\providecommand{\VVmLegacy}{66.02}
-\providecommand{\VIntervLegacy}{3.46}
+\providecommand{\VQoLegacy}{2518.87}
+\providecommand{\VRbLegacy}{5.67}
+\providecommand{\VVmLegacy}{65.82}
+\providecommand{\VIntervLegacy}{3.23}
 
 % Headline: VMAF-aware tol=1.0 (recommended).
-\providecommand{\VQoVmAwareOne}{2552.17}
-\providecommand{\VRbVmAwareOne}{4.99}
-\providecommand{\VVmVmAwareOne}{66.24}
-\providecommand{\VIntervVmAwareOne}{3.18}
+\providecommand{\VQoVmAwareOne}{2561.00}
+\providecommand{\VRbVmAwareOne}{5.12}
+\providecommand{\VVmVmAwareOne}{66.04}
+\providecommand{\VIntervVmAwareOne}{2.71}
 
-% Strongest QoE win: VMAF-aware tol=0.8 (tighter VMAF preservation budget).
-\providecommand{\VQoVmAwareEpt}{2545.14}
-\providecommand{\VRbVmAwareEpt}{4.89}
-\providecommand{\VVmVmAwareEpt}{66.28}
-\providecommand{\VIntervVmAwareEpt}{3.18}
+% Strongest triple win (+ paired QoE): VMAF-aware tol=0.8 (bud 8).
+\providecommand{\VQoVmAwareEpt}{2583.70}
+\providecommand{\VRbVmAwareEpt}{4.98}
+\providecommand{\VVmVmAwareEpt}{66.13}
+\providecommand{\VIntervVmAwareEpt}{2.79}
 
 % Looser tolerance points (sweep)
-\providecommand{\VQoVmAwareTwl}{2539.53}
-\providecommand{\VRbVmAwareTwl}{5.14}
-\providecommand{\VVmVmAwareTwl}{66.12}
+\providecommand{\VQoVmAwareTwl}{2546.86}
+\providecommand{\VRbVmAwareTwl}{5.03}
+\providecommand{\VVmVmAwareTwl}{65.89}
 
-\providecommand{\VQoVmAwareFvt}{2513.93}
-\providecommand{\VRbVmAwareFvt}{5.64}
-\providecommand{\VVmVmAwareFvt}{66.09}
+\providecommand{\VQoVmAwareFvt}{2532.23}
+\providecommand{\VRbVmAwareFvt}{5.21}
+\providecommand{\VVmVmAwareFvt}{65.86}
 
 % Threshold sweep (with VMAF-aware fallback)
 \providecommand{\VQoThreshThreeVmafFB}{2542.14}
@@ -60,15 +60,15 @@
 \providecommand{\VRbThreshFive}{10.50}
 
 % Shield off (co-design dependence)
-\providecommand{\VQoOff}{2549.73}
-\providecommand{\VRbOff}{11.74}
-\providecommand{\VVmOff}{66.95}
+\providecommand{\VQoOff}{2563.72}
+\providecommand{\VRbOff}{11.04}
+\providecommand{\VVmOff}{66.55}
 
 % Family span (used in abstract / intro)
-\providecommand{\VRbFamilyLo}{4.89}
+\providecommand{\VRbFamilyLo}{4.98}
 \providecommand{\VRbFamilyHi}{10.50}
-\providecommand{\VQoFamilyLo}{2498.63}
-\providecommand{\VQoFamilyHi}{2552.17}
+\providecommand{\VQoFamilyLo}{2518.87}
+\providecommand{\VQoFamilyHi}{2583.70}
 
 % ---- Headline paired Wilcoxon (vs shield_legacy, n=80) ----
 % vmaf_aware_tol1.0_bud08 (recommended op-point)
@@ -94,8 +94,8 @@
 % ---- vs Pensieve / RobustMPC (mean-level cross-policy comparison) ----
 % These are absolute mean differences; pairing across distinct trained policies
 % is left to the discussion (different policies, same trace seeds in evaluation).
-\providecommand{\VRbReductionVsPen}{10.00}     % 14.99 - 4.99
-\providecommand{\VRbReductionVsMPC}{25.71}     % 30.70 - 4.99
+\providecommand{\VRbReductionVsPen}{9.87}     % 14.99 - 5.12 (recommended vmaf-aware tol 1.0)
+\providecommand{\VRbReductionVsMPC}{25.58}     % 30.70 - 5.12 (recommended vmaf-aware tol 1.0)
 
 % ---- Structural finding ----
 \providecommand{\VShieldVariants}{47}
@@ -132,5 +132,23 @@
 \providecommand{\VPairedPQoEMPC}{0.001}
 \providecommand{\VPairedDRbMPC}{-25.71}
 \providecommand{\VPairedPRbMPC}{1.0\!\times\!10^{-15}}
+
+% ---- OOD: synthetic 5G/mmWave stress traces (same policy/seeds/harness as Sec.~\ref{sec:eval}) ----
+% Source: results/v5g_stress_shielded_qoe/online_summary.csv + paired_wilcoxon.csv
+% Paired vmaf_aware_tol0.8_bud08 vs shield_legacy, n=\VNepisodes{}.
+\providecommand{\VFiveGRbShieldOff}{70.26}
+\providecommand{\VFiveGRbShieldLegacy}{21.91}
+\providecommand{\VFiveGPairedDQoE}{+39.85}
+\providecommand{\VFiveGPairedPQoE}{3.9\!\times\!10^{-5}}
+\providecommand{\VFiveGPairedDRb}{-2.38}
+\providecommand{\VFiveGPairedPRb}{4.4\!\times\!10^{-6}}
+\providecommand{\VFiveGPairedDVm}{+0.01}
+\providecommand{\VFiveGPairedPVm}{0.715}
+% Secondary op-point (\(\tau{=}1.0\)): strong QoE/rebuffer pairing; VMAF similarly indistinguishable from legacy.
+\providecommand{\VFiveGPairedDQoEten}{+34.60}
+\providecommand{\VFiveGPairedPQoEten}{8.1\!\times\!10^{-7}}
+\providecommand{\VFiveGPairedDRbten}{-2.27}
+\providecommand{\VFiveGPairedPRbten}{2.8\!\times\!10^{-6}}
+\providecommand{\VFiveGPairedPVmten}{0.422}
 
 \makeatother
