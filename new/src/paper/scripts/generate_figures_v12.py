@@ -7,13 +7,13 @@ Inputs (default paths relative to repo new/):
   results/decision_log_v12_v12_policy.csv
 
 Outputs:
-  new/src/paper/figures_v12/*.pdf and *.png
-  new/src/paper/figures_v12/summary_bootstrap_v12.csv
-  new/src/paper/tables_v12/table_main_results_ci.tex
-  new/src/paper/tables_v12/table_paired_wilcoxon_qoe_headline.tex
-  new/src/paper/tables_v12/table_paired_wilcoxon_rebuffer_headline.tex
-  new/src/paper/tables_v12/macros_v12.tex (abstract-ready scalars)
-  new/src/paper/tables_v12/paired_wilcoxon_v12.csv
+  new/src/paper/figures/*.pdf and *.png
+  new/src/paper/figures/summary_bootstrap_v12.csv
+  new/src/paper/tables/table_main_results_ci.tex
+  new/src/paper/tables/table_paired_wilcoxon_qoe_headline.tex
+  new/src/paper/tables/table_paired_wilcoxon_rebuffer_headline.tex
+  new/src/paper/tables/macros_v12.tex (abstract-ready scalars)
+  new/src/paper/tables/paired_wilcoxon_v12.csv
 
 Usage:
   python new/src/paper/scripts/generate_figures_v12.py
@@ -782,8 +782,8 @@ def main() -> None:
     stats_path = args.stats or (new_root / "results" / "detailed_stats_master_v12_v12_policy.csv")
     dec_path = args.decisions or (new_root / "results" / "decision_log_v12_v12_policy.csv")
     paper_dir = Path(__file__).resolve().parents[1]
-    out_dir = args.out or (paper_dir / "figures_v12")
-    tables_dir = paper_dir / "tables_v12"
+    out_dir = args.out or (paper_dir / "figures")
+    tables_dir = paper_dir / "tables"
 
     _setup_matplotlib()
     df = pd.read_csv(stats_path)

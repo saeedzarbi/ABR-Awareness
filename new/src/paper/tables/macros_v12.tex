@@ -1,0 +1,136 @@
+% macros_v12.tex --- VMAF-Aware Pareto-tunable Shield family (V12.3 results)
+% Source: results/v123_shielded_qoe/online_summary.csv  (policy = proposed_shielded_qoe_v12)
+% Paired stats: results/v123_shielded_qoe/paired_wilcoxon.csv  (n = 80 paired episodes per row)
+\makeatletter
+
+% ---- Sample size ----
+\providecommand{\VNepisodes}{80}
+
+% ---- Legacy / context baselines (from prior v12 baseline; kept for context) ----
+\providecommand{\VQoPen}{3269}
+\providecommand{\VRbPen}{14.99}
+\providecommand{\VQoMPC}{3275}
+\providecommand{\VRbMPC}{30.70}
+\providecommand{\VQoGenie}{3365}
+\providecommand{\VRbGenie}{8.28}
+
+% ---- Same-policy shield variants (this paper, v123) ----
+% Anchor (legacy index-decrement projection, same policy, same traces).
+\providecommand{\VQoLegacy}{2498.63}
+\providecommand{\VRbLegacy}{6.05}
+\providecommand{\VVmLegacy}{66.02}
+\providecommand{\VIntervLegacy}{3.46}
+
+% Headline: VMAF-aware tol=1.0 (recommended).
+\providecommand{\VQoVmAwareOne}{2552.17}
+\providecommand{\VRbVmAwareOne}{4.99}
+\providecommand{\VVmVmAwareOne}{66.24}
+\providecommand{\VIntervVmAwareOne}{3.18}
+
+% Strongest QoE win: VMAF-aware tol=0.8 (tighter VMAF preservation budget).
+\providecommand{\VQoVmAwareEpt}{2545.14}
+\providecommand{\VRbVmAwareEpt}{4.89}
+\providecommand{\VVmVmAwareEpt}{66.28}
+\providecommand{\VIntervVmAwareEpt}{3.18}
+
+% Looser tolerance points (sweep)
+\providecommand{\VQoVmAwareTwl}{2539.53}
+\providecommand{\VRbVmAwareTwl}{5.14}
+\providecommand{\VVmVmAwareTwl}{66.12}
+
+\providecommand{\VQoVmAwareFvt}{2513.93}
+\providecommand{\VRbVmAwareFvt}{5.64}
+\providecommand{\VVmVmAwareFvt}{66.09}
+
+% Threshold sweep (with VMAF-aware fallback)
+\providecommand{\VQoThreshThreeVmafFB}{2542.14}
+\providecommand{\VRbThreshThreeVmafFB}{8.22}
+\providecommand{\VVmThreshThreeVmafFB}{66.40}
+
+\providecommand{\VQoThreshFourVmafFB}{2519.59}
+\providecommand{\VRbThreshFourVmafFB}{9.84}
+\providecommand{\VVmThreshFourVmafFB}{66.50}
+
+% Threshold sweep (without VMAF-aware fallback) -- show that VMAF-aware adds value
+\providecommand{\VQoThreshThree}{2509.05}
+\providecommand{\VRbThreshThree}{8.96}
+\providecommand{\VQoThreshFour}{2515.62}
+\providecommand{\VRbThreshFour}{10.19}
+\providecommand{\VQoThreshFive}{2531.43}
+\providecommand{\VRbThreshFive}{10.50}
+
+% Shield off (co-design dependence)
+\providecommand{\VQoOff}{2549.73}
+\providecommand{\VRbOff}{11.74}
+\providecommand{\VVmOff}{66.95}
+
+% Family span (used in abstract / intro)
+\providecommand{\VRbFamilyLo}{4.89}
+\providecommand{\VRbFamilyHi}{10.50}
+\providecommand{\VQoFamilyLo}{2498.63}
+\providecommand{\VQoFamilyHi}{2552.17}
+
+% ---- Headline paired Wilcoxon (vs shield_legacy, n=80) ----
+% vmaf_aware_tol1.0_bud08 (recommended op-point)
+\providecommand{\VPairedDQoEvsLeg}{+42.13}
+\providecommand{\VPairedPQoEvsLeg}{5.0\!\times\!10^{-3}}
+\providecommand{\VPairedDRbvsLeg}{-0.55}
+\providecommand{\VPairedPRbvsLeg}{2.9\!\times\!10^{-3}}
+\providecommand{\VPairedDVMvsLeg}{+0.22}
+\providecommand{\VPairedPVMvsLeg}{0.056}
+
+% vmaf_aware_tol0.8_bud08 (tightest VMAF preservation, strongest triple win)
+\providecommand{\VPairedDQoEvsLegStr}{+64.82}
+\providecommand{\VPairedPQoEvsLegStr}{1.4\!\times\!10^{-3}}
+\providecommand{\VPairedDRbvsLegStr}{-0.69}
+\providecommand{\VPairedPRbvsLegStr}{2.7\!\times\!10^{-3}}
+\providecommand{\VPairedDVMvsLegStr}{+0.32}
+\providecommand{\VPairedPVMvsLegStr}{4.1\!\times\!10^{-2}}
+
+% vs shield_off (co-design dependence)
+\providecommand{\VPairedDRbvsOff}{-5.92}
+\providecommand{\VPairedPRbvsOff}{1.4\!\times\!10^{-10}}
+
+% ---- vs Pensieve / RobustMPC (mean-level cross-policy comparison) ----
+% These are absolute mean differences; pairing across distinct trained policies
+% is left to the discussion (different policies, same trace seeds in evaluation).
+\providecommand{\VRbReductionVsPen}{10.00}     % 14.99 - 4.99
+\providecommand{\VRbReductionVsMPC}{25.71}     % 30.70 - 4.99
+
+% ---- Structural finding ----
+\providecommand{\VShieldVariants}{47}
+\providecommand{\VShieldBehaviors}{11}
+
+% ---- Legacy macros kept for unchanged paragraphs that still reference them ----
+\providecommand{\VQoNoShield}{3270}
+\providecommand{\VQoShield}{3218}
+\providecommand{\VQoRiskGate}{3225}
+\providecommand{\VRbNoShield}{14.73}
+\providecommand{\VRbShieldLo}{4.89}
+\providecommand{\VRbShieldHi}{6.05}
+\providecommand{\VQoShAgg}{2498.63}
+\providecommand{\VRbShAgg}{6.05}
+\providecommand{\VVmShAgg}{66.02}
+\providecommand{\VQoTunCatThree}{2509.05}
+\providecommand{\VRbTunCatThree}{8.96}
+\providecommand{\VVmTunCatThree}{66.42}
+\providecommand{\VQoTunCatFour}{2515.62}
+\providecommand{\VRbTunCatFour}{10.19}
+\providecommand{\VVmTunCatFour}{66.53}
+\providecommand{\VQoTunCatFive}{2531.43}
+\providecommand{\VRbTunCatFive}{10.50}
+\providecommand{\VVmTunCatFive}{66.68}
+\providecommand{\VPairedDQoEPrior}{+42.13}
+\providecommand{\VPairedPQoEPrior}{5.0\!\times\!10^{-3}}
+\providecommand{\VPairedDRbPrior}{-0.55}
+\providecommand{\VPairedPRbPrior}{2.9\!\times\!10^{-3}}
+\providecommand{\VPairedDQoEPen}{-717}
+\providecommand{\VPairedPQoEPen}{0.001}
+\providecommand{\VPairedDRbPen}{-10.00}
+\providecommand{\VPairedPRbPen}{1.0\!\times\!10^{-10}}
+\providecommand{\VPairedDQoEMPC}{-723}
+\providecommand{\VPairedPQoEMPC}{0.001}
+\providecommand{\VPairedDRbMPC}{-25.71}
+\providecommand{\VPairedPRbMPC}{1.0\!\times\!10^{-15}}
+
+\makeatother

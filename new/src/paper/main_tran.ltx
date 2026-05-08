@@ -1,19 +1,9 @@
-% !TEX program = pdflatex
-% !BIB program = bibtex
-% Elsevier-compatible manuscript clone (IEEE version: main.ltx).
-% Compile with Elsevier-provided elsarticle.cls.
-% Typical camera-ready switch: \documentclass[final,5p,times,twocolumn]{elsarticle}
-%
-% References: this file uses BibTeX + elsarticle-num.bst (from the elsarticle bundle).
-% If in-text cites show as [?], run the full chain from this directory:
-%   pdflatex main_elsevier && bibtex main_elsevier && pdflatex main_elsevier && pdflatex main_elsevier
-% Or: latexmk -pdf main_elsevier.tex (see latexmkrc in this folder).
-%
-% Pass natbib options before elsarticle loads natbib (avoids clashes with \biboptions alone).
-\PassOptionsToPackage{numbers,sort&compress}{natbib}
-\documentclass[preprint,12pt]{elsarticle}
+\documentclass[journal]{IEEEtran}
 
-% Uncomment for review PDFs with line numbers: \usepackage{lineno} and after \begin{document}: \linenumbers
+% =========================================
+% PACKAGES
+% =========================================
+\usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{algorithm}
@@ -23,31 +13,38 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{url}
+\usepackage{hyperref}
 \usepackage{multirow}
-\usepackage[T1]{fontenc}
-\usepackage[hidelinks]{hyperref}
 
+% =========================================
+% AUTO-GENERATED SCALARS (run scripts/generate_figures_v12.py)
+% =========================================
 \makeatletter
 \IfFileExists{tables_v12/macros_v12.tex}{\input{tables_v12/macros_v12}}{\typeout{^^J[WARN] Missing tables_v12/macros_v12.tex --- run generate_figures_v12.py^^J}}
 \makeatother
 
-% Optional: set target journal name for submission system metadata
-% \journal{Journal Name}
-
+% =========================================
+% TITLE & AUTHORS
+% =========================================
 \begin{document}
-
-\begin{frontmatter}
 
 \title{Constrained Deep Reinforcement Learning with Runtime Shielding\\ for Stall-Aware Adaptive Video Streaming}
 
-\author[uta]{Saeed Zarbi}
-\author[uta]{Leili Farzinvash}
-\author[uta]{Pedram Salehpour\corref{c1}}
-\cortext[c1]{Corresponding author}
-\ead[c1]{psalehpour@tabrizu.ac.ir}
+\author{
+\IEEEauthorblockN{Saeed Zarbi\IEEEauthorrefmark{1}, Leili Farzinvash\IEEEauthorrefmark{2}, and Pedram Salehpour\IEEEauthorrefmark{2}}
+\IEEEauthorblockA{\IEEEauthorrefmark{1}Student Member, IEEE.}
+\IEEEauthorblockA{\IEEEauthorrefmark{2}Department of Computer Engineering, Faculty of Electrical and Computer Engineering, University of Tabriz, Tabriz, Iran.}
+\thanks{Manuscript received February 2026.}
+\thanks{S. Zarbi is a Ph.D. student. L. Farzinvash is Associate Professor, University of Tabriz. P. Salehpour is Associate Professor, Department of Computer Engineering, University of Tabriz (e-mail: psalehpour@tabrizu.ac.ir).}}
 
-\address[uta]{Department of Computer Engineering, Faculty of Electrical and Computer Engineering, University of Tabriz, Tabriz, Iran}
+\markboth{IEEE Transactions on Multimedia,~Vol.~XX, No.~X, February~2026}%
+{Zarbi \MakeLowercase{\textit{et al.}}: Constrained RL and Shielded ABR}
 
+\maketitle
+
+% =========================================
+% ABSTRACT
+% =========================================
 \begin{abstract}
 Client-side Adaptive Bitrate (ABR) control must jointly improve perceptual quality and avoid playback stalls, yet purely reward-maximizing deep reinforcement learning (DRL) often learns aggressive bitrate choices that inflate tail stall risk under throughput volatility.
 This paper revisits DASH/HLS bitrate selection under a constrained Markov Decision Process (CMDP) viewpoint: maximize expected visual quality subject to empirical budgets on rebuffer accumulation and quality switching (\emph{smoothness}), using a primal--dual Lagrangian relaxation trained with Proximal Policy Optimization (PPO).
@@ -58,17 +55,15 @@ Oracle Genie retains a gap (\VQoGenie\, QoE under identical logging) attributabl
 Together, CMDP+Lagrangian training plus explicit runtime shielding offers a reproducible,\linebreak client-deployable abstraction for stall-aware streaming aligned with QoE-vs-safety evaluation.
 \end{abstract}
 
-\begin{keyword}
-Adaptive Bitrate Streaming\sep Deep Reinforcement Learning\sep Constrained MDP\sep Lagrangian Duality\sep Runtime Shielding\sep Video QoE
-\end{keyword}
-
-\end{frontmatter}
+\begin{IEEEkeywords}
+Adaptive Bitrate Streaming, Deep Reinforcement Learning, Constrained MDP, Lagrangian Duality, Runtime Shielding, Video QoE.
+\end{IEEEkeywords}
 
 % =========================================
 \section{Introduction}
 \label{sec:intro}
 
-HTTP-based adaptive streaming is the default delivery mode for Internet video: clients fetch time-indexed segments from ordinary web caches and CDNs, while a local \emph{adaptive bitrate} (ABR) controller picks a representation (bitrate/resolution) for each short playback interval under time-varying throughput~\cite{sodagar2011mpeg,bentaleb2018survey}.
+\IEEEPARstart{H}{TTP}-based adaptive streaming is the default delivery mode for Internet video: clients fetch time-indexed segments from ordinary web caches and CDNs, while a local \emph{adaptive bitrate} (ABR) controller picks a representation (bitrate/resolution) for each short playback interval under time-varying throughput~\cite{sodagar2011mpeg,bentaleb2018survey}.
 Because stall events are acutely salient to viewers and quality swings are distracting, modern systems must optimize a \emph{vector} of competing objectives---throughput efficiency, visual fidelity, rebuffering, and stability---rather than myopically maximizing a single scalar signal~\cite{wu2024qoe}.
 Industry-scale demand for mobile and fixed broadband video further raises the stakes for robust client-side control when links are volatile or capacity-constrained~\cite{cisco2023}.
 
@@ -603,9 +598,7 @@ Future exploration: differentiable risk metrics (CVaR~\cite{rockafellar2000}), l
 \section*{Ethics / Data Availability}
 \textbf{Artifacts:} code, evaluation scripts, and exported CSV logs underpin Table~\ref{tab:main:results}; shields deterministic with documented parameters enabling third-party auditing.
 
-% Elsevier numeric style (install elsarticle CTAN/MiKTeX package so elsarticle-num.bst exists).
-% If BibTeX errors on missing .bst, install "elsarticle" or temporarily use: \bibliographystyle{unsrtnat}
-\bibliographystyle{elsarticle-num}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
 
 \end{document}

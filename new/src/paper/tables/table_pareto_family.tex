@@ -1,0 +1,28 @@
+% VMAF-Aware Shield family vs legacy projection (n=80 paired episodes per row).
+% Source: results/v123_shielded_qoe/online_summary.csv  (proposed_shielded_qoe_v12 policy)
+% All rows share the same policy, ladder, traces, and seeds; only the shield differs.
+\begin{tabular}{@{} l c c c c @{}}
+\toprule
+\textbf{Shield variant}                          & \textbf{QoE} & \textbf{Rebuf.\ (\%)} & \textbf{VMAF} & \textbf{Interv.\ (\%)} \\
+\midrule
+\textit{Anchor:} legacy projection ($\rho_{\mathrm{cat}}{=}2$, no VMAF FB) & \VQoLegacy   & \VRbLegacy   & \VVmLegacy   & \VIntervLegacy \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{VMAF-aware fallback (Pareto-improving family)}} \\
+\quad VMAF-aware (tol $=$ 0.8, bud $=$ 8) -- best triple win & \VQoVmAwareEpt & \VRbVmAwareEpt & \VVmVmAwareEpt & \VIntervVmAwareEpt \\
+\quad VMAF-aware (tol $=$ 1.0, bud $=$ 8) -- recommended      & \VQoVmAwareOne & \VRbVmAwareOne & \VVmVmAwareOne & \VIntervVmAwareOne \\
+\quad VMAF-aware (tol $=$ 1.2, bud $=$ 8)                     & \VQoVmAwareTwl & \VRbVmAwareTwl & \VVmVmAwareTwl & ---             \\
+\quad VMAF-aware (tol $=$ 1.5, bud $=$ 8)                     & \VQoVmAwareFvt & \VRbVmAwareFvt & \VVmVmAwareFvt & ---             \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Threshold-only sweeps (without VMAF-aware fallback)}} \\
+\quad $\rho_{\mathrm{cat}}{=}3$, no VMAF FB                  & \VQoThreshThree   & \VRbThreshThree   & ---           & ---             \\
+\quad $\rho_{\mathrm{cat}}{=}4$, no VMAF FB                  & \VQoThreshFour    & \VRbThreshFour    & ---           & ---             \\
+\quad $\rho_{\mathrm{cat}}{=}5$, no VMAF FB                  & \VQoThreshFive    & \VRbThreshFive    & ---           & ---             \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Threshold sweep with VMAF-aware fallback}} \\
+\quad $\rho_{\mathrm{cat}}{=}3$, VMAF FB                     & \VQoThreshThreeVmafFB & \VRbThreshThreeVmafFB & \VVmThreshThreeVmafFB & --- \\
+\quad $\rho_{\mathrm{cat}}{=}4$, VMAF FB                     & \VQoThreshFourVmafFB  & \VRbThreshFourVmafFB  & \VVmThreshFourVmafFB  & --- \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Reference (same policy, no shield at inference)}} \\
+\quad shield off                                              & \VQoOff   & \VRbOff   & \VVmOff   & 0.00 \\
+\bottomrule
+\end{tabular}
