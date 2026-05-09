@@ -1,0 +1,32 @@
+% Baselines: table_main_results_ci. Shield rows: online_summary.csv (n=80).
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Method} & \textbf{QoE} & \textbf{VMAF} & \textbf{Rebuf.\ (\%)} & \textbf{Intv.\ (\%)} \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Baselines} (distinct policies; 95\% CI, $n{=}80$)} \\
+\midrule
+Pensieve~\cite{mao2017neural} &
+  3269\,\scriptsize $[2931,\,3573]$ &
+  71.59\,\scriptsize $[65.03,\,77.79]$ &
+  \textbf{14.99}\,\scriptsize $[12.29,\,17.86]$ &
+  --- \\
+RobustMPC~\cite{yin2015control} &
+  \textbf{3275}\,\scriptsize $[2953,\,3577]$ &
+  \textbf{74.65}\,\scriptsize $[68.40,\,80.38]$ &
+  30.70\,\scriptsize $[27.28,\,34.10]$ &
+  --- \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Same CMDP policy} (paired replay; CI)} \\
+\midrule
++ Legacy (index decrement) &
+  2518.87\,\scriptsize $[2176.5,\,2854.7]$ &
+  65.82 &
+  5.67\,\scriptsize $[4.95,\,6.36]$ &
+  3.23 \\
++ VMAF-aware ($\tau{=}1.0$) &
+  \textbf{2561.00}\,\scriptsize $[2216.3,\,2900.5]$ &
+  \textbf{66.04} &
+  \textbf{5.12}\,\scriptsize $[4.41,\,5.84]$ &
+  \textbf{2.71} \\
+\bottomrule
+\end{tabular}

@@ -55,7 +55,10 @@
     \draw[arrow] (agent_input) |- (actor.west);
     \draw[arrow] (agent_input) |- (critic.west);
 
-    \draw[arrow, line width=1.5pt, blue!70!black] (actor.east) -- ++(1,0) |- node[pos=0.7, above, font=\bfseries, fill=white] {Action $R_k$ (Selected Bitrate)} ($(buffer.west) - (1,0)$) -- (buffer.west);
+    % VMAF-aware shield: projects raw policy action before it hits the player/download plant
+    \node[block, fill=green!12, right=2.2cm of actor, minimum width=7.2em] (shield) {\textbf{VMAF-Aware}\\Shield $\mathcal{S}$};
+    \draw[arrow, line width=1.5pt, blue!70!black] (actor.east) -- node[midway, above, font=\footnotesize, fill=white, inner sep=2pt] {$a^{\mathrm{raw}}_k$} (shield.west);
+    \draw[arrow, line width=1.5pt, green!50!black] (shield.east) -- ++(0.6,0) |- node[pos=0.82, above, font=\footnotesize, fill=white, inner sep=2pt] {$a^{\mathrm{exec}}_k$} ($(buffer.west) - (0.9,0)$) -- (buffer.west);
     \draw[arrow, dashed, thick, orange!70!black] (buffer.south) -- ++(0,-0.5) -| node[pos=0.3, below, fill=white] {Reward $r_k$ (QoE)} ($(critic.south) - (0,0.5)$) -- (critic.south);
 \end{tikzpicture}
 
