@@ -113,25 +113,32 @@ METHOD_CLASS: dict[str, str] = {
 def _setup_matplotlib() -> None:
     mpl.rcParams.update(
         {
-            "figure.dpi": 120,
+            "figure.dpi": 150,
             "savefig.dpi": 300,
-            "font.family": "sans-serif",
-            "font.sans-serif": ["DejaVu Sans", "Arial", "Helvetica", "sans-serif"],
-            "font.size": 10,
-            "axes.titlesize": 11,
-            "axes.labelsize": 10.5,
+            "font.family": "serif",
+            "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
+            "font.size": 9,
+            "axes.titlesize": 10,
+            "axes.labelsize": 9.5,
             "axes.titleweight": "600",
             "axes.labelweight": "500",
-            "axes.linewidth": 0.9,
+            "axes.linewidth": 0.8,
             "axes.edgecolor": "#333333",
             "axes.spines.top": False,
             "axes.spines.right": False,
-            "xtick.major.width": 0.8,
-            "ytick.major.width": 0.8,
+            "xtick.major.width": 0.7,
+            "ytick.major.width": 0.7,
+            "xtick.labelsize": 8,
+            "ytick.labelsize": 8,
             "grid.color": "#E0E0E0",
-            "grid.linewidth": 0.7,
-            "legend.frameon": False,
+            "grid.linewidth": 0.6,
+            "legend.frameon": True,
+            "legend.fancybox": False,
+            "legend.edgecolor": "#CCCCCC",
+            "legend.framealpha": 0.95,
             "legend.borderaxespad": 0.5,
+            "legend.fontsize": 7.5,
+            "figure.constrained_layout.use": True,
         }
     )
 
@@ -208,16 +215,15 @@ def fig_tradeoff_with_ci(df: pd.DataFrame, out_dir: Path) -> None:
 
     ax.set_xlabel("Mean rebuffer ratio (% of session)")
     ax.set_ylabel("Session QoE (sum)")
-    ax.set_title("Safety–QoE trade-off (bootstrap 95% CI)")
-    ax.grid(True, alpha=0.45, linestyle="--")
+    ax.grid(True, alpha=0.35, linestyle="--")
     ax.legend(
         loc="lower left",
-        bbox_to_anchor=(0.02, 0.02),
-        fontsize=7.2,
+        bbox_to_anchor=(0.01, 0.01),
+        fontsize=6.5,
         ncol=1,
-        handletextpad=0.4,
+        handletextpad=0.3,
+        columnspacing=0.8,
     )
-    fig.tight_layout()
     _save(fig, out_dir, "fig_tradeoff_qoe_rebuffer")
     plt.close(fig)
 
@@ -231,11 +237,9 @@ def fig_ecdf(df: pd.DataFrame, out_dir: Path, column: str, xlabel: str, stem: st
         ax.step(sub, y, where="post", color=COLORS.get(m, "#444444"), lw=1.45, label=DISPLAY_NAME.get(m, m))
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Empirical CDF")
-    ttl = "Episode QoE" if column == "QoE" else "Episode rebuffer %"
-    ax.set_title(f"CDF of {ttl}")
-    ax.grid(True, alpha=0.45, linestyle="--")
-    ax.legend(loc="lower right", fontsize=7.0, ncol=1)
-    fig.tight_layout()
+    ax.set_ylim(0, 1.05)
+    ax.grid(True, alpha=0.35, linestyle="--")
+    ax.legend(loc="lower right", fontsize=6.5, ncol=1, handletextpad=0.3)
     _save(fig, out_dir, stem)
     plt.close(fig)
 
@@ -342,10 +346,8 @@ def fig_ablation_bars(df: pd.DataFrame, out_dir: Path) -> None:
         cols = [COLORS.get(m, "#888888") for m in sub["Method"]]
         ax.bar(sub["Label"], sub[col], color=cols, edgecolor="white", linewidth=0.6)
         ax.set_title(title)
-        ax.tick_params(axis="x", rotation=18, labelsize=7.5)
-        ax.grid(True, axis="y", alpha=0.45, linestyle="--")
-    fig.suptitle("Ablations vs. full proposed (episode means)", fontsize=11, fontweight="600", y=1.02)
-    fig.tight_layout()
+        ax.tick_params(axis="x", rotation=25, labelsize=6.5)
+        ax.grid(True, axis="y", alpha=0.35, linestyle="--")
     _save(fig, out_dir, "fig_ablation_qoe_rebuffer")
     plt.close(fig)
 
@@ -362,16 +364,14 @@ def fig_per_video_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
     # short video names
     pv.index = [str(i)[:10] for i in pv.index]
 
-    fig, ax = plt.subplots(figsize=(7.2, 2.6))
+    fig, ax = plt.subplots(figsize=(7.2, 3.0))
     im = ax.imshow(pv.values, aspect="auto", cmap="magma", vmin=pv.values.min(), vmax=pv.values.max())
     ax.set_xticks(range(len(pv.columns)))
-    ax.set_xticklabels([DISPLAY_NAME.get(c, c) for c in pv.columns], rotation=35, ha="right", fontsize=6.8)
+    ax.set_xticklabels([DISPLAY_NAME.get(c, c) for c in pv.columns], rotation=45, ha="right", fontsize=6.2)
     ax.set_yticks(range(len(pv.index)))
-    ax.set_yticklabels(list(pv.index), fontsize=8)
-    ax.set_title("Mean QoE by test video")
+    ax.set_yticklabels(list(pv.index), fontsize=7.5)
     cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
-    cbar.set_label("QoE")
-    fig.tight_layout()
+    cbar.set_label("QoE", fontsize=8)
     _save(fig, out_dir, "fig_heatmap_qoe_by_video")
     plt.close(fig)
 
@@ -418,9 +418,13 @@ def fig_timeseries_compare(
     axes[3].set_ylabel("Rebuf. (s)")
     axes[-1].set_xlabel("Chunk index")
     axes[0].set_title(f"Representative trace ({video}, episode {episode})")
-    for ax in axes:
-        ax.grid(True, alpha=0.35, linestyle="--")
-        ax.legend(loc="upper right", fontsize=6.5)
+    for i, ax in enumerate(axes):
+        ax.grid(True, alpha=0.3, linestyle="--")
+        if i == 0:
+            ax.legend(loc="upper right", fontsize=6, ncol=2, handletextpad=0.3)
+        else:
+            ax.get_legend() and ax.get_legend().remove() if ax.get_legend() else None
+    axes[0].legend(loc="upper right", fontsize=6, ncol=2, handletextpad=0.3)
     _save(fig, out_dir, "fig_timeseries_proposed_vs_shielded")
     plt.close(fig)
 
@@ -480,7 +484,7 @@ def fig_forest_two_baselines(df: pd.DataFrame, out_dir: Path) -> None:
     if not baselines or not targets:
         return
 
-    fig, axes = plt.subplots(1, len(baselines), figsize=(5.6 * len(baselines), 3.35), squeeze=False)
+    fig, axes = plt.subplots(1, len(baselines), figsize=(5.2 * len(baselines), 3.6), squeeze=False)
     for ax_col, baseline in enumerate(baselines):
         ax = axes[0, ax_col]
         base = df[df["Method"] == baseline][["Video", "Episode", "QoE"]].rename(columns={"QoE": "QoE_b"})
@@ -515,8 +519,6 @@ def fig_forest_two_baselines(df: pd.DataFrame, out_dir: Path) -> None:
         ax.set_xlabel(r"Paired $\Delta$QoE vs.\ " + baseline)
         ax.set_title("vs. " + baseline)
         ax.grid(True, axis="x", alpha=0.4, linestyle="--")
-    fig.suptitle(r"Paired QoE shifts (bootstrap 95% CI on mean $\Delta$)", fontsize=11, fontweight="600")
-    fig.tight_layout()
     _save(fig, out_dir, "fig_forest_delta_qoe_dual_baseline")
     plt.close(fig)
 

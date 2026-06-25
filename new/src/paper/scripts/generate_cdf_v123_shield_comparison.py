@@ -46,10 +46,19 @@ def main() -> None:
     df = pd.read_csv(csv_path)
     plt.rcParams.update(
         {
-            "font.size": 10,
-            "axes.labelsize": 10,
-            "legend.fontsize": 8,
+            "font.family": "serif",
+            "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
+            "font.size": 9,
+            "axes.labelsize": 9.5,
+            "xtick.labelsize": 8,
+            "ytick.labelsize": 8,
+            "legend.fontsize": 7.5,
             "figure.figsize": (5.0, 3.2),
+            "figure.dpi": 150,
+            "savefig.dpi": 300,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "figure.constrained_layout.use": True,
         }
     )
 

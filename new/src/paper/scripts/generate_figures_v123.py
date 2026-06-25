@@ -50,23 +50,30 @@ COLORS = {
 def _setup_matplotlib() -> None:
     mpl.rcParams.update(
         {
-            "figure.dpi": 120,
+            "figure.dpi": 150,
             "savefig.dpi": 300,
-            "font.family": "sans-serif",
-            "font.sans-serif": ["DejaVu Sans", "Arial", "Helvetica", "sans-serif"],
-            "font.size": 10,
-            "axes.titlesize": 11,
-            "axes.labelsize": 10.5,
+            "font.family": "serif",
+            "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
+            "font.size": 9,
+            "axes.titlesize": 10,
+            "axes.labelsize": 9.5,
             "axes.titleweight": "600",
-            "axes.linewidth": 0.9,
+            "axes.linewidth": 0.8,
             "axes.edgecolor": "#333333",
             "axes.spines.top": False,
             "axes.spines.right": False,
-            "xtick.major.width": 0.8,
-            "ytick.major.width": 0.8,
+            "xtick.major.width": 0.7,
+            "ytick.major.width": 0.7,
+            "xtick.labelsize": 8,
+            "ytick.labelsize": 8,
             "grid.color": "#E0E0E0",
-            "grid.linewidth": 0.7,
-            "legend.frameon": False,
+            "grid.linewidth": 0.6,
+            "legend.frameon": True,
+            "legend.fancybox": False,
+            "legend.edgecolor": "#CCCCCC",
+            "legend.framealpha": 0.95,
+            "legend.fontsize": 7.5,
+            "figure.constrained_layout.use": True,
         }
     )
 
@@ -196,14 +203,16 @@ def plot_pareto_front_line(unique: pd.DataFrame, out_dir: Path) -> None:
         linewidth=0.5,
         label="non-dominated",
     )
-    for _, r in front.iterrows():
+    for idx, (_, r) in enumerate(front.iterrows()):
+        offset_y = 6 if idx % 2 == 0 else -10
         ax.annotate(
-            str(r["Method"])[:28],
+            str(r["Method"])[:22],
             (float(r["Rebuf_pct"]), float(r["QoE_mean"])),
             textcoords="offset points",
-            xytext=(4, 4),
-            fontsize=6,
-            alpha=0.85,
+            xytext=(5, offset_y),
+            fontsize=5.5,
+            alpha=0.8,
+            arrowprops=dict(arrowstyle="-", color="#999999", lw=0.4),
         )
     ax.set_xlabel("Mean rebuffer ratio (%)")
     ax.set_ylabel("Mean session QoE")
