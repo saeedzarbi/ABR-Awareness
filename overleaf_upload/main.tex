@@ -1,19 +1,10 @@
-% !TEX program = pdflatex
-% !BIB program = bibtex
-% Elsevier-compatible manuscript (IEEE twin: main.ltx). Computer Networks encourages the
-% elsarticle class or the els-cas-templates bundle; see https://www.elsevier.com/latex
-% Compile with Elsevier-provided elsarticle.cls.
-% Two-column final layout: \documentclass[final,5p,times,twocolumn]{elsarticle} (then restore figure*/table* for full-width floats if needed).
+% Elsevier elsarticle manuscript for Overleaf.
+% Compiler: pdfLaTeX. Bibliography: BibTeX.
 %
-% References: this file uses BibTeX + elsarticle-num.bst (from the elsarticle bundle).
-% If in-text cites show as [?], run the full chain from this directory:
-%   pdflatex main_elsevier && bibtex main_elsevier && pdflatex main_elsevier && pdflatex main_elsevier
-% Or: latexmk -pdf main_elsevier.tex (see latexmkrc in this folder).
-%
-% Pass natbib options before elsarticle loads natbib (avoids clashes with \biboptions alone).
+% For two-column final layout, change to:
+%   \documentclass[final,5p,times,twocolumn]{elsarticle}
 \PassOptionsToPackage{numbers,sort&compress}{natbib}
 \documentclass[preprint,12pt,times]{elsarticle}
-% elsarticle: pass natbib options here too (avoids [?] if class did not inherit preamble-only \PassOptionsToPackage).
 \biboptions{numbers,sort&compress}
 
 % Uncomment for review PDFs with line numbers: \usepackage{lineno} and after \begin{document}: \linenumbers
@@ -42,7 +33,6 @@
   \setlength{\topsep}{0pt}%
   \setlength{\partopsep}{0pt}%
 }
-
 \usepackage{graphicx}
 \usepackage{adjustbox}
 \usepackage{tikz}
@@ -106,10 +96,7 @@
 \usepackage[hidelinks]{hyperref}
 
 \makeatletter
-% Make \input{} resilient to different build working directories.
-% This is needed because some editors/CI compile from repo root (or a wrapper
-% main.tex), while this manuscript lives in new/src/paper/.
-\def\input@path{{./}{tables/}{figures/}{src/paper/}{src/paper/tables/}{src/paper/figures/}{new/src/paper/}{new/src/paper/tables/}{new/src/paper/figures/}}
+\def\input@path{{./}{tables/}{figures/}}
 \makeatother
 
 \makeatletter
@@ -563,13 +550,9 @@ These terms are not formal safety certificates; they reduce variance and prevent
 
 \begin{figure}[htbp]
     \centering
-    \IfFileExists{figures/fig_system_arch.png}{%
-        \includegraphics[width=0.88\linewidth,height=0.32\textheight,keepaspectratio]{figures/fig_system_arch.png}%
-    }{%
-        \begin{adjustbox}{max width=\linewidth,max totalheight=0.32\textheight,center}
-        \input{figures/fig_system_arch_tikz.tex}%
-        \end{adjustbox}
-    }
+    \begin{adjustbox}{max width=\linewidth,max totalheight=0.32\textheight,center}
+    \input{figures/fig_system_arch_tikz.tex}
+    \end{adjustbox}
     \caption{End-to-end control loop. The actor proposes \(a^{\mathrm{raw}}_k\); the VMAF-aware shield \(\mathcal{S}\) projects it to \(a^{\mathrm{exec}}_k\) before the chunk download updates the client buffer under time-varying throughput. Manifest lookahead (including ladder VMAF tables) feeds the augmented state \(s_k\); auxiliary penalties (\(\phi,\psi^{\mathrm{Lya}}\)) enter Lagrangian training only.}
     \label{fig:arch}
 \end{figure}
