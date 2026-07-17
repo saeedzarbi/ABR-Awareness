@@ -114,30 +114,36 @@ def _setup_matplotlib() -> None:
     mpl.rcParams.update(
         {
             "figure.dpi": 150,
-            "savefig.dpi": 300,
+            "savefig.dpi": 600,
+            # TrueType embedding (42) — Type 3 bitmap fonts look pixelated in PDF viewers.
+            "pdf.fonttype": 42,
+            "ps.fonttype": 42,
             "font.family": "serif",
             "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
-            "font.size": 9,
-            "axes.titlesize": 10,
-            "axes.labelsize": 9.5,
+            # Keep labels readable after journal-width scaling (minimum ~8 pt).
+            "font.size": 10.5,
+            "axes.titlesize": 11,
+            "axes.labelsize": 10.5,
             "axes.titleweight": "600",
             "axes.labelweight": "500",
-            "axes.linewidth": 0.8,
+            "axes.linewidth": 1.0,
             "axes.edgecolor": "#333333",
             "axes.spines.top": False,
             "axes.spines.right": False,
-            "xtick.major.width": 0.7,
-            "ytick.major.width": 0.7,
-            "xtick.labelsize": 8,
-            "ytick.labelsize": 8,
+            "xtick.major.width": 0.9,
+            "ytick.major.width": 0.9,
+            "xtick.labelsize": 9.5,
+            "ytick.labelsize": 9.5,
             "grid.color": "#E0E0E0",
-            "grid.linewidth": 0.6,
+            "grid.linewidth": 0.7,
+            "lines.linewidth": 1.8,
+            "lines.markersize": 6.5,
             "legend.frameon": True,
             "legend.fancybox": False,
             "legend.edgecolor": "#CCCCCC",
             "legend.framealpha": 0.95,
             "legend.borderaxespad": 0.5,
-            "legend.fontsize": 7.5,
+            "legend.fontsize": 9,
             "figure.constrained_layout.use": True,
         }
     )
@@ -709,6 +715,10 @@ def export_paired_statistics(df: pd.DataFrame, tables_dir: Path, figures_dir: Pa
     out_df.to_csv(csv_p, index=False)
     print(f"Wrote {csv_p}")
 
+    if out_df.empty or "Metric" not in out_df.columns:
+        print("WARNING: paired Wilcoxon table empty (is scipy installed?). Skipping headline TeX.")
+        return
+
     hq = out_df[(out_df["Metric"] == "QoE") & (out_df["Baseline"].isin(["Pensieve", "RobustMPC"]))]
     _write_headline_wilcoxon_tex(
         headline_df=hq,
@@ -778,6 +788,11 @@ def main() -> None:
     parser.add_argument("--stats", type=Path, default=None)
     parser.add_argument("--decisions", type=Path, default=None)
     parser.add_argument("--out", type=Path, default=None)
+    parser.add_argument(
+        "--figures-only",
+        action="store_true",
+        help="Regenerate figure assets without rewriting tables, statistics, or macros.",
+    )
     args = parser.parse_args()
 
     new_root = _repo_new()
@@ -792,12 +807,11 @@ def main() -> None:
     decisions = pd.read_csv(dec_path)
 
     print(f"Loaded {len(df)} episode rows from {stats_path}")
-    rng_tab = np.random.default_rng(0)
-    wide = _summarize_wide_bootstrap(df, rng_tab)
-    export_latex_main_table(wide, tables_dir)
-    export_paired_statistics(df, tables_dir, out_dir)
-    export_abstract_macros(wide, tables_dir)
+    if not args.figures_only:
+        rng_tab = np.random.default_rng(0)
+        wide = _summarize_wide_bootstrap(df, rng_tab)
 
+    # Figures first so a later table export failure cannot skip high-quality redraws.
     fig_tradeoff_with_ci(df, out_dir)
     fig_ecdf(df, out_dir, "QoE", "Session QoE (sum)", "fig_cdf_qoe")
     fig_ecdf(df, out_dir, "Rebuffer", "Rebuffer ratio (% of session)", "fig_cdf_rebuffer")
@@ -808,7 +822,16 @@ def main() -> None:
     fig_paired_delta_vs_baseline(df, out_dir, baseline="Pensieve")
     fig_forest_two_baselines(df, out_dir)
     fig_timeseries_compare(decisions, out_dir, video="sintel", episode=0)
+
+    if args.figures_only:
+        print("Done (figures only).")
+        return
+
     export_summary_csv(df, out_dir)
+
+    export_latex_main_table(wide, tables_dir)
+    export_paired_statistics(df, tables_dir, out_dir)
+    export_abstract_macros(wide, tables_dir)
     print("Done.")
 
 

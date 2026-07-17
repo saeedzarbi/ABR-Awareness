@@ -1,0 +1,4 @@
+﻿$pdf_mode = 1;
+$bibtex_use = 2;
+# Soft mode: do not halt on first warning/error (Overleaf-friendly).
+$pdflatex = 'pdflatex -interaction=nonstopmode %O %S';

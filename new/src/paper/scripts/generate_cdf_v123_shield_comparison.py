@@ -48,16 +48,21 @@ def main() -> None:
         {
             "font.family": "serif",
             "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
-            "font.size": 9,
-            "axes.labelsize": 9.5,
-            "xtick.labelsize": 8,
-            "ytick.labelsize": 8,
-            "legend.fontsize": 7.5,
+            # Sized for legibility after scaling in the manuscript.
+            "font.size": 10.5,
+            "axes.labelsize": 10.5,
+            "xtick.labelsize": 9.5,
+            "ytick.labelsize": 9.5,
+            "legend.fontsize": 9,
             "figure.figsize": (5.0, 3.2),
             "figure.dpi": 150,
-            "savefig.dpi": 300,
+            "savefig.dpi": 600,
+            "pdf.fonttype": 42,
+            "ps.fonttype": 42,
             "axes.spines.top": False,
             "axes.spines.right": False,
+            "axes.linewidth": 1.0,
+            "lines.linewidth": 1.8,
             "figure.constrained_layout.use": True,
         }
     )
