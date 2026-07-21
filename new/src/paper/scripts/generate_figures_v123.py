@@ -267,7 +267,7 @@ def plot_paired_delta_qoe(episodes_csv: Path, out_dir: Path) -> None:
     colors = [COLORS.get(_family(l), "#333333") for l in labels]
     ax.barh(pos, med, color=colors, alpha=0.85, height=0.65)
     ax.errorbar(med, pos, xerr=[np.array(med) - np.array(lo), np.array(hi) - np.array(med)], fmt="none", c="#333333", capsize=2, linewidth=0.8)
-    ax.axvline(0.0, color="#333333", linewidth=0.9, linestyle="--")
+    ax.axvline(0.0, color="#111111", linewidth=1.7, linestyle="--", zorder=2)
     ax.set_yticks(pos)
     ax.set_yticklabels([l[:32] for l in labels], fontsize=8)
     ax.set_xlabel("Paired ΔQoE vs. shield_legacy (same Video×Episode)")

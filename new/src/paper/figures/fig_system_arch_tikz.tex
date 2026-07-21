@@ -1,87 +1,112 @@
-% TikZ-only system architecture diagram.
+% TikZ-only system architecture: two-layer Policy--Shield co-design.
+% Solid bold = inference path; dashed = training-only path.
 \tikzset{
     archblock/.style={
         draw=black!60, rounded corners=2pt, align=center,
-        minimum height=0.82cm, minimum width=2.65cm,
-        inner sep=4pt, fill=white
+        minimum height=0.82cm, minimum width=2.55cm,
+        inner sep=3.5pt, fill=white, font=\footnotesize
     },
     stateblock/.style={
         archblock, fill=orange!8, draw=orange!55!black,
-        text width=2.65cm, minimum height=1.35cm
+        text width=2.55cm, minimum height=1.40cm
     },
     actorblock/.style={archblock, fill=red!9, draw=red!55!black},
     criticblock/.style={archblock, fill=blue!8, draw=blue!55!black},
     shieldblock/.style={
         archblock, fill=green!10, draw=green!45!black,
-        minimum width=2.45cm
+        minimum width=2.55cm, text width=2.45cm
     },
     groupbox/.style={
         draw=black!45, dashed, rounded corners=3pt,
-        inner xsep=9pt, inner ysep=12pt
+        inner xsep=8pt, inner ysep=11pt
     },
-    flow/.style={->, >=Latex, line width=0.85pt},
-    feedback/.style={->, >=Latex, dashed, line width=0.8pt}
+    % Inference (deployed) path
+    infer/.style={->, >=Latex, line width=1.25pt, solid, black!80},
+    infergreen/.style={->, >=Latex, line width=1.35pt, solid, green!40!black},
+    % Training-only path
+    train/.style={->, >=Latex, line width=0.85pt, densely dashed, black!55},
+    trainorange/.style={->, >=Latex, line width=0.85pt, densely dashed, orange!70!black},
+    trainblue/.style={->, >=Latex, line width=0.85pt, densely dashed, blue!55!black},
 }
 
-\begin{tikzpicture}[x=1cm,y=1cm,font=\small]
+\begin{tikzpicture}[x=1cm,y=1cm,font=\footnotesize]
     % Environment
-    \node[archblock, fill=gray!8] (network) at (0,1.25)
+    \node[archblock, fill=gray!8] (network) at (0,1.35)
         {Network channel\\Throughput \(C_k\)};
-    \node[archblock, fill=gray!8] (buffer) at (0,0)
+    \node[archblock, fill=gray!8] (buffer) at (0,0.05)
         {Client player\\Buffer \(B_k\)};
-    \node[archblock, fill=red!5, draw=red!50!black] (video) at (0,-1.25)
-        {Video source\\Chunk sizes and VMAF};
+    \node[archblock, fill=red!5, draw=red!50!black] (video) at (0,-1.30)
+        {Video source\\Chunk sizes / VMAF};
 
     % Observation aggregation and PPO
     \node[stateblock] (state) at (3.85,0.55)
         {\textbf{Augmented state \(s_k\)}\\[-1pt]
-         \(\{\)throughput, buffer,\\previous action, lookahead\(\}\)};
-    \node[actorblock] (actor) at (7.15,0.9)
+         throughput, buffer,\\prev.\ action, lookahead};
+    \node[actorblock] (actor) at (7.20,1.05)
         {\textbf{Actor}\\Policy \(\pi_\theta(a\mid s)\)};
-    \node[criticblock] (critic) at (7.15,-0.75)
-        {\textbf{Critic}\\Value \(V_\phi(s)\)};
-    \node[shieldblock] (shield) at (10.35,0.9)
-        {\textbf{VMAF-aware shield}\\Projection \(\mathcal{S}\)};
+    \node[criticblock] (critic) at (7.20,-0.85)
+        {\textbf{Critic}\\Value \(V_\phi(s)\)\\{\scriptsize (training only)}};
+    \node[shieldblock] (shield) at (10.55,1.05)
+        {\textbf{VMAF-aware shield}\\
+         \(\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\)};
 
-    % Group boundaries and unobstructed labels
+    % Group boundaries
     \begin{pgfonlayer}{background}
         \node[groupbox, fill=blue!3, fit=(network) (buffer) (video)]
             (envgroup) {};
         \node[groupbox, fill=red!3, fit=(actor) (critic)]
             (agentgroup) {};
     \end{pgfonlayer}
-    \node[font=\bfseries, text=blue!55!black, above=2pt of envgroup.north]
+    \node[font=\bfseries\footnotesize, text=blue!55!black, above=2pt of envgroup.north]
         {ABR streaming environment};
-    \node[font=\bfseries, text=red!55!black, above=2pt of agentgroup.north]
+    \node[font=\bfseries\footnotesize, text=red!55!black, above=2pt of agentgroup.north]
         {Lagrangian PPO agent};
 
-    % Observation paths
-    \draw[flow, gray!75] (network.east) -- ++(0.38,0)
-        |- ([yshift=0.43cm]state.west);
-    \draw[flow, gray!75] (buffer.east) -- (state.west);
-    \draw[flow, red!65!black] (video.east) -- ++(0.38,0)
-        |- node[pos=0.28, below, font=\scriptsize] {manifest lookahead}
-        ([yshift=-0.43cm]state.west);
+    % --- Observation → state (inference inputs) ---
+    \draw[infer, gray!70] (network.east) -- ++(0.35,0)
+        |- ([yshift=0.42cm]state.west);
+    \draw[infer, gray!70] (buffer.east) -- (state.west);
+    \draw[infer, red!60!black] (video.east) -- ++(0.35,0)
+        |- node[pos=0.30, below, font=\scriptsize] {manifest / VMAF}
+        ([yshift=-0.42cm]state.west);
 
-    % Policy/value paths
-    \draw[flow] (state.east) -- (actor.west);
-    \draw[flow, dashed, black!65] (state.south) |- (critic.west);
-    \draw[flow, blue!65!black] (actor.east) --
-        node[midway, above, font=\scriptsize, fill=white, inner sep=1.5pt]
+    % --- Inference: state → actor → shield; state → shield ---
+    \draw[infer] (state.east) --
+        node[midway, above, font=\scriptsize, fill=white, inner sep=1pt] {\(s_k\)}
+        (actor.west);
+    \draw[infer] (actor.east) --
+        node[midway, above, font=\scriptsize, fill=white, inner sep=1pt]
         {\(a^{\mathrm{raw}}_k\)} (shield.west);
+    % Critical: shield also consumes \(s_k\) (buffer, throughput, VMAF ladder)
+    \draw[infer, orange!65!black]
+        (state.north) -- ++(0,0.95) -|
+        node[pos=0.22, above, font=\scriptsize, fill=white, inner sep=1pt]
+        {\(s_k\to\mathcal{S}\)}
+        (shield.north);
 
-    % Executed action returns to the player along a clear upper route
-    \draw[flow, green!45!black, line width=1.05pt]
-        (shield.north) -- ++(0,1.45) -|
-        node[pos=0.48, above, font=\scriptsize, fill=white, inner sep=1.5pt]
+    % --- Inference: executed action back to player ---
+    \draw[infergreen]
+        (shield.east) -- ++(0.55,0) -- ++(0,1.55) -|
+        node[pos=0.55, above, font=\scriptsize, fill=white, inner sep=1pt]
         {\(a^{\mathrm{exec}}_k\)}
         (buffer.north);
 
-    % Training reward to critic along a separate lower route
-    \draw[feedback, orange!70!black]
-        (buffer.east) -- ++(0.45,0) |-
-        node[pos=0.78, below, font=\scriptsize, fill=white, inner sep=1.5pt]
-        {reward \(r_k\)}
+    % --- Training only: state → critic; reward / Lyapunov cues → critic ---
+    \draw[trainblue]
+        (state.south) |-
+        node[pos=0.75, below, font=\scriptsize, fill=white, inner sep=1pt]
+        {\(s_k\) (train)}
+        (critic.west);
+    \draw[trainorange]
+        (buffer.east) -- ++(0.55,0) |-
+        node[pos=0.72, below, font=\scriptsize, fill=white, inner sep=1pt]
+        {\(r_k,\;\phi,\;\psi^{\mathrm{Lya}}\)}
         (critic.south);
-\end{tikzpicture}
 
+    % Legend
+    \node[anchor=west, font=\scriptsize, align=left] at (3.2,-2.45) {
+        \tikz\draw[infer] (0,0) -- (0.55,0);~\textbf{Inference} (deployed): \(s_k\!\to\!\pi_\theta\!\to\!a^{\mathrm{raw}}_k\),\;
+        \(\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\!\to\!a^{\mathrm{exec}}_k\)\\[1pt]
+        \tikz\draw[train] (0,0) -- (0.55,0);~\textbf{Training only}: critic, reward \(r_k\), and Lagrangian cues \(\phi,\psi^{\mathrm{Lya}}\)
+    };
+\end{tikzpicture}

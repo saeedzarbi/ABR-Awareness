@@ -30,6 +30,12 @@ COLORS = {
     "shield_off": "#CC79A7",
 }
 
+LINESTYLES = {
+    "shield_legacy": "--",
+    "vmaf_aware_tol1.0_bud08": "-",
+    "shield_off": "-.",
+}
+
 
 def _ecdf(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     xs = np.sort(x)
@@ -77,7 +83,15 @@ def main() -> None:
             if len(sub) == 0:
                 continue
             xs, ys = _ecdf(sub)
-            ax.step(xs, ys, where="post", label=label, color=COLORS.get(key, None), linewidth=1.8)
+            ax.step(
+                xs,
+                ys,
+                where="post",
+                label=label,
+                color=COLORS.get(key, None),
+                linewidth=1.9,
+                linestyle=LINESTYLES.get(key, "-"),
+            )
         ax.set_xlabel(xlabel)
         ax.set_ylabel("Empirical CDF")
         ax.set_ylim(0, 1.05)

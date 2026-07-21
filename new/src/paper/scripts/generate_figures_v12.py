@@ -78,6 +78,19 @@ ORDER_MAIN = [
 
 ORDER_ABLATION = ["Ablation_Base", "Ablation_Future", "Ablation_Lyap", "Proposed"]
 
+# Distinct linestyles for B&W / colorblind-safe CDF overlays.
+LINESTYLES_MAIN: list[str] = [
+    "-",
+    "--",
+    "-.",
+    ":",
+    (0, (5, 1)),
+    (0, (3, 1, 1, 1)),
+    (0, (1, 1)),
+    (0, (5, 2, 1, 2)),
+    (0, (3, 1, 1, 1, 1, 1)),
+]
+
 # LaTeX first-column entries (with citations where useful)
 LATEX_METHOD_COL: dict[str, str] = {
     "Genie": r"Genie (oracle)~\cite{mao2017neural}",
@@ -225,7 +238,7 @@ def fig_tradeoff_with_ci(df: pd.DataFrame, out_dir: Path) -> None:
     ax.legend(
         loc="lower left",
         bbox_to_anchor=(0.01, 0.01),
-        fontsize=6.5,
+        fontsize=8,
         ncol=1,
         handletextpad=0.3,
         columnspacing=0.8,
@@ -237,15 +250,24 @@ def fig_tradeoff_with_ci(df: pd.DataFrame, out_dir: Path) -> None:
 def fig_ecdf(df: pd.DataFrame, out_dir: Path, column: str, xlabel: str, stem: str) -> None:
     methods = [m for m in ORDER_MAIN if m in set(df["Method"].unique())]
     fig, ax = plt.subplots(figsize=(5.0, 3.6))
-    for m in methods:
+    for i, m in enumerate(methods):
         sub = np.sort(df[df["Method"] == m][column].values.astype(float))
         y = np.arange(1, len(sub) + 1) / len(sub)
-        ax.step(sub, y, where="post", color=COLORS.get(m, "#444444"), lw=1.45, label=DISPLAY_NAME.get(m, m))
+        ls = LINESTYLES_MAIN[i % len(LINESTYLES_MAIN)]
+        ax.step(
+            sub,
+            y,
+            where="post",
+            color=COLORS.get(m, "#444444"),
+            lw=1.7,
+            linestyle=ls,
+            label=DISPLAY_NAME.get(m, m),
+        )
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Empirical CDF")
     ax.set_ylim(0, 1.05)
     ax.grid(True, alpha=0.35, linestyle="--")
-    ax.legend(loc="lower right", fontsize=6.5, ncol=1, handletextpad=0.3)
+    ax.legend(loc="lower right", fontsize=8, ncol=1, handletextpad=0.3)
     _save(fig, out_dir, stem)
     plt.close(fig)
 
@@ -322,10 +344,12 @@ def fig_shield_intervention(decisions: pd.DataFrame, out_dir: Path) -> None:
     vals = [r[2] for r in rows]
     colors = [COLORS.get(r[1], "#888888") for r in rows]
 
-    fig, ax = plt.subplots(figsize=(5.0, 3.2))
+    fig, ax = plt.subplots(figsize=(5.2, 3.4))
     ax.barh(labels, vals, color=colors, edgecolor="white", linewidth=0.6, height=0.65)
     ax.set_xlabel("Shield intervention rate (% of chunk steps)")
     ax.set_title("Runtime shield activity")
+    ax.tick_params(axis="y", labelsize=9.5)
+    ax.tick_params(axis="x", labelsize=9.5)
     ax.grid(True, axis="x", alpha=0.45, linestyle="--")
     fig.tight_layout()
     _save(fig, out_dir, "fig_shield_intervention_rate")
@@ -352,7 +376,7 @@ def fig_ablation_bars(df: pd.DataFrame, out_dir: Path) -> None:
         cols = [COLORS.get(m, "#888888") for m in sub["Method"]]
         ax.bar(sub["Label"], sub[col], color=cols, edgecolor="white", linewidth=0.6)
         ax.set_title(title)
-        ax.tick_params(axis="x", rotation=25, labelsize=6.5)
+        ax.tick_params(axis="x", rotation=25, labelsize=8.5)
         ax.grid(True, axis="y", alpha=0.35, linestyle="--")
     _save(fig, out_dir, "fig_ablation_qoe_rebuffer")
     plt.close(fig)
@@ -370,14 +394,15 @@ def fig_per_video_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
     # short video names
     pv.index = [str(i)[:10] for i in pv.index]
 
-    fig, ax = plt.subplots(figsize=(7.2, 3.0))
-    im = ax.imshow(pv.values, aspect="auto", cmap="magma", vmin=pv.values.min(), vmax=pv.values.max())
+    fig, ax = plt.subplots(figsize=(7.2, 3.2))
+    im = ax.imshow(pv.values, aspect="auto", cmap="viridis", vmin=pv.values.min(), vmax=pv.values.max())
     ax.set_xticks(range(len(pv.columns)))
-    ax.set_xticklabels([DISPLAY_NAME.get(c, c) for c in pv.columns], rotation=45, ha="right", fontsize=6.2)
+    ax.set_xticklabels([DISPLAY_NAME.get(c, c) for c in pv.columns], rotation=45, ha="right", fontsize=8)
     ax.set_yticks(range(len(pv.index)))
-    ax.set_yticklabels(list(pv.index), fontsize=7.5)
+    ax.set_yticklabels(list(pv.index), fontsize=9)
     cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
-    cbar.set_label("QoE", fontsize=8)
+    cbar.set_label("QoE", fontsize=9)
+    cbar.ax.tick_params(labelsize=8.5)
     _save(fig, out_dir, "fig_heatmap_qoe_by_video")
     plt.close(fig)
 
@@ -390,6 +415,11 @@ def fig_timeseries_compare(
     methods: tuple[str, str] = ("Proposed", "Proposed_Shielded"),
 ) -> None:
     """Two-row panel: throughput, buffer, selected bitrate, per-chunk rebuffer."""
+    # Style map: colorblind / B&W safe (solid+circle vs dash-dot+triangle).
+    style_by_method = {
+        methods[0]: {"ls": "-", "marker": "o", "markevery": 3},
+        methods[1]: {"ls": "-.", "marker": "^", "markevery": 3},
+    }
     fig, axes = plt.subplots(4, 1, figsize=(6.8, 5.4), sharex=True, constrained_layout=True)
     for row, m in enumerate(methods):
         if m not in decisions["Method"].values:
@@ -405,16 +435,67 @@ def fig_timeseries_compare(
         br = sub["Bitrate_kbps"].values
         rb = sub["Rebuffer_s"].values
         color = COLORS.get(m, "#444444")
+        st = style_by_method.get(m, {"ls": "-", "marker": "o", "markevery": 3})
 
-        axes[0].plot(chunks, tp, "-o", ms=2.2, lw=1.0, color=color, label=DISPLAY_NAME.get(m, m), alpha=0.9)
-        axes[1].step(chunks, buf, where="mid", color=color, lw=1.2, label=DISPLAY_NAME.get(m, m), alpha=0.9)
-        axes[2].step(chunks, br, where="mid", color=color, lw=1.2, label=DISPLAY_NAME.get(m, m), alpha=0.9)
+        # Throughput is environment-shared; plot once from the first available method.
+        if row == 0:
+            axes[0].plot(
+                chunks,
+                tp,
+                linestyle="-",
+                marker="o",
+                markevery=st["markevery"],
+                ms=3.2,
+                lw=1.4,
+                color="#333333",
+                label="Throughput",
+                alpha=0.95,
+            )
+        axes[1].step(
+            chunks,
+            buf,
+            where="mid",
+            color=color,
+            lw=1.6,
+            linestyle=st["ls"],
+            label=DISPLAY_NAME.get(m, m),
+            alpha=0.95,
+        )
+        axes[1].plot(
+            chunks[:: st["markevery"]],
+            buf[:: st["markevery"]],
+            linestyle="None",
+            marker=st["marker"],
+            ms=4.0,
+            color=color,
+        )
+        axes[2].step(
+            chunks,
+            br,
+            where="mid",
+            color=color,
+            lw=1.6,
+            linestyle=st["ls"],
+            label=DISPLAY_NAME.get(m, m),
+            alpha=0.95,
+        )
+        axes[2].plot(
+            chunks[:: st["markevery"]],
+            br[:: st["markevery"]],
+            linestyle="None",
+            marker=st["marker"],
+            ms=4.0,
+            color=color,
+        )
         axes[3].bar(
             chunks + 0.18 * (row - 0.5),
             rb,
             width=0.35,
             color=color,
-            alpha=0.65,
+            alpha=0.7 if row == 0 else 0.85,
+            edgecolor="black",
+            linewidth=0.35,
+            hatch="" if row == 0 else "//",
             label=DISPLAY_NAME.get(m, m),
         )
 
@@ -424,13 +505,10 @@ def fig_timeseries_compare(
     axes[3].set_ylabel("Rebuf. (s)")
     axes[-1].set_xlabel("Chunk index")
     axes[0].set_title(f"Representative trace ({video}, episode {episode})")
-    for i, ax in enumerate(axes):
+    for ax in axes:
         ax.grid(True, alpha=0.3, linestyle="--")
-        if i == 0:
-            ax.legend(loc="upper right", fontsize=6, ncol=2, handletextpad=0.3)
-        else:
-            ax.get_legend() and ax.get_legend().remove() if ax.get_legend() else None
-    axes[0].legend(loc="upper right", fontsize=6, ncol=2, handletextpad=0.3)
+        ax.tick_params(labelsize=9)
+    axes[1].legend(loc="upper right", fontsize=8, ncol=1, handletextpad=0.3)
     _save(fig, out_dir, "fig_timeseries_proposed_vs_shielded")
     plt.close(fig)
 
@@ -463,7 +541,7 @@ def fig_paired_delta_vs_baseline(df: pd.DataFrame, out_dir: Path, baseline: str 
     if not labels:
         plt.close(fig)
         return
-    ax.axvline(0, color="#333333", lw=0.9, linestyle="--")
+    ax.axvline(0, color="#111111", lw=1.6, linestyle="--", zorder=2)
     ax.set_yticks(range(len(labels)))
     ax.set_yticklabels(labels, fontsize=8)
     ax.set_xlabel(f"ΔQoE vs. {baseline} (paired episodes)")
@@ -519,11 +597,12 @@ def fig_forest_two_baselines(df: pd.DataFrame, out_dir: Path) -> None:
             )
             ys.append(DISPLAY_NAME.get(m, m))
             pos += 1
-        ax.axvline(0.0, color="#222222", lw=0.9, linestyle="--")
+        ax.axvline(0.0, color="#111111", lw=1.7, linestyle="--", zorder=2)
         ax.set_yticks(range(len(ys)))
-        ax.set_yticklabels(ys, fontsize=8)
+        ax.set_yticklabels(ys, fontsize=9.5)
         ax.set_xlabel(r"Paired $\Delta$QoE vs.\ " + baseline)
         ax.set_title("vs. " + baseline)
+        ax.tick_params(axis="x", labelsize=9.5)
         ax.grid(True, axis="x", alpha=0.4, linestyle="--")
     _save(fig, out_dir, "fig_forest_delta_qoe_dual_baseline")
     plt.close(fig)
