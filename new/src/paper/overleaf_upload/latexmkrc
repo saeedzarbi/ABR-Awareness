@@ -1,4 +1,6 @@
-﻿$pdf_mode = 1;
-$bibtex_use = 2;
-# Soft mode: do not halt on first warning/error (Overleaf-friendly).
-$pdflatex = 'pdflatex -interaction=nonstopmode %O %S';
+# Build from this directory: new/src/paper/
+# Ensures BibTeX runs so \cite{} resolves (elsarticle + references.bib).
+# Example: latexmk -pdf main_elsevier.tex   OR   latexmk -pdf main.ltx
+$pdf_mode = 1;
+$bibtex_use = 1;
+$clean_ext = 'bbl run.xml synctex.gz';

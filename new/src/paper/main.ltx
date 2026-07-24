@@ -59,26 +59,41 @@
 % for full-width floats (see comment at top of this file).
 
 % Allow LaTeX to mix text and floats on the same page (avoid one-figure float pages)
-\renewcommand{\topfraction}{0.90}
-\renewcommand{\bottomfraction}{0.80}
-\renewcommand{\textfraction}{0.30}
-\renewcommand{\floatpagefraction}{0.45}
-\setcounter{topnumber}{4}
-\setcounter{bottomnumber}{3}
-\setcounter{totalnumber}{6}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.70}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+% Reduce extra space at top of float-only pages
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
 
-% Evaluation figures: prefer width-driven scaling (avoid over-shrinking via height caps).
-\newcommand{\evalfig}[2][0.38]{%
-  \includegraphics[width=0.95\linewidth,height=#1\textheight,keepaspectratio]{#2}%
+% Evaluation figures: scale by line width so on-page text matches Fig. 9/10.
+% Do NOT cap height for most figures — height caps shrink axis labels in the PDF.
+\newcommand{\evalfig}[1]{%
+  \includegraphics[width=\linewidth]{#1}%
+}
+\newcommand{\evalfiglarge}[1]{%
+  \includegraphics[width=\linewidth]{#1}%
 }
 \newcommand{\evalfigwide}[1]{%
-  \includegraphics[width=\linewidth,height=0.32\textheight,keepaspectratio]{#1}%
+  \includegraphics[width=\linewidth]{#1}%
+}
+\newcommand{\evalfigwideLarge}[1]{%
+  \includegraphics[width=\linewidth]{#1}%
+}
+\newcommand{\evalfigpanel}[1]{%
+  \includegraphics[width=\linewidth]{#1}%
 }
 \newcommand{\evalfigtall}[1]{%
-  \includegraphics[width=0.95\linewidth,height=0.42\textheight,keepaspectratio]{#1}%
+  \includegraphics[width=\linewidth,height=0.52\textheight,keepaspectratio]{#1}%
 }
 \newcommand{\evalfigsmall}[1]{%
-  \includegraphics[width=0.90\linewidth,height=0.24\textheight,keepaspectratio]{#1}%
+  \includegraphics[width=0.92\linewidth]{#1}%
 }
 
 \usepackage{tabularx} % full-width tables without resizebox
@@ -534,11 +549,13 @@ Among feasible rungs, we select the one that maximizes perceptual score subject 
 \begin{equation}
 \label{eq:shield-argmax}
     a^{\mathrm{exec}}_{k}
-    \in
+    =
     \underset{
-        j\in\mathcal{A}_{\mathrm{safe},k}(a^{\mathrm{raw}}_{k}):\,
-        V_{k}(a^{\mathrm{raw}}_{k})-V_{k}(j)\le\tau
-    }{\operatorname{arg\,max}}
+        \substack{
+            j\in\mathcal{A}_{\mathrm{safe},k}(a^{\mathrm{raw}}_{k}) \\[1pt]
+            V_{k}(a^{\mathrm{raw}}_{k})-V_{k}(j)\le\tau
+        }
+    }{\arg\max}\,
     V_{k}(j).
 \end{equation}
 \(\tau\) has a direct perceptual interpretation: it is the maximum VMAF-point reduction admitted relative to the policy proposal before the fallback rule is invoked.
@@ -575,9 +592,7 @@ These auxiliary terms are not safety certificates; they are intended to stabiliz
 
 \begin{figure}[htbp]
     \centering
-    \begin{adjustbox}{max width=\linewidth,max totalheight=0.38\textheight,center}
     \input{figures/fig_system_arch_tikz.tex}%
-    \end{adjustbox}
     \caption{End-to-end control loop. Solid arrows mark the deployed inference path \(s_k\!\rightarrow\!\pi_\theta\!\rightarrow\!a^{\mathrm{raw}}_k\!\rightarrow\!\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\!\rightarrow\!a^{\mathrm{exec}}_k\); the shield consumes both the proposal and the augmented state (buffer, throughput, VMAF ladder). Dashed arrows mark training-only signals (critic, reward \(r_k\), and Lagrangian cues \(\phi,\psi^{\mathrm{Lya}}\)).}
     \label{fig:arch}
 \end{figure}
@@ -743,7 +758,7 @@ Because the same episode suite is used to compare configurations, the selection 
 \IF{\(\mathcal{J}_k=\emptyset\)} \STATE \textbf{return} \((0,\mathbf{1}[a\neq0])\) \ENDIF
 \STATE \(\mathcal{J}'_k\leftarrow\{j\in\mathcal{J}_k:V_k(a)-V_k(j)\le\tau\}\)
 \STATE \(\mathcal{J}^\star_k\leftarrow\mathcal{J}'_k\) if \(\mathcal{J}'_k\neq\emptyset\); otherwise \(\mathcal{J}^\star_k\leftarrow\mathcal{J}_k\)
-\STATE \(a^{\mathrm{exec}}\leftarrow\arg\max_{j\in\mathcal{J}^\star_k}\bigl(V_k(j),\,j,\,-d^{\mathrm{est}}_k(j)\bigr)\)
+\STATE \(a^{\mathrm{exec}}\leftarrow\underset{j\in\mathcal{J}^\star_k}{\arg\max}\bigl(V_k(j),\,j,\,-d^{\mathrm{est}}_k(j)\bigr)\)
 \STATE \textbf{return} \((a^{\mathrm{exec}},\mathbf{1}[a^{\mathrm{exec}}\neq a])\)
 \end{algorithmic}
 \end{algorithm}
@@ -867,7 +882,7 @@ Figure~\ref{fig:tradeoff} illustrates the method-level mean session QoE and rebu
 
 \begin{figure}[!htbp]
     \centering
-    \evalfig{figures/fig_tradeoff_qoe_rebuffer.pdf}
+    \evalfiglarge{figures/fig_tradeoff_qoe_rebuffer.pdf}
     \caption{Method-level mean session QoE and rebuffering ratio with 95\% bootstrap confidence intervals (\(n{=}80\) episodes per method).}
     \label{fig:tradeoff}
 \end{figure}
@@ -903,7 +918,7 @@ The motion-heavy \texttt{crowd\_run} sequence yields lower QoE across controller
 
 \begin{figure}[!htbp]
     \centering
-    \evalfig{figures/fig_heatmap_qoe_by_video.pdf}
+    \evalfiglarge{figures/fig_heatmap_qoe_by_video.pdf}
     \caption{Mean QoE by video and method. QoE is lower across methods for the motion-heavy \texttt{crowd\_run} sequence.}
     \label{fig:heatmap:qoe}
 \end{figure}
@@ -915,7 +930,7 @@ Tables~\ref{tab:main:results}--\ref{tab:wilcoxon:rb} report the paired episode-l
 
 \begin{figure}[!htbp]
     \centering
-    \evalfigwide{figures/fig_forest_delta_qoe_dual_baseline.pdf}
+    \evalfigwideLarge{figures/fig_forest_delta_qoe_dual_baseline.pdf}
     \caption{Paired QoE differences relative to Pensieve (left) and RobustMPC (right), with 95\% bootstrap confidence intervals within each video and pooled across videos.}
     \label{fig:forest:baseline}
 \end{figure}
@@ -969,20 +984,20 @@ Relative to legacy projection, the VMAF-aware QoE curve is shifted to the right,
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.78\linewidth,height=0.31\textheight,keepaspectratio]{figures/fig_cdf_qoe.pdf}\\[-0.1em]
-    {\footnotesize\textbf{(a)} Session QoE}\label{fig:cdf:qoe}\par\vspace{0.4em}
-    \includegraphics[width=0.78\linewidth,height=0.31\textheight,keepaspectratio]{figures/fig_cdf_rebuffer.pdf}\\[-0.1em]
-    {\footnotesize\textbf{(b)} Rebuffering ratio}\label{fig:cdf:rb}
+    \evalfigpanel{figures/fig_cdf_qoe.pdf}\\[0.25em]
+    {\small\textbf{(a)} Session QoE}\label{fig:cdf:qoe}\\[0.45em]
+    \evalfigpanel{figures/fig_cdf_rebuffer.pdf}\\[0.25em]
+    {\small\textbf{(b)} Rebuffering ratio}\label{fig:cdf:rb}
     \caption{Empirical CDFs for distinct learned controllers (Table~\ref{tab:main:results}). Higher QoE and greater cumulative probability at low rebuffering ratios indicate better performance.}
     \label{fig:cdf:policy}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.78\linewidth,height=0.31\textheight,keepaspectratio]{figures/fig_cdf_qoe_v123_paired.pdf}\\[-0.1em]
-    {\footnotesize\textbf{(a)} Session QoE}\label{fig:cdf:qoe:paired}\par\vspace{0.4em}
-    \includegraphics[width=0.78\linewidth,height=0.31\textheight,keepaspectratio]{figures/fig_cdf_rebuffer_v123_paired.pdf}\\[-0.1em]
-    {\footnotesize\textbf{(b)} Rebuffering ratio}\label{fig:cdf:rb:paired}
+    \evalfigpanel{figures/fig_cdf_qoe_v123_paired.pdf}\\[0.25em]
+    {\small\textbf{(a)} Session QoE}\label{fig:cdf:qoe:paired}\\[0.45em]
+    \evalfigpanel{figures/fig_cdf_rebuffer_v123_paired.pdf}\\[0.25em]
+    {\small\textbf{(b)} Rebuffering ratio}\label{fig:cdf:rb:paired}
     \caption{Paired-replay CDFs (\(n{=}80\)). The policy, traces, and seeds are fixed, and only the shield logic varies. VMAF-aware projection assigns greater probability to low rebuffering ratios than legacy projection.}
     \label{fig:cdf:paired}
 \end{figure}
@@ -994,10 +1009,10 @@ Figure~\ref{fig:paired_legacy} shows paired episode-level QoE differences relati
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.78\linewidth,height=0.31\textheight,keepaspectratio]{figures/fig_v123_pareto_qoe_rebuffer.pdf}\\[-0.1em]
-    {\footnotesize\textbf{(a)} Behavioral groups (95\% CIs)}\label{fig:pareto_scatter}\par\vspace{0.4em}
-    \includegraphics[width=0.78\linewidth,height=0.31\textheight,keepaspectratio]{figures/fig_v123_empirical_pareto_front.pdf}\\[-0.1em]
-    {\footnotesize\textbf{(b)} Empirical nondominated set}\label{fig:pareto_front}
+    \evalfigpanel{figures/fig_v123_pareto_qoe_rebuffer.pdf}\\[0.25em]
+    {\small\textbf{(a)} Behavioral groups (95\% CIs)}\label{fig:pareto_scatter}\\[0.45em]
+    \evalfigpanel{figures/fig_v123_empirical_pareto_front.pdf}\\[0.25em]
+    {\small\textbf{(b)} Empirical nondominated set}\label{fig:pareto_front}
     \caption{Shield-sweep Pareto view. (a)~Mean QoE and rebuffering ratio for tolerance-defined behavioral groups. (b)~Empirical nondominated operating points (blue) and dominated points (gray); connecting lines are visual guides only.}
     \label{fig:pareto}
 \end{figure}
@@ -1035,7 +1050,7 @@ Figure~\ref{fig:shield_rate} compares the percentage of chunk decisions modified
 
 \begin{figure}[!htbp]
     \centering
-    \evalfigsmall{figures/fig_shield_intervention_rate.pdf}
+    \evalfiglarge{figures/fig_shield_intervention_rate.pdf}
     \caption{Percentage of chunk decisions modified by each shield configuration; the unshielded baseline has zero interventions.}
     \label{fig:shield_rate}
 \end{figure}

@@ -2,10 +2,6 @@
 """
 Empirical CDFs for paired shield comparison (v123 online_episodes.csv).
 
-Plots QoE and rebuffer ratio for identical Video×Episode seeds across methods,
-highlighting that VMAF-aware projection shifts mass right (QoE) and toward
-near-zero rebuffer versus legacy projection.
-
 Usage:
   python new/src/paper/scripts/generate_cdf_v123_shield_comparison.py
 """
@@ -20,7 +16,7 @@ import pandas as pd
 
 METHODS = {
     "shield_legacy": "Legacy projection",
-    "vmaf_aware_tol1.0_bud08": "VMAF-aware (v123, $\\tau{=}1.0$)",
+    "vmaf_aware_tol1.0_bud08": "VMAF-aware ($\\tau{=}1.0$)",
     "shield_off": "No shield (same policy)",
 }
 
@@ -54,13 +50,12 @@ def main() -> None:
         {
             "font.family": "serif",
             "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
-            # Sized for legibility after scaling in the manuscript.
-            "font.size": 10.5,
-            "axes.labelsize": 10.5,
-            "xtick.labelsize": 9.5,
-            "ytick.labelsize": 9.5,
-            "legend.fontsize": 9,
-            "figure.figsize": (5.0, 3.2),
+            "font.size": 12,
+            "axes.titlesize": 12,
+            "axes.labelsize": 12,
+            "legend.fontsize": 10,
+            "xtick.labelsize": 11,
+            "ytick.labelsize": 11,
             "figure.dpi": 150,
             "savefig.dpi": 600,
             "pdf.fonttype": 42,
@@ -69,38 +64,52 @@ def main() -> None:
             "axes.spines.right": False,
             "axes.linewidth": 1.0,
             "lines.linewidth": 1.8,
-            "figure.constrained_layout.use": True,
         }
     )
+
+    stack_figsize = (6.8, 3.9)
+    stack_label = 13
+    stack_tick = 12
+    stack_legend = 11
 
     for col, xlabel, stem in [
         ("QoE", "Session QoE (sum surrogate)", "fig_cdf_qoe_v123_paired"),
         ("Rebuffer", "Rebuffer ratio (% of session)", "fig_cdf_rebuffer_v123_paired"),
     ]:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=stack_figsize, constrained_layout=False)
         for key, label in METHODS.items():
             sub = df[df["Method"] == key][col].astype(float).values
             if len(sub) == 0:
                 continue
             xs, ys = _ecdf(sub)
+            highlight = key.startswith("vmaf_aware")
             ax.step(
                 xs,
                 ys,
                 where="post",
                 label=label,
                 color=COLORS.get(key, None),
-                linewidth=1.9,
+                linewidth=2.4 if highlight else 1.6,
+                alpha=1.0 if highlight else 0.85,
                 linestyle=LINESTYLES.get(key, "-"),
+                zorder=4 if highlight else 2,
             )
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel("Empirical CDF")
+        ax.set_xlabel(xlabel, fontsize=stack_label)
+        ax.set_ylabel("Empirical CDF", fontsize=stack_label)
+        ax.tick_params(axis="both", labelsize=stack_tick)
         ax.set_ylim(0, 1.05)
-        ax.legend(loc="lower right", framealpha=0.92)
         ax.grid(True, alpha=0.35, linestyle=":")
-        fig.tight_layout()
+        ax.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.14),
+            fontsize=stack_legend,
+            ncol=1,
+            frameon=True,
+        )
+        fig.subplots_adjust(bottom=0.24, left=0.10, right=0.98, top=0.97)
         for ext in ("pdf", "png"):
             p = out_dir / f"{stem}.{ext}"
-            fig.savefig(p, bbox_inches="tight")
+            fig.savefig(p, bbox_inches="tight", facecolor="white", edgecolor="none")
             print("Wrote", p)
         plt.close(fig)
 

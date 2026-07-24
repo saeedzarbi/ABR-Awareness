@@ -56,10 +56,10 @@ def _setup_matplotlib() -> None:
             "ps.fonttype": 42,
             "font.family": "serif",
             "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
-            # Keep labels readable after journal-width scaling (minimum ~8 pt).
-            "font.size": 10.5,
-            "axes.titlesize": 11,
-            "axes.labelsize": 10.5,
+            # Larger fonts for better readability (matching Fig 9/10 style).
+            "font.size": 12,
+            "axes.titlesize": 12,
+            "axes.labelsize": 12,
             "axes.titleweight": "600",
             "axes.linewidth": 1.0,
             "axes.edgecolor": "#333333",
@@ -67,8 +67,8 @@ def _setup_matplotlib() -> None:
             "axes.spines.right": False,
             "xtick.major.width": 0.9,
             "ytick.major.width": 0.9,
-            "xtick.labelsize": 9.5,
-            "ytick.labelsize": 9.5,
+            "xtick.labelsize": 11,
+            "ytick.labelsize": 11,
             "grid.color": "#E0E0E0",
             "grid.linewidth": 0.7,
             "lines.linewidth": 1.8,
@@ -77,10 +77,16 @@ def _setup_matplotlib() -> None:
             "legend.fancybox": False,
             "legend.edgecolor": "#CCCCCC",
             "legend.framealpha": 0.95,
-            "legend.fontsize": 9,
+            "legend.fontsize": 10,
             "figure.constrained_layout.use": True,
         }
     )
+
+
+STACK_PANEL_FIGSIZE = (6.8, 3.9)
+STACK_PANEL_LABELSIZE = 13
+STACK_PANEL_TICKSIZE = 12
+STACK_PANEL_LEGENDSIZE = 11
 
 
 def _repo_new() -> Path:
@@ -139,7 +145,7 @@ def _non_dominated_mask(rb: np.ndarray, qoe: np.ndarray) -> np.ndarray:
 
 
 def plot_pareto_scatter(summary: pd.DataFrame, out_dir: Path) -> None:
-    fig, ax = plt.subplots(figsize=(5.4, 4.2))
+    fig, ax = plt.subplots(figsize=STACK_PANEL_FIGSIZE, constrained_layout=False)
     for _, r in summary.iterrows():
         m = r["Method"]
         fam = _family(m)
@@ -173,11 +179,19 @@ def plot_pareto_scatter(summary: pd.DataFrame, out_dir: Path) -> None:
         Line2D([0], [0], marker="o", color="w", markerfacecolor=COLORS["thresh"], label="thresh sweep", markersize=8),
         Line2D([0], [0], marker="o", color="w", markerfacecolor=COLORS["lookahead"], label="lookahead", markersize=8),
     ]
-    ax.legend(handles=handles, loc="lower left", fontsize=8.5)
-    ax.set_xlabel("Mean rebuffer ratio (%)")
-    ax.set_ylabel("Mean session QoE")
-    ax.set_title("Shield sweep (unique behavioral classes)")
+    ax.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.12),
+        fontsize=STACK_PANEL_LEGENDSIZE,
+        ncol=2,
+        frameon=True,
+    )
+    ax.set_xlabel("Mean rebuffer ratio (%)", fontsize=STACK_PANEL_LABELSIZE)
+    ax.set_ylabel("Mean session QoE", fontsize=STACK_PANEL_LABELSIZE)
+    ax.tick_params(axis="both", labelsize=STACK_PANEL_TICKSIZE)
     ax.grid(True, linestyle="--", alpha=0.7)
+    fig.tight_layout()
     _save(fig, out_dir, "fig_v123_pareto_qoe_rebuffer")
     plt.close(fig)
 
@@ -187,7 +201,7 @@ def plot_pareto_front_line(unique: pd.DataFrame, out_dir: Path) -> None:
     qoe = unique["QoE_mean"].to_numpy(dtype=float)
     mask = _non_dominated_mask(rb, qoe)
     front = unique.loc[mask].sort_values("Rebuf_pct")
-    fig, ax = plt.subplots(figsize=(5.4, 4.0))
+    fig, ax = plt.subplots(figsize=STACK_PANEL_FIGSIZE, constrained_layout=False)
     ax.scatter(rb, qoe, c="#BBBBBB", s=40, zorder=1, label="dominated points")
     ax.plot(
         front["Rebuf_pct"],
@@ -215,15 +229,16 @@ def plot_pareto_front_line(unique: pd.DataFrame, out_dir: Path) -> None:
             (float(r["Rebuf_pct"]), float(r["QoE_mean"])),
             textcoords="offset points",
             xytext=(5, offset_y),
-            fontsize=5.5,
-            alpha=0.8,
+            fontsize=9,
+            alpha=0.85,
             arrowprops=dict(arrowstyle="-", color="#999999", lw=0.4),
         )
-    ax.set_xlabel("Mean rebuffer ratio (%)")
-    ax.set_ylabel("Mean session QoE")
-    ax.set_title("Empirical Pareto frontier (QoE up, rebuffer down)")
+    ax.set_xlabel("Mean rebuffer ratio (%)", fontsize=STACK_PANEL_LABELSIZE)
+    ax.set_ylabel("Mean session QoE", fontsize=STACK_PANEL_LABELSIZE)
+    ax.tick_params(axis="both", labelsize=STACK_PANEL_TICKSIZE)
     ax.grid(True, linestyle="--", alpha=0.7)
-    ax.legend(loc="lower left", fontsize=8)
+    ax.legend(loc="lower left", fontsize=STACK_PANEL_LEGENDSIZE)
+    fig.tight_layout()
     _save(fig, out_dir, "fig_v123_empirical_pareto_front")
     plt.close(fig)
 
@@ -269,9 +284,10 @@ def plot_paired_delta_qoe(episodes_csv: Path, out_dir: Path) -> None:
     ax.errorbar(med, pos, xerr=[np.array(med) - np.array(lo), np.array(hi) - np.array(med)], fmt="none", c="#333333", capsize=2, linewidth=0.8)
     ax.axvline(0.0, color="#111111", linewidth=1.7, linestyle="--", zorder=2)
     ax.set_yticks(pos)
-    ax.set_yticklabels([l[:32] for l in labels], fontsize=8)
-    ax.set_xlabel("Paired ΔQoE vs. shield_legacy (same Video×Episode)")
-    ax.set_title("Headline shield variants")
+    ax.set_yticklabels([l[:32] for l in labels], fontsize=11)
+    ax.set_xlabel("Paired ΔQoE vs. shield_legacy (same Video×Episode)", fontsize=12)
+    ax.set_title("Headline shield variants", fontsize=12)
+    ax.tick_params(axis="x", labelsize=11)
     ax.grid(True, axis="x", linestyle="--", alpha=0.6)
     _save(fig, out_dir, "fig_v123_paired_dQoE_vs_legacy")
     plt.close(fig)
