@@ -119,14 +119,32 @@ DEFAULT_CFG = {
     "ar_rho": 0.6,
 }
 
+# HARSH preset: for the low-latency (small-buffer) regime the DEFAULT calibration
+# is far too easy -- even NLoS (12 Mbps) comfortably sustains the 6 Mbps top rung,
+# so no method ever rebuffers. The harsh preset places throughput *around and
+# below* the encoding ladder (top rung 6 Mbps) with deeper, longer outages, so a
+# small buffer genuinely gets drained and decision-time safety is exercised.
+HARSH_CFG = {
+    "los_median_mbps": 8.0, "los_cv": 0.50, "los_dwell_s": 4.0,
+    "nlos_median_mbps": 2.5, "nlos_cv": 0.70, "nlos_dwell_s": 4.0,
+    "outage_median_mbps": 0.15, "outage_cv": 0.5, "outage_dwell_s": 3.0,
+    "p_los_to_nlos": 0.50, "p_nlos_to_los": 0.30, "p_nlos_to_outage": 0.20,
+    # Low AR so the outage state can actually reach sub-Mbps within its dwell
+    # (with heavy smoothing the deep-outage never materialises and nothing stalls).
+    "ar_rho": 0.4,
+}
+
+PRESETS = {"default": DEFAULT_CFG, "harsh": HARSH_CFG}
+
 
 def cmd_synth(args):
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
+    cfg = PRESETS[getattr(args, "preset", "default")]
     rng = np.random.default_rng(int(args.seed))
     all_stats = []
     for i in range(int(args.num)):
-        thr, stats = _gen_trace_kbps(int(args.length), rng, DEFAULT_CFG)
+        thr, stats = _gen_trace_kbps(int(args.length), rng, cfg)
         (out_dir / f"{args.prefix}_{i:04d}.json").write_text(
             json.dumps({"throughput_kbps": thr}), encoding="utf-8"
         )
@@ -138,7 +156,8 @@ def cmd_synth(args):
 
     summary = {
         "generator": "v14_three_state_ar1",
-        "config": DEFAULT_CFG,
+        "preset": getattr(args, "preset", "default"),
+        "config": cfg,
         "n_traces": int(args.num), "length_s": int(args.length),
         "validation": {k: _agg(k) for k in
                        ["mean_kbps", "median_kbps", "cv", "outage_frac", "min_kbps", "p05_kbps"]},
@@ -210,6 +229,8 @@ def main():
     ps.add_argument("--num", type=int, default=50)
     ps.add_argument("--length", type=int, default=300)
     ps.add_argument("--seed", type=int, default=123)
+    ps.add_argument("--preset", type=str, default="default", choices=["default", "harsh"],
+                    help="'harsh' places throughput around/below the ladder for the low-latency regime.")
     ps.add_argument("--out", type=str, default=str(Path("data") / "standardized" / "test_traces_5g_stress_v14"))
     ps.add_argument("--prefix", type=str, default="synthetic_5g_v14")
     ps.set_defaults(func=cmd_synth)
