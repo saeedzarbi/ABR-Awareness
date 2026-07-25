@@ -58,9 +58,15 @@ echo "[0] Verify ffmpeg + libvmaf"
 if ! command -v ffmpeg >/dev/null 2>&1; then
     echo "[FATAL] ffmpeg not found. Install it (see header) then re-run."; exit 2
 fi
-if ! ffmpeg -hide_banner -filters 2>/dev/null | grep -q libvmaf; then
-    echo "[FATAL] this ffmpeg lacks the libvmaf filter. Use a build that includes it."; exit 2
-fi
+# NOTE: capture the filter list into a variable FIRST, then grep the string.
+# Do NOT pipe `ffmpeg -filters | grep -q libvmaf`: with `set -o pipefail`, grep -q
+# closes the pipe early on match, ffmpeg dies with SIGPIPE, and the pipeline is
+# reported as failed even though libvmaf IS present (false negative).
+FF_FILTERS="$(ffmpeg -hide_banner -filters 2>/dev/null || true)"
+case "${FF_FILTERS}" in
+    *libvmaf*) : ;;  # present
+    *) echo "[FATAL] this ffmpeg lacks the libvmaf filter. Use a build that includes it."; exit 2 ;;
+esac
 echo "  ffmpeg + libvmaf OK"
 
 echo ""
