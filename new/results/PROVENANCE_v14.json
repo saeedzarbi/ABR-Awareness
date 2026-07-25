@@ -1,0 +1,90 @@
+{
+  "pipeline": "v14",
+  "videos": {
+    "train_videos": [
+      "bigbuckbunny",
+      "crowd_run",
+      "tearsofsteel_short"
+    ],
+    "eval_videos": [
+      "bigbuckbunny",
+      "crowd_run",
+      "tearsofsteel_short",
+      "sintel"
+    ],
+    "unseen_eval_videos": [
+      "sintel"
+    ],
+    "eval_videos_also_in_training": [
+      "bigbuckbunny",
+      "crowd_run",
+      "tearsofsteel_short"
+    ],
+    "note": "3 of 4 evaluation videos are also training videos; sintel is held out. The V14 summary reports seen/unseen/pooled separately so in-distribution and generalisation results are not conflated."
+  },
+  "traces": {
+    "train_dir": "/root/ABR-Awareness/new/data/standardized/train_traces",
+    "test_dir": "/root/ABR-Awareness/new/data/standardized/test_traces",
+    "n_train": 101,
+    "n_test": 27,
+    "n_name_overlap": 8,
+    "overlap_examples": [
+      "fcc_test_fcc_trace_10652_http---www.amazon.json",
+      "fcc_test_fcc_trace_1171_http---www.yahoo.json",
+      "fcc_test_fcc_trace_14731_http---www.facebook.json",
+      "fcc_test_fcc_trace_215364_http---www.ebay.json",
+      "fcc_test_fcc_trace_216810_http---www.facebook.json",
+      "fcc_test_fcc_trace_27175_http---www.amazon.json",
+      "fcc_test_fcc_trace_5554_http---www.amazon.json",
+      "fcc_test_fcc_trace_805712_http---www.facebook.json"
+    ],
+    "disjoint_by_name": false
+  },
+  "vmaf_ladder": {
+    "bigbuckbunny": {
+      "vmaf_by_rung": [
+        66.58,
+        83.73,
+        90.34,
+        95.49,
+        97.11,
+        97.14
+      ],
+      "monotone_nondecreasing": true
+    },
+    "crowd_run": {
+      "vmaf_by_rung": [
+        4.03,
+        15.45,
+        24.75,
+        32.84,
+        44.66,
+        62.0
+      ],
+      "monotone_nondecreasing": true
+    },
+    "sintel": {
+      "vmaf_by_rung": [
+        74.82,
+        87.43,
+        95.19,
+        95.31,
+        96.41,
+        97.71
+      ],
+      "monotone_nondecreasing": true
+    },
+    "tearsofsteel_short": {
+      "vmaf_by_rung": [
+        67.85,
+        86.63,
+        92.82,
+        95.92,
+        97.6,
+        98.49
+      ],
+      "monotone_nondecreasing": true
+    }
+  },
+  "vmaf_ladder_all_monotone": true
+}
