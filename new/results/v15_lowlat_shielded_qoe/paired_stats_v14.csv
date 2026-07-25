@@ -1,0 +1,16 @@
+metric,desc,target,baseline,n,n_nonzero,mean,median,stat,p,p_holm
+QoE,VMAF-aware(0.8) vs legacy,vmaf_aware_tol0.8_bud08,shield_legacy,80,0,0.0,0.0,,1.0,1.0
+QoE,VMAF-aware(1.0) vs legacy,vmaf_aware_tol1.0_bud08,shield_legacy,80,0,0.0,0.0,,1.0,1.0
+QoE,VMAF-aware vs highest-index (0.8) [isolation],vmaf_aware_tol0.8_bud08,highest_feasible_tol0.8,80,0,0.0,0.0,,1.0,1.0
+QoE,VMAF-aware vs highest-index (1.0) [isolation],vmaf_aware_tol1.0_bud08,highest_feasible_tol1.0,80,0,0.0,0.0,,1.0,1.0
+QoE,shield-off vs legacy [co-design],shield_off,shield_legacy,80,13,-93.14065173933193,0.0,1139.0,0.012642486613740895,0.06321243306870447
+Rebuffer,VMAF-aware(0.8) vs legacy,vmaf_aware_tol0.8_bud08,shield_legacy,80,0,0.0,0.0,,1.0,1.0
+Rebuffer,VMAF-aware(1.0) vs legacy,vmaf_aware_tol1.0_bud08,shield_legacy,80,0,0.0,0.0,,1.0,1.0
+Rebuffer,VMAF-aware vs highest-index (0.8) [isolation],vmaf_aware_tol0.8_bud08,highest_feasible_tol0.8,80,0,0.0,0.0,,1.0,1.0
+Rebuffer,VMAF-aware vs highest-index (1.0) [isolation],vmaf_aware_tol1.0_bud08,highest_feasible_tol1.0,80,0,0.0,0.0,,1.0,1.0
+Rebuffer,shield-off vs legacy [co-design],shield_off,shield_legacy,80,13,0.483138811142354,0.0,1139.0,0.012642486613740895,0.06321243306870447
+VMAF,VMAF-aware(0.8) vs legacy,vmaf_aware_tol0.8_bud08,shield_legacy,80,0,0.0,0.0,,1.0,1.0
+VMAF,VMAF-aware(1.0) vs legacy,vmaf_aware_tol1.0_bud08,shield_legacy,80,0,0.0,0.0,,1.0,1.0
+VMAF,VMAF-aware vs highest-index (0.8) [isolation],vmaf_aware_tol0.8_bud08,highest_feasible_tol0.8,80,0,0.0,0.0,,1.0,1.0
+VMAF,VMAF-aware vs highest-index (1.0) [isolation],vmaf_aware_tol1.0_bud08,highest_feasible_tol1.0,80,0,0.0,0.0,,1.0,1.0
+VMAF,shield-off vs legacy [co-design],shield_off,shield_legacy,80,12,0.04876041666666735,0.0,1173.0,0.019999003744120194,0.09999501872060097
