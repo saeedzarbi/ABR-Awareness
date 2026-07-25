@@ -1,90 +1,82 @@
-% Figure 1: compact architecture (natural width ~\linewidth, minimal scaling).
+% Figure 1: simplified architecture — single left-to-right inference path,
+% one training branch (Critic, dashed), one feedback arc. Scaled to \linewidth
+% by \adjustbox in main.ltx, so absolute size here only fixes proportions.
+\definecolor{archEnv}{HTML}{666666}
+\definecolor{archState}{HTML}{E69F00}
+\definecolor{archPolicy}{HTML}{0072B2}
+\definecolor{archShield}{HTML}{009E73}
+
 \tikzset{
     archbox/.style={
-        draw, rounded corners=3pt, align=center,
-        inner sep=4pt, font=\small,
-        minimum height=0.95cm
+        draw, rounded corners=3pt, align=center, thick,
+        inner sep=8pt, font=\normalsize, minimum height=1.25cm
     },
-    envbox/.style={archbox, fill=gray!10, draw=gray!55, text width=2.0cm},
-    statebox/.style={archbox, fill=orange!14, draw=orange!55!black, text width=2.5cm, minimum height=1.25cm},
-    actorbox/.style={archbox, fill=blue!10, draw=blue!55!black, text width=2.2cm},
-    shieldbox/.style={archbox, fill=green!12, draw=green!45!black, text width=2.4cm, minimum height=1.15cm},
-    clientbox/.style={archbox, fill=red!8, draw=red!45!black, text width=1.9cm},
-    criticbox/.style={archbox, fill=blue!6, draw=blue!45!black, dashed, text width=2.2cm},
-    groupbox/.style={draw=black!30, dashed, rounded corners=4pt, inner xsep=7pt, inner ysep=9pt},
-    infer/.style={->, >=Latex, line width=1.05pt, black!80},
-    inferbold/.style={->, >=Latex, line width=1.25pt, black},
-    train/.style={->, >=Latex, line width=0.8pt, densely dashed, blue!55!black},
-    feedback/.style={->, >=Latex, line width=1.05pt, green!45!black},
-    edgelabel/.style={font=\footnotesize, fill=white, inner sep=1.5pt},
+    envbox/.style={archbox, fill=archEnv!8, draw=archEnv, text width=3.1cm},
+    statebox/.style={archbox, fill=archState!12, draw=archState!85!black, text width=2.3cm, minimum height=1.55cm},
+    actorbox/.style={archbox, fill=archPolicy!12, draw=archPolicy, text width=2.3cm},
+    shieldbox/.style={archbox, fill=archShield!14, draw=archShield!80!black, text width=2.7cm, minimum height=1.55cm},
+    clientbox/.style={archbox, fill=archEnv!5, draw=archEnv, text width=2.0cm},
+    criticbox/.style={archbox, thin, fill=archPolicy!4, draw=archPolicy!70, dash pattern=on 3pt off 2pt, text width=2.3cm},
+    ppogroup/.style={draw=archPolicy!45, dash pattern=on 3pt off 2pt, rounded corners=5pt, inner xsep=10pt, inner ysep=10pt},
+    infer/.style={->, line width=1.5pt, black!85},
+    train/.style={->, line width=1.0pt, dash pattern=on 3pt off 2pt, archPolicy!70!black},
+    feedback/.style={->, line width=1.05pt, archEnv},
+    edgelabel/.style={font=\small, fill=white, inner sep=1.5pt},
 }
 
-\begin{tikzpicture}[font=\small, >=Latex]
+\begin{tikzpicture}[font=\normalsize, >=Latex]
 
-    % --- Environment (left) ---
-    \node[envbox] (network) at (0, 1.35) {Network \(C_k\)};
-    \node[envbox] (manifest) at (0, 0.45) {Manifest/VMAF};
-    \node[envbox] (buffer) at (0, -0.45) {Buffer \(B_k\)};
+    % --- Main inference path (single row, left to right) ---
+    \node[envbox] (env) at (0, 0)
+        {\textbf{Environment}\\[3pt]{\footnotesize network throughput $C_k$, manifest/VMAF, buffer $B_k$}};
 
-    % --- Core pipeline ---
-    \node[statebox] (state) at (3.3, 0.45)
-        {\textbf{State} \(s_k\)\\[-1pt]{\scriptsize throughput, buffer,}\\[-2pt]{\scriptsize prev.\ action, lookahead}};
+    \node[statebox] (state) at (3.7, 0)
+        {\textbf{State} \(s_k\)\\[3pt]{\footnotesize throughput, buffer,}\\[0pt]{\footnotesize VMAF, lookahead}};
 
-    \node[actorbox] (actor) at (6.4, 0.45)
-        {\textbf{Actor} \(\pi_\theta\)\\[-1pt]{\scriptsize \(a^{\mathrm{raw}}_k\)}};
+    \node[actorbox] (actor) at (6.9, 0)
+        {\textbf{Actor} \(\pi_\theta\)\\[3pt]{\footnotesize proposes \(a^{\mathrm{raw}}_k\)}};
 
-    \node[shieldbox] (shield) at (9.6, 0.45)
-        {\textbf{VMAF-aware Shield}\\[-1pt]{\scriptsize \(\mathcal{S}(s,a^{\mathrm{raw}})\)}};
+    \node[shieldbox] (shield) at (10.3, 0)
+        {\textbf{Runtime Shield}\\[3pt]{\footnotesize \(\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\)}};
 
-    \node[clientbox] (client) at (12.4, 0.45) {Client\\Player};
+    \node[clientbox] (client) at (13.5, 0)
+        {\textbf{Client}\\[2pt]{\footnotesize player}};
 
-    \node[criticbox] (critic) at (6.4, -1.55)
-        {\textbf{Critic} \(V_\phi(s)\)\\[-1pt]{\scriptsize training only}};
+    \draw[infer] (env.east) -- (state.west);
+    \draw[infer] (state.east) -- (actor.west)
+        node[edgelabel, midway, above=1pt] {\(s_k\)};
+    \draw[infer] (actor.east) -- (shield.west)
+        node[edgelabel, midway, above=1pt] {\(a^{\mathrm{raw}}_k\)};
+    \draw[infer] (shield.east) -- (client.west)
+        node[edgelabel, midway, above=1pt] {\(a^{\mathrm{exec}}_k\)};
 
-    % --- Environment to state ---
-    \draw[infer] (network.east) -- ++(0.35,0) |- ([yshift=4pt]state.west);
-    \draw[infer] (manifest.east) -- (state.west);
-    \draw[infer] (buffer.east) -- ++(0.35,0) |- ([yshift=-4pt]state.west);
+    % --- Training-only branch (Critic), clearly set apart below the Actor ---
+    \node[criticbox] (critic) at (6.9, -2.9)
+        {\textbf{Critic} \(V_\phi(s)\)\\[2pt]{\footnotesize training only}\\[2pt]{\footnotesize reward \(r_k\), \(\lambda\)-update}};
+    % Short drop keeps the horizontal run above the Critic box instead of
+    % cutting across its text.
+    \draw[train] (state.south) -- ++(0,-0.45) -| (critic.north);
 
-    % --- Main inference path (labels above) ---
-    \draw[inferbold] (state.east) -- (actor.west);
-    \node[edgelabel, above=2pt] at ($(state.east)!0.5!(actor.west)$) {\(s_k\)};
-
-    \draw[inferbold] (actor.east) -- (shield.west);
-    \node[edgelabel, above=2pt] at ($(actor.east)!0.5!(shield.west)$) {\(a^{\mathrm{raw}}_k\)};
-
-    \draw[feedback] (shield.east) -- (client.west);
-    \node[edgelabel, above=2pt] at ($(shield.east)!0.5!(client.west)$) {\(a^{\mathrm{exec}}_k\)};
-
-    % --- State to shield (lower corridor) ---
-    \draw[infer]
-        ([yshift=-4pt]state.east) -- ++(0.25,0)
-        |- ($(state.east)!0.55!(shield.west) + (0,-0.55)$)
-        -| ([yshift=-8pt]shield.west);
-    \node[edgelabel] at ($(state.east)!0.55!(shield.west) + (0,-0.72)$) {\(s_k\)};
-
-    % --- Training path ---
-    \draw[train] (state.south) -- ++(0,-0.35) -| (critic.north);
-    \draw[train] (buffer.south) -- ++(0,-1.05) -| ([xshift=-6pt]critic.south);
-    \node[edgelabel] at ($(buffer.south)!0.5!(critic.south) + (0.9,-0.55)$) {\(r_k,\phi,\psi\)};
-
-    % --- Download feedback ---
-    \draw[infer, gray!60] (client.south) -- ++(0,-0.45) -| ([xshift=5pt]buffer.south);
-
-    % --- Group boxes ---
     \begin{pgfonlayer}{background}
-        \node[groupbox, fill=gray!3, fit=(network)(manifest)(buffer),
-              label={[font=\small\bfseries, text=gray!65]above:Environment}] {};
-        \node[groupbox, fill=blue!2, fit=(actor)(critic), inner ysep=12pt,
-              label={[font=\small\bfseries, text=blue!55!black]above:Lagrangian PPO}] {};
-        \node[groupbox, fill=green!3, fit=(shield),
-              label={[font=\small\bfseries, text=green!45!black]above:Runtime Shield}] {};
+        \node[ppogroup, fit=(actor)(critic)] (ppogrp) {};
     \end{pgfonlayer}
 
-    % --- Legend ---
-    \node[font=\footnotesize, anchor=north] at (6.2, -2.35) {
-        \tikz[baseline=-0.5ex]\draw[inferbold] (0,0) -- (0.55,0);~Inference \quad
-        \tikz[baseline=-0.5ex]\draw[train] (0,0) -- (0.55,0);~Training only
+    % Group caption sits in the free band above the Shield box; centered above
+    % the group it would run into the State box on the left.
+    \node[anchor=south west, font=\normalsize\bfseries, text=archPolicy]
+        at (ppogrp.north east) {Lagrangian PPO agent};
+
+    % --- Download feedback: a single low-key arc over the top, clear of the
+    % training branch below, back into the environment ---
+    \draw[feedback]
+        (client.north) -- ++(0,1.75) -| (env.north)
+        node[edgelabel, font=\footnotesize, pos=0.5, above] {buffer update after chunk download};
+
+    % --- Legend (compact, single line, below the PPO group box) ---
+    \node[font=\footnotesize, anchor=north] at (6.9, -4.55) {
+        \tikz[baseline=-0.5ex]\draw[infer] (0,0) -- (0.6,0);~Inference \hspace{1.2em}
+        \tikz[baseline=-0.5ex]\draw[train] (0,0) -- (0.6,0);~Training only \hspace{1.2em}
+        \tikz[baseline=-0.5ex]\draw[feedback] (0,0) -- (0.6,0);~Download feedback
     };
 
 \end{tikzpicture}

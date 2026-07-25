@@ -1,0 +1,11 @@
+Highlights
+(3-5 bullet points, each max 85 characters including spaces, per Computer
+Networks / Elsevier submission requirements. Upload as a separate editable
+file, e.g. paste into a new Word document named "Highlights", and select
+file type "Highlights" during submission in Editorial Manager.)
+
+- Introduces a VMAF-aware runtime shield for constrained deep RL video ABR control.
+- Formulates ABR as a CMDP solved with Lagrangian PPO under stall/smoothness budgets.
+- Soft-tolerance projection cuts rebuffering with no mean VMAF loss vs. legacy rules.
+- Shows a perceptual-loss budget cannot bind while the VMAF ladder is monotone.
+- Per-frame logs show the chunk-level ladder is nonmonotone in 25% of chunks.

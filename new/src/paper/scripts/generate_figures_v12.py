@@ -76,7 +76,16 @@ ORDER_MAIN = [
     "Proposed_ShieldedQoE",
 ]
 
-ORDER_ABLATION = ["Ablation_Base", "Ablation_Future", "Ablation_Lyap", "Proposed"]
+ORDER_ABLATION = ["Proposed", "Ablation_Base", "Ablation_Future", "Ablation_Lyap"]
+
+# Ablation bars use the subtractive wording of the ablation table and the running
+# text ("- Lagrangian constraints" etc.) so figure and table can be read together.
+ABLATION_LABEL: dict[str, str] = {
+    "Proposed": "Full CMDP",
+    "Ablation_Base": r"$-$ Lagrangian",
+    "Ablation_Future": r"$-$ Lookahead",
+    "Ablation_Lyap": r"$-$ Lyapunov",
+}
 
 # Distinct linestyles for B&W / colorblind-safe CDF overlays (keyed by method).
 LINESTYLES_BY_METHOD: dict[str, str | tuple] = {
@@ -185,41 +194,45 @@ def _setup_matplotlib() -> None:
             "ps.fonttype": 42,
             "font.family": "serif",
             "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
+            # STIX matches the Times/serif body font; without this, any mathtext
+            # ($...$, e.g. "$\Delta$QoE") silently falls back to DejaVu Sans and
+            # mixes a sans-serif face into an otherwise all-serif figure.
+            "mathtext.fontset": "stix",
             # Larger fonts for better readability (matching Fig 9/10 style).
-            "font.size": 12,
-            "axes.titlesize": 12,
-            "axes.labelsize": 12,
+            "font.size": 22,
+            "axes.titlesize": 22,
+            "axes.labelsize": 22,
             "axes.titleweight": "600",
             "axes.labelweight": "500",
-            "axes.linewidth": 1.0,
+            "axes.linewidth": 1.3,
             "axes.edgecolor": "#333333",
             "axes.spines.top": False,
             "axes.spines.right": False,
-            "xtick.major.width": 0.9,
-            "ytick.major.width": 0.9,
-            "xtick.labelsize": 11,
-            "ytick.labelsize": 11,
+            "xtick.major.width": 1.2,
+            "ytick.major.width": 1.2,
+            "xtick.labelsize": 20,
+            "ytick.labelsize": 20,
             "grid.color": "#E0E0E0",
             "grid.linewidth": 0.7,
-            "lines.linewidth": 1.8,
-            "lines.markersize": 6.5,
+            "lines.linewidth": 2.3,
+            "lines.markersize": 8.5,
             "legend.frameon": True,
             "legend.fancybox": False,
             "legend.edgecolor": "#CCCCCC",
             "legend.framealpha": 0.95,
             "legend.borderaxespad": 0.5,
-            "legend.fontsize": 10,
+            "legend.fontsize": 18,
             "figure.constrained_layout.use": True,
         }
     )
 
 
 # Full-width stacked (a)/(b) panels: one panel per \linewidth row in LaTeX.
-STACK_PANEL_FIGSIZE = (6.8, 3.9)
-STACK_PANEL_LABELSIZE = 13
-STACK_PANEL_TICKSIZE = 12
-STACK_PANEL_LEGENDSIZE = 11
-FOREST_FIGSIZE_W = 6.8
+STACK_PANEL_FIGSIZE = (7.2, 4.7)
+STACK_PANEL_LABELSIZE = 24
+STACK_PANEL_TICKSIZE = 22
+STACK_PANEL_LEGENDSIZE = 20
+FOREST_FIGSIZE_W = 10.5
 
 
 def _repo_new() -> Path:
@@ -292,14 +305,14 @@ def fig_tradeoff_with_ci(df: pd.DataFrame, out_dir: Path) -> None:
             label=DISPLAY_NAME.get(m, m),
         )
 
-    ax.set_xlabel("Mean rebuffer ratio (% of session)", fontsize=12)
-    ax.set_ylabel("Session QoE (sum)", fontsize=12)
-    ax.tick_params(axis="both", labelsize=11)
+    ax.set_xlabel("Mean rebuffer ratio (% of session)", fontsize=22)
+    ax.set_ylabel("Session QoE (sum)", fontsize=22)
+    ax.tick_params(axis="both", labelsize=20)
     ax.grid(True, alpha=0.35, linestyle="--")
     ax.legend(
         loc="upper center",
         bbox_to_anchor=(0.5, -0.12),
-        fontsize=10,
+        fontsize=18,
         ncol=3,
         handletextpad=0.4,
         columnspacing=1.0,
@@ -312,7 +325,7 @@ def fig_tradeoff_with_ci(df: pd.DataFrame, out_dir: Path) -> None:
 
 def fig_ecdf(df: pd.DataFrame, out_dir: Path, column: str, xlabel: str, stem: str) -> None:
     methods = [m for m in ORDER_MAIN if m in set(df["Method"].unique())]
-    fig, ax = plt.subplots(figsize=STACK_PANEL_FIGSIZE, constrained_layout=False)
+    fig, ax = plt.subplots(figsize=STACK_PANEL_FIGSIZE, layout="constrained")
     for i, m in enumerate(methods):
         sub = np.sort(df[df["Method"] == m][column].values.astype(float))
         y = np.arange(1, len(sub) + 1) / len(sub)
@@ -336,72 +349,18 @@ def fig_ecdf(df: pd.DataFrame, out_dir: Path, column: str, xlabel: str, stem: st
     ax.tick_params(axis="both", labelsize=STACK_PANEL_TICKSIZE)
     ax.set_ylim(0, 1.05)
     ax.grid(True, alpha=0.35, linestyle="--")
-    # Legend below the axes — keeps the mid/upper CDF overlap region unobstructed.
-    ax.legend(
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.16),
+    # Figure-level legend placed *outside* the axes; the constrained layout
+    # engine reserves exactly the space it needs, so it never collides with
+    # the x-axis label regardless of font size or entry count.
+    fig.legend(
+        loc="outside lower center",
         fontsize=STACK_PANEL_LEGENDSIZE,
-        ncol=3,
+        ncol=5,
         handletextpad=0.35,
         columnspacing=0.9,
         frameon=True,
     )
-    fig.subplots_adjust(bottom=0.32, left=0.14, right=0.98, top=0.97)
     _save(fig, out_dir, stem)
-    plt.close(fig)
-
-
-def fig_switches_violin(df: pd.DataFrame, out_dir: Path) -> None:
-    """Horizontal mean switches per episode with bootstrap 95% CI (matplotlib-only).
-
-    Filename remains ``fig_switches_violin`` for stable LaTeX includes.
-    """
-    methods = [m for m in ORDER_MAIN if m in set(df["Method"].unique())]
-    if not methods:
-        return
-
-    rng = np.random.default_rng(42)
-    labels = [DISPLAY_NAME[m] for m in methods]
-    means: list[float] = []
-    err_lo: list[float] = []
-    err_hi: list[float] = []
-    for m in methods:
-        sub = df[df["Method"] == m]["Switch"].values.astype(float)
-        mu, lo, hi = _bootstrap_ci(sub, rng=rng)
-        means.append(mu)
-        err_lo.append(mu - lo)
-        err_hi.append(hi - mu)
-
-    y = np.arange(len(methods), dtype=float)
-    fig_h = max(4.2, 0.38 * len(methods) + 1.2)
-    fig, ax = plt.subplots(figsize=(5.85, fig_h))
-
-    for i, m in enumerate(methods):
-        c = COLORS.get(m, "#444444")
-        ax.errorbar(
-            means[i],
-            y[i],
-            xerr=np.array([[err_lo[i]], [err_hi[i]]]),
-            fmt="o",
-            color=c,
-            ecolor=c,
-            capsize=2.8,
-            markersize=5.8,
-            elinewidth=1.05,
-            markeredgecolor="white",
-            markeredgewidth=0.55,
-            zorder=3,
-        )
-
-    ax.set_yticks(y)
-    ax.set_yticklabels(labels, fontsize=11)
-    ax.set_xlabel("Bitrate switches per episode")
-    ax.set_title("Mean bitrate switches (bootstrap 95% CI)")
-    ax.grid(True, axis="x", alpha=0.45, linestyle="--")
-    pad = 0.55
-    ax.set_ylim(y.min() - pad, y.max() + pad)
-    fig.tight_layout()
-    _save(fig, out_dir, "fig_switches_violin")
     plt.close(fig)
 
 
@@ -425,10 +384,10 @@ def fig_shield_intervention(decisions: pd.DataFrame, out_dir: Path) -> None:
 
     fig, ax = plt.subplots(figsize=(7.2, 4.2), constrained_layout=False)
     ax.barh(labels, vals, color=colors, edgecolor="white", linewidth=0.6, height=0.62)
-    ax.set_xlabel("Shield intervention rate (% of chunk steps)", fontsize=12)
-    ax.set_title("Runtime shield activity", fontsize=12)
-    ax.tick_params(axis="y", labelsize=11)
-    ax.tick_params(axis="x", labelsize=11)
+    ax.set_xlabel("Shield intervention rate (% of chunk steps)", fontsize=22)
+    ax.set_title("Runtime shield activity", fontsize=22)
+    ax.tick_params(axis="y", labelsize=20)
+    ax.tick_params(axis="x", labelsize=20)
     ax.grid(True, axis="x", which="major", alpha=0.55, linestyle="--", linewidth=0.8, zorder=0)
     ax.set_axisbelow(True)
     fig.tight_layout()
@@ -441,8 +400,8 @@ def fig_ablation_bars(df: pd.DataFrame, out_dir: Path) -> None:
     if len(methods) < 2:
         return
     agg = df[df["Method"].isin(methods)].groupby("Method", as_index=False)[["QoE", "Rebuffer"]].mean()
-    agg["Label"] = agg["Method"].map(lambda m: DISPLAY_NAME.get(m, m))
-    order = [DISPLAY_NAME[m] for m in methods if m in set(agg["Method"])]
+    agg["Label"] = agg["Method"].map(lambda m: ABLATION_LABEL.get(m, DISPLAY_NAME.get(m, m)))
+    order = [ABLATION_LABEL.get(m, DISPLAY_NAME[m]) for m in methods if m in set(agg["Method"])]
 
     fig, axes = plt.subplots(1, 2, figsize=(6.8, 3.4))
     for ax, col, title in zip(
@@ -451,16 +410,21 @@ def fig_ablation_bars(df: pd.DataFrame, out_dir: Path) -> None:
         ["Mean session QoE", "Mean rebuffer (%)"],
     ):
         sub = agg.set_index("Method").loc[[m for m in methods if m in agg["Method"].values]].reset_index()
-        sub["Label"] = sub["Method"].map(lambda m: DISPLAY_NAME.get(m, m))
+        sub["Label"] = sub["Method"].map(lambda m: ABLATION_LABEL.get(m, DISPLAY_NAME.get(m, m)))
         sub = sub.set_index("Label").loc[[l for l in order if l in sub["Label"].values]].reset_index()
         cols = [COLORS.get(m, "#888888") for m in sub["Method"]]
-        ax.bar(sub["Label"], sub[col], color=cols, edgecolor="white", linewidth=0.6)
-        ax.set_title(title, fontsize=12)
-        ax.tick_params(axis="both", labelsize=11)
+        bars = ax.bar(sub["Label"], sub[col], color=cols, edgecolor="white", linewidth=0.6)
+        ax.set_title(title, fontsize=22)
+        ax.tick_params(axis="both", labelsize=20)
         ax.tick_params(axis="x", rotation=25)
         ax.grid(True, axis="y", alpha=0.35, linestyle="--")
         # Bar charts must start at zero to avoid exaggerating small gaps.
         ax.set_ylim(bottom=0)
+        # With a zero baseline the QoE bars differ by about 1%, so print the
+        # values; the axis stays honest and the numbers stay readable.
+        fmt = "{:.0f}" if col == "QoE" else "{:.1f}"
+        ax.bar_label(bars, labels=[fmt.format(v) for v in sub[col]], fontsize=17, padding=2)
+        ax.set_ylim(top=float(sub[col].max()) * 1.16)
     _save(fig, out_dir, "fig_ablation_qoe_rebuffer")
     plt.close(fig)
 
@@ -496,16 +460,16 @@ def fig_per_video_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
     ax.set_yticks(range(n_methods))
     ax.set_yticklabels(
         [HEATMAP_ROW_LABEL.get(c, DISPLAY_NAME.get(c, c)) for c in pv_t.index],
-        fontsize=11,
+        fontsize=20,
     )
     ax.set_xticks(range(n_videos))
-    ax.set_xticklabels(video_labels, rotation=30, ha="right", fontsize=11)
-    ax.set_xlabel("Video sequence", fontsize=12)
-    ax.set_ylabel("Method", fontsize=12)
-    ax.tick_params(axis="both", labelsize=11)
+    ax.set_xticklabels(video_labels, rotation=30, ha="right", fontsize=20)
+    ax.set_xlabel("Video sequence", fontsize=22)
+    ax.set_ylabel("Method", fontsize=22)
+    ax.tick_params(axis="both", labelsize=20)
     cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.04)
-    cbar.set_label("Mean session QoE", fontsize=11)
-    cbar.ax.tick_params(labelsize=10)
+    cbar.set_label("Mean session QoE", fontsize=20)
+    cbar.ax.tick_params(labelsize=18)
     fig.tight_layout()
     _save(fig, out_dir, "fig_heatmap_qoe_by_video")
     plt.close(fig)
@@ -524,7 +488,7 @@ def fig_timeseries_compare(
         methods[0]: {"ls": "-", "marker": "o", "markevery": 3},
         methods[1]: {"ls": "-.", "marker": "x", "markevery": 3},
     }
-    fig, axes = plt.subplots(4, 1, figsize=(8.2, 7.2), sharex=True, constrained_layout=False)
+    fig, axes = plt.subplots(4, 1, figsize=(8.6, 8.4), sharex=True, layout="constrained")
     for row, m in enumerate(methods):
         if m not in decisions["Method"].values:
             continue
@@ -611,58 +575,17 @@ def fig_timeseries_compare(
             label=DISPLAY_NAME.get(m, m),
         )
 
-    axes[0].set_ylabel("Throughput (Mb/s)", fontsize=11)
-    axes[1].set_ylabel("Buffer (s)", fontsize=11)
-    axes[2].set_ylabel("Bitrate (kbps)", fontsize=11)
-    axes[3].set_ylabel("Rebuf. (s)", fontsize=11)
-    axes[-1].set_xlabel("Chunk index", fontsize=11)
-    axes[0].set_title(f"Representative trace ({video}, episode {episode})", fontsize=12)
+    axes[0].set_ylabel("Throughput (Mb/s)", fontsize=20)
+    axes[1].set_ylabel("Buffer (s)", fontsize=20)
+    axes[2].set_ylabel("Bitrate (kbps)", fontsize=20)
+    axes[3].set_ylabel("Rebuf. (s)", fontsize=20)
+    axes[-1].set_xlabel("Chunk index", fontsize=20)
+    axes[0].set_title(f"Representative trace ({video}, episode {episode})", fontsize=22)
     for ax in axes:
         ax.grid(True, alpha=0.3, linestyle="--")
-        ax.tick_params(labelsize=11)
-    axes[1].legend(loc="upper right", fontsize=10, ncol=1, handletextpad=0.3)
-    fig.tight_layout()
+        ax.tick_params(labelsize=20)
+    axes[1].legend(loc="upper right", fontsize=18, ncol=1, handletextpad=0.3)
     _save(fig, out_dir, "fig_timeseries_proposed_vs_shielded")
-    plt.close(fig)
-
-
-def fig_paired_delta_vs_baseline(df: pd.DataFrame, out_dir: Path, baseline: str = "Pensieve") -> None:
-    if baseline not in df["Method"].values:
-        return
-    base = df[df["Method"] == baseline][["Video", "Episode", "QoE"]].rename(columns={"QoE": "QoE_b"})
-    targets = ["Proposed", "Proposed_Shielded", "Proposed_ShieldedRiskGate", "Proposed_ShieldedQoE"]
-    rows = []
-    rng = np.random.default_rng(1)
-    fig, ax = plt.subplots(figsize=(4.8, 3.0))
-    positions = []
-    labels = []
-    pos = 0
-    for m in targets:
-        if m not in df["Method"].values:
-            continue
-        a = df[df["Method"] == m][["Video", "Episode", "QoE"]].rename(columns={"QoE": "QoE_m"})
-        merged = a.merge(base, on=["Video", "Episode"])
-        delta = (merged["QoE_m"] - merged["QoE_b"]).values.astype(float)
-        if len(delta) == 0:
-            continue
-        _, lo, hi = _bootstrap_ci(delta, rng=rng)
-        mean = float(np.mean(delta))
-        ax.barh(pos, mean, xerr=[[mean - lo], [hi - mean]], color=COLORS.get(m, "#444444"), capsize=3, height=0.55)
-        positions.append(pos)
-        labels.append(DISPLAY_NAME.get(m, m))
-        pos += 1
-    if not labels:
-        plt.close(fig)
-        return
-    ax.axvline(0, color="#111111", lw=1.7, linestyle="--", zorder=2)
-    ax.set_yticks(range(len(labels)))
-    ax.set_yticklabels(labels, fontsize=11)
-    ax.set_xlabel(f"ΔQoE vs. {baseline} (paired episodes)")
-    ax.set_title("Effect size with bootstrap 95% CI")
-    ax.grid(True, axis="x", alpha=0.45, linestyle="--")
-    fig.tight_layout()
-    safe = "".join(ch if ch.isalnum() else "_" for ch in baseline.lower())
-    _save(fig, out_dir, f"fig_paired_delta_qoe_vs_{safe}")
     plt.close(fig)
 
 
@@ -684,7 +607,7 @@ def fig_forest_two_baselines(df: pd.DataFrame, out_dir: Path) -> None:
     n_rows = max(1, len([m for m in targets if m not in baselines]) - 0)
     fig_h = max(5.0, 0.55 * n_rows + 1.8)
     fig, axes = plt.subplots(
-        1, len(baselines), figsize=(FOREST_FIGSIZE_W, fig_h), squeeze=False, constrained_layout=False
+        1, len(baselines), figsize=(FOREST_FIGSIZE_W, fig_h), squeeze=False, layout="constrained"
     )
     for ax_col, baseline in enumerate(baselines):
         ax = axes[0, ax_col]
@@ -717,13 +640,16 @@ def fig_forest_two_baselines(df: pd.DataFrame, out_dir: Path) -> None:
         ax.axvline(0.0, color="#111111", lw=1.7, linestyle="--", zorder=2)
         ax.set_yticks(range(len(ys)))
         ax.set_yticklabels(ys, fontsize=STACK_PANEL_TICKSIZE)
-        ax.set_xlabel(r"Paired $\Delta$QoE vs.\ " + baseline, fontsize=STACK_PANEL_LABELSIZE)
-        ax.set_title(r"vs.\ " + baseline, fontsize=STACK_PANEL_LABELSIZE, pad=8)
+        # Baseline name already appears in the title above, so the x-axis
+        # label stays short — a repeated long label was overflowing the
+        # narrow per-panel width and visually colliding with the neighboring
+        # panel's label.
+        ax.set_xlabel(r"Paired $\Delta$QoE", fontsize=STACK_PANEL_LABELSIZE)
+        ax.set_title("vs. " + baseline, fontsize=STACK_PANEL_LABELSIZE, pad=10)
         ax.tick_params(axis="x", labelsize=STACK_PANEL_TICKSIZE)
         ax.grid(True, axis="x", alpha=0.4, linestyle="--")
         if ys:
             ax.set_ylim(-0.6, len(ys) - 0.4)
-    fig.tight_layout()
     _save(fig, out_dir, "fig_forest_delta_qoe_dual_baseline")
     plt.close(fig)
 
@@ -777,10 +703,14 @@ def _fmt_cell(mu: float, lo: float, hi: float, digits: int) -> str:
 def export_latex_main_table(summary_wide: pd.DataFrame, tex_dir: Path) -> None:
     tex_dir.mkdir(parents=True, exist_ok=True)
     order = [m for m in ORDER_MAIN if m in set(summary_wide["Method"])]
+    # Table style is shared with the hand-written fragments in main.ltx:
+    # tabularx at \linewidth, bold header cells, and no embedded note row
+    # (main.ltx supplies every note through \tablenote).
     lines = [
-        r"\begin{tabular}{@{}lccccl@{}}",
+        r"\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xccccl@{}}",
         r"\toprule",
-        r"Method & QoE$\uparrow$ & VMAF$\uparrow$ & Rebuf.\ (\%)$\downarrow$ & Switches$\downarrow$ & Type \\",
+        r"\textbf{Method} & \textbf{QoE}$\uparrow$ & \textbf{VMAF}$\uparrow$ & "
+        r"\textbf{Rebuf.\ (\%)}$\downarrow$ & \textbf{Switches}$\downarrow$ & \textbf{Type} \\",
         r"\midrule",
     ]
     sw = summary_wide.set_index("Method")
@@ -803,9 +733,7 @@ def export_latex_main_table(summary_wide: pd.DataFrame, tex_dir: Path) -> None:
         lines.append(row_tex + r" \\")
     lines += [
         r"\bottomrule",
-        r"\multicolumn{6}{l}{\footnotesize Interval: bootstrap 95\% CI on episode means ($n{=}80$ per row). "
-        r"$^{\dagger}$Shield-aware variant (elevated bitrate switches).}\\",
-        r"\end{tabular}",
+        r"\end{tabularx}",
     ]
     path = tex_dir / "table_main_results_ci.tex"
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -858,16 +786,16 @@ def _write_headline_wilcoxon_tex(
     path_out: Path,
     delta_header: str,
     median_decimals: int,
-    footer: str,
 ) -> None:
     headline_methods = ["Proposed", "Proposed_Shielded", "Proposed_ShieldedRiskGate", "Proposed_ShieldedQoE"]
     headline_df = headline_df[headline_df["Method"].isin(headline_methods)]
     lines = [
-        r"\begin{tabular}{@{}lcccc@{}}",
+        r"\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xcccc@{}}",
         r"\toprule",
-        r"Method & \multicolumn{2}{c}{vs.\ Pensieve} & \multicolumn{2}{c}{vs.\ RobustMPC} \\",
+        r"\textbf{Method} & \multicolumn{2}{c}{\textbf{vs.\ Pensieve}} & "
+        r"\multicolumn{2}{c}{\textbf{vs.\ RobustMPC}} \\",
         r"\cmidrule(lr){2-3}\cmidrule(lr){4-5}",
-        f" & {delta_header} & $p$ & {delta_header} & $p$ \\\\",
+        f" & \\textbf{{{delta_header}}} & \\textbf{{$p$}} & \\textbf{{{delta_header}}} & \\textbf{{$p$}} \\\\",
         r"\midrule",
     ]
     for m in [x for x in headline_methods if x in all_episodes_df["Method"].values]:
@@ -884,7 +812,7 @@ def _write_headline_wilcoxon_tex(
                 row.append(f"${ms}$")
                 row.append(pv)
         lines.append(" & ".join(row) + r" \\")
-    lines += [r"\bottomrule", rf"\multicolumn{{5}}{{l}}{{\footnotesize {footer}}} \\", r"\end{tabular}"]
+    lines += [r"\bottomrule", r"\end{tabularx}"]
     path_out.write_text("\n".join(lines), encoding="utf-8")
     print(f"Wrote {path_out}")
 
@@ -925,10 +853,6 @@ def export_paired_statistics(df: pd.DataFrame, tables_dir: Path, figures_dir: Pa
         path_out=tables_dir / "table_paired_wilcoxon_qoe_headline.tex",
         delta_header=r"med.\ $\Delta$QoE",
         median_decimals=1,
-        footer=(
-            r"Two-sided paired Wilcoxon signed-rank; $\Delta$QoE is the per-episode "
-            r"paired difference (method minus baseline)."
-        ),
     )
 
     hb = out_df[(out_df["Metric"] == "Rebuffer") & (out_df["Baseline"].isin(["Pensieve", "RobustMPC"]))]
@@ -938,10 +862,6 @@ def export_paired_statistics(df: pd.DataFrame, tables_dir: Path, figures_dir: Pa
         path_out=tables_dir / "table_paired_wilcoxon_rebuffer_headline.tex",
         delta_header=r"med.\ $\Delta$Rebuf.\ (\%)",
         median_decimals=2,
-        footer=(
-            r"Same paired episodes; $\Delta$Rebuffer is the per-episode difference in reported "
-            r"mean rebuffer ratio (\%). Negative values favor the row method (fewer stalls)."
-        ),
     )
 
 
@@ -1014,11 +934,9 @@ def main() -> None:
     fig_tradeoff_with_ci(df, out_dir)
     fig_ecdf(df, out_dir, "QoE", "Session QoE (sum)", "fig_cdf_qoe")
     fig_ecdf(df, out_dir, "Rebuffer", "Rebuffer ratio (% of session)", "fig_cdf_rebuffer")
-    fig_switches_violin(df, out_dir)
     fig_shield_intervention(decisions, out_dir)
     fig_ablation_bars(df, out_dir)
     fig_per_video_heatmap(df, out_dir)
-    fig_paired_delta_vs_baseline(df, out_dir, baseline="Pensieve")
     fig_forest_two_baselines(df, out_dir)
     fig_timeseries_compare(decisions, out_dir, video="sintel", episode=0)
 

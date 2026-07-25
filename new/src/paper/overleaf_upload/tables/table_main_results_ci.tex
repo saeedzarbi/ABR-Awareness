@@ -1,6 +1,6 @@
-\begin{tabular}{@{}lccccl@{}}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xccccl@{}}
 \toprule
-Method & QoE$\uparrow$ & VMAF$\uparrow$ & Rebuf.\ (\%)$\downarrow$ & Switches$\downarrow$ & Type \\
+\textbf{Method} & \textbf{QoE}$\uparrow$ & \textbf{VMAF}$\uparrow$ & \textbf{Rebuf.\ (\%)}$\downarrow$ & \textbf{Switches}$\downarrow$ & \textbf{Type} \\
 \midrule
 Genie (oracle)~\cite{mao2017neural} & 3365\,\scriptsize $[3043,\,3663]$ & 72.15\,\scriptsize $[65.44,\,78.26]$ & 8.28\,\scriptsize $[6.02,\,10.95]$ & 3.7\,\scriptsize $[3.2,\,4.1]$ & oracle \\
 RobustMPC~\cite{yin2015control} & 3275\,\scriptsize $[2953,\,3577]$ & 74.65\,\scriptsize $[68.40,\,80.38]$ & 30.70\,\scriptsize $[27.28,\,34.10]$ & 8.4\,\scriptsize $[7.7,\,9.1]$ & MPC \\
@@ -12,5 +12,4 @@ Ours: + shield & 3218\,\scriptsize $[2889,\,3529]$ & 68.47\,\scriptsize $[61.91,
 Ours: + risk-gate & 3225\,\scriptsize $[2880,\,3536]$ & 68.61\,\scriptsize $[61.95,\,75.07]$ & 1.20\,\scriptsize $[0.85,\,1.60]$ & 6.3\,\scriptsize $[5.2,\,7.5]$ & RL+CMDP+RG \\
 Ours: + shield-QoE$^{\dagger}$ & 3224\,\scriptsize $[2896,\,3536]$ & 68.74\,\scriptsize $[61.87,\,75.14]$ & 1.45\,\scriptsize $[1.07,\,1.87]$ & 9.9\,\scriptsize $[8.7,\,11.4]$ & RL+CMDP+Q \\
 \bottomrule
-\multicolumn{6}{l}{\footnotesize Interval: bootstrap 95\% CI on episode means ($n{=}80$ per row). $^{\dagger}$Shield-aware variant (elevated bitrate switches).}\\
-\end{tabular}
+\end{tabularx}

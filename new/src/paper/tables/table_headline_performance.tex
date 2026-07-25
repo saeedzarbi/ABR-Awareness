@@ -1,32 +1,28 @@
-% Baselines: table_main_results_ci. Shield rows: online_summary.csv (n=80).
+% All rows: v123 shield-sweep run, online_summary.csv (n=80 paired episodes,
+% one fixed policy checkpoint, identical traces and seeds).
 \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xcccc@{}}
 \toprule
-\textbf{Method} & \textbf{QoE} & \textbf{VMAF} & \textbf{Rebuf.\ (\%)} & \textbf{Interv.\ (\%)} \\
+\textbf{Projection} & \textbf{QoE} & \textbf{VMAF} & \textbf{Rebuf.\ (\%)} & \textbf{Interv.\ (\%)} \\
 \midrule
-\multicolumn{5}{@{}l}{\textit{Baselines} (distinct policies; 95\% CI, $n{=}80$)} \\
-\midrule
-Pensieve~\cite{mao2017neural} &
-  \cici{3269}{2931}{3573} &
-  \cici{71.59}{65.03}{77.79} &
-  \cicib{14.99}{12.29}{17.86} &
-  --- \\
-RobustMPC~\cite{yin2015control} &
-  \cici{3275}{2953}{3577} &
-  \cici{74.65}{68.40}{80.38} &
-  \cici{30.70}{27.28}{34.10} &
-  --- \\
-\midrule
-\multicolumn{5}{@{}l}{\textit{Same CMDP policy} (paired replay; CI)} \\
-\midrule
-+ Legacy (index decrement) &
+Unshielded replay &
+  \cici{2563.72}{2214.4}{2902.1} &
+  \textbf{66.55} &
+  \cici{11.04}{9.20}{12.89} &
+  0.00 \\
+Legacy (index decrement) &
   \cici{2518.87}{2176.5}{2854.7} &
   65.82 &
   \cici{5.67}{4.95}{6.36} &
   3.23 \\
-+ VMAF-aware (\(\sigma_{\mathrm{soft}}{=}1.0\), \(\tau{=}8\)) &
-  \cicib{2561.00}{2216.3}{2900.5} &
-  \textbf{66.04} &
-  \cicib{5.12}{4.41}{5.84} &
-  \textbf{2.71} \\
+VMAF-aware (\(\sigma_{\mathrm{soft}}{=}1.0\)) &
+  \cici{2561.00}{2216.3}{2900.5} &
+  66.04 &
+  \cici{5.12}{4.41}{5.84} &
+  2.71 \\
+VMAF-aware (\(\sigma_{\mathrm{soft}}{=}0.8\)) &
+  \cicib{2583.70}{2239.7}{2923.3} &
+  66.13 &
+  \cicib{4.98}{4.31}{5.69} &
+  2.79 \\
 \bottomrule
 \end{tabularx}

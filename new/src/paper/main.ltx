@@ -143,6 +143,9 @@
 
 \makeatletter
 \IfFileExists{tables/macros_v12.tex}{\input{tables/macros_v12}}{\typeout{^^J[WARN] Missing tables/macros_v12.tex --- run generate_figures_v12.py^^J}}
+\IfFileExists{tables/macros_equivalence.tex}{\input{tables/macros_equivalence}}{\typeout{^^J[WARN] Missing tables/macros_equivalence.tex --- run compute_vmaf_equivalence.py^^J}}
+\IfFileExists{tables/macros_latency.tex}{\input{tables/macros_latency}}{\typeout{^^J[WARN] Missing tables/macros_latency.tex --- run benchmark_shield_latency.py^^J}}
+\IfFileExists{tables/macros_ladder.tex}{\input{tables/macros_ladder}}{\typeout{^^J[WARN] Missing tables/macros_ladder.tex --- run analyze_vmaf_ladder_perchunk.py^^J}}
 \makeatother
 
 % -------------------------------------------------------------------------
@@ -187,6 +190,34 @@
 \providecommand{\VFiveGPairedDRbten}{-2.27}
 \providecommand{\VFiveGPairedPRbten}{2.8\!\times\!10^{-6}}
 \providecommand{\VFiveGPairedPVmten}{0.422}
+
+% --- Post-hoc TOST equivalence test for paired VMAF differences (see
+% scripts/compute_vmaf_equivalence.py; macros_equivalence.tex overrides these). ---
+\providecommand{\VEqMargin}{2.0}
+\providecommand{\VEqDEight}{0.318}
+\providecommand{\VEqCILoEight}{0.096}
+\providecommand{\VEqCIHiEight}{0.539}
+\providecommand{\VEqPEight}{6.0\!\times\!10^{-21}}
+\providecommand{\VEqDOne}{0.224}
+\providecommand{\VEqCILoOne}{0.027}
+\providecommand{\VEqCIHiOne}{0.422}
+\providecommand{\VEqPOne}{4.3\!\times\!10^{-25}}
+\providecommand{\VEqDFiveGEight}{0.014}
+\providecommand{\VEqCILoFiveGEight}{-0.073}
+\providecommand{\VEqCIHiFiveGEight}{0.101}
+\providecommand{\VEqPFiveGEight}{7.7\!\times\!10^{-53}}
+\providecommand{\VEqDFiveGOne}{0.063}
+\providecommand{\VEqCILoFiveGOne}{-0.004}
+\providecommand{\VEqCIHiFiveGOne}{0.131}
+\providecommand{\VEqPFiveGOne}{1.9\!\times\!10^{-60}}
+
+% --- Shield latency micro-benchmark (see scripts/benchmark_shield_latency.py;
+% macros_latency.tex overrides these). ---
+\providecommand{\VLatMeanUs}{8.8}
+\providecommand{\VLatMedianUs}{5.3}
+\providecommand{\VLatPNinetyNineUs}{28.6}
+\providecommand{\VLatMaxUs}{48.3}
+\providecommand{\VLatNcalls}{2880}
 
 % --- Pareto family table macros (from v123 shield sweep) ---
 % Legacy (shield_legacy, ρ_cat=2)
@@ -242,28 +273,19 @@
 \author[uta]{Saeed Zarbi}
 \author[uta]{Leili Farzinvash}
 \author[uta]{Pedram Salehpour\corref{c1}}
+\ead{psalehpour@tabrizu.ac.ir}
 \cortext[c1]{Corresponding author}
-\ead[c1]{psalehpour@tabrizu.ac.ir}
 
 \address[uta]{Department of Computer Engineering, Faculty of Electrical and Computer Engineering, University of Tabriz, Tabriz, Iran}
 
 \begin{abstract}
-Deep reinforcement learning (DRL) policies for client-side adaptive bitrate (ABR) streaming can achieve high average quality of experience (QoE), but individual decisions may still cause substantial rebuffering under volatile \mbox{5G/mmWave} throughput.
-Conventional runtime shields reduce this risk by decrementing the representation index until a feasibility test passes.
-Because adjacent representations can differ nonuniformly in Video Multimethod Assessment Fusion (VMAF), this content-blind repair may incur unnecessary perceptual loss.
-
-We formulate ABR as a constrained Markov decision process (CMDP) and optimize it using Lagrangian proximal policy optimization (PPO) with manifest lookahead and buffer-stabilization cues.
-We then introduce a rule-based VMAF-aware runtime shield that projects a proposed action onto a buffer-feasible representation.
-When a downgrade is required, the shield selects the feasible representation that retains the highest VMAF subject to a perceptual-loss budget~$\tau$.
-
-We evaluate a fixed policy on \(\VNepisodes\) paired broadband episodes using identical traces and random seeds.
-The primary engineering result is a \emph{quality-preserving safety improvement}.
-Relative to legacy index-decrement projection, the VMAF-aware shield at \(\sigma_{\mathrm{soft}}{=}0.8\) and \(\tau{=}8\) reduces mean rebuffering from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\).
-Mean session QoE increases by approximately \(2.6\%\), without an observed reduction in perceptual quality.
-Mean VMAF instead increases slightly (\(+0.3\) points), and the three unadjusted paired Wilcoxon tests yield \(p<0.05\).
-Across \(\VShieldVariants\) evaluated configurations, outcomes form \(\VShieldBehaviors\) tolerance-defined behavioral groups, with the VMAF-aware fallback accounting for the main observed changes in the empirical Pareto set.
-Replay on synthetic \mbox{5G/mmWave} stress traces also yields statistically significant QoE and rebuffering improvements, although VMAF differences are not statistically detectable.
-Finally, removing the shield from the evaluated policy increases rebuffering (\(p<10^{-10}\)), supporting deployment of that policy with its associated shield.
+Deep reinforcement learning (DRL) policies for client-side adaptive bitrate (ABR) streaming achieve high average quality of experience (QoE), yet individual decisions can still cause substantial rebuffering under volatile \mbox{5G/mmWave} throughput.
+Conventional runtime shields decrement the representation index until a feasibility test passes; because adjacent representations differ nonuniformly in Video Multimethod Assessment Fusion (VMAF), this content-blind repair can incur unnecessary perceptual loss.
+We formulate ABR as a constrained Markov decision process optimized with Lagrangian proximal policy optimization, and introduce a VMAF-aware shield that projects each proposed action onto a buffer-feasible representation using a soft buffer tolerance and a catastrophic-download threshold.
+On \(\VNepisodes\) paired broadband episodes with identical traces and seeds, the shield reduces mean rebuffering from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\) and raises mean session QoE by approximately \(2.6\%\) relative to legacy projection, with mean VMAF increasing slightly; all three unadjusted paired Wilcoxon tests yield \(p<0.05\).
+We further show which shield parameters are identifiable: a perceptual-loss budget cannot bind while the ladder is monotone in the representation index, and a risk gate below the catastrophic threshold is redundant, so \(\VShieldVariants\) configurations collapse into \(\VShieldBehaviors\) behavioral groups.
+Measured from per-frame logs, the chunk-level ladder is nonmonotone in \(\LadPctChunksInverted\%\) of chunks, identifying chunk-level VMAF as the condition under which perceptual budgeting becomes active.
+Replay on synthetic \mbox{5G/mmWave} stress traces reproduces the QoE and rebuffering gains, although VMAF differences remain statistically undetectable, and removing the shield increases rebuffering (\(p<10^{-10}\)), supporting joint policy--shield deployment.
 \end{abstract}
 
 \begin{keyword}
@@ -277,7 +299,7 @@ Adaptive Bitrate Streaming\sep Deep Reinforcement Learning\sep Constrained MDP\s
 \label{sec:intro}
 
 Client-side adaptive bitrate (ABR) policies trained with deep reinforcement learning (DRL) can achieve high average surrogate rewards, but aggressive representation choices may still produce severe rebuffering on individual episodes~\cite{mao2017neural,sutton2018reinforcement}.
-Sub-6\,GHz and \mbox{5G/mmWave} links can exhibit abrupt throughput reductions caused by blockage, line-of-sight/non-line-of-sight transitions, scheduling, and mobility~\cite{narayanan2021variegated,cisco2023}.
+Sub-6\,GHz and \mbox{5G/mmWave} links can exhibit abrupt throughput reductions caused by blockage, line-of-sight/non-line-of-sight (LOS/NLOS) transitions, scheduling, and mobility~\cite{narayanan2021variegated,cisco2023}.
 Such reductions can produce prolonged stalls that substantially affect quality of experience (QoE), even when session-level averages remain acceptable~\cite{seufert2015survey,yan2019learning}.
 
 This limitation is architectural rather than specific to a particular proximal policy optimization (PPO) implementation.
@@ -289,34 +311,37 @@ One way to limit decision-time risk is to place a \emph{runtime shield} between 
 The shield projects each proposed action before the corresponding chunk is downloaded.
 A common repair rule decrements the representation index until a buffer-feasibility test passes.
 This rule does not account for content-dependent perceptual spacing: adjacent ladder representations may differ by only a few Video Multimethod Assessment Fusion (VMAF) points or by more than ten~\cite{li2016vmaf}.
-Consequently, an index-based downgrade can incur greater perceptual loss than another feasible action available in the same manifest.
+An index-based downgrade can incur greater perceptual loss than another feasible action available in the same manifest.
 
 We address this limitation by treating the shield as a constrained perceptual optimization layer.
 In this architecture, PPO and the shield have distinct responsibilities: PPO learns high-QoE behavior over the operating distribution, whereas the shield enforces an explicit feasibility predicate for each proposed action.
-The shield is therefore not a temporary correction for an inadequately trained policy; it is the decision-time enforcement layer of the controller.
+The shield is not a temporary correction for an inadequately trained policy; it is the decision-time enforcement layer of the controller.
 This separation is particularly relevant to real deployments, where the network can move outside the empirical support of the training traces and a policy confidence score does not constitute a safety certificate.
 The proposed VMAF-aware runtime shield searches the representation ladder whenever a downgrade is required and selects the buffer-feasible action with the highest retained VMAF.
-Its behavior is controlled by a soft feasibility tolerance \(\sigma_{\mathrm{soft}}\), a perceptual-loss budget~\(\tau\), and a catastrophic-download threshold~\(\rho_{\mathrm{cat}}\) (Sec.~\ref{sec:method:shield}).
-The projection is defined entirely by the buffer state, manifest chunk sizes, conservative throughput estimates, and per-chunk VMAF values.
+Its behavior is controlled by a soft feasibility tolerance \(\sigma_{\mathrm{soft}}\) and a catastrophic-download threshold~\(\rho_{\mathrm{cat}}\) (Section~\ref{sec:method:shield}).
+The rule also admits a perceptual-loss budget~\(\tau\), but we show analytically and empirically that this budget cannot change any decision while the ladder's VMAF is monotone in the representation index, so we do not present it as a control.
+The projection is defined entirely by the buffer state, manifest chunk sizes, conservative throughput estimates, and the VMAF ladder.
 These observable inputs make each intervention auditable~\cite{alshiekh2018shielding,li2016vmaf}.
 
 In paired trace-driven evaluation, the VMAF-aware configurations empirically improve the reported QoE, rebuffering, and VMAF means relative to legacy index-decrement projection.
-At \(\sigma_{\mathrm{soft}}{=}0.8\) and \(\tau{=}8\), mean rebuffering decreases from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\), while mean QoE increases by approximately \(2.6\%\).
+At \(\sigma_{\mathrm{soft}}{=}0.8\), mean rebuffering decreases from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\), while mean QoE increases by approximately \(2.6\%\).
 Mean VMAF is preserved and increases slightly by \(0.3\) points.
-All three unadjusted paired tests yield \(p<0.05\) (Sec.~\ref{sec:eval}).
-Thus, the shield obtains a statistically supported reduction in stalls without exchanging perceptual quality for safety in the evaluated broadband episodes.
-Synthetic \mbox{5G/mmWave} stress replay retains the QoE and rebuffering improvements but does not show a statistically detectable VMAF difference (Sec.~\ref{sec:eval:ood}).
+All three unadjusted paired tests yield \(p<0.05\) (Section~\ref{sec:eval}).
+The shield obtains a statistically supported reduction in stalls without exchanging perceptual quality for safety in the evaluated broadband episodes.
+Synthetic \mbox{5G/mmWave} stress replay retains the QoE and rebuffering improvements but does not show a statistically detectable VMAF difference (Section~\ref{sec:eval:ood}).
 For the evaluated policy, removing the shield at inference substantially increases rebuffering, indicating that the policy and shield should be treated as a joint deployment configuration.
 
 The main contributions are:
 \begin{itemize}
   \item \textbf{Two-layer constrained control.} We formulate ABR as a constrained Markov decision process (CMDP) and optimize expectation-level objectives using primal--dual Lagrangian PPO. A separate shield enforces configured feasibility tests at decision time, including under out-of-distribution throughput changes~\cite{altman1999constrained,paternain2019dual,schulman2017proximal,alshiekh2018shielding}.
 
-  \item \textbf{VMAF-aware runtime shielding.} We design an auditable projection that uses the nonlinear perceptual ladder to select emergency downgrades. The parameters \(\sigma_{\mathrm{soft}}\), \(\tau\), and \(\rho_{\mathrm{cat}}\) can be adjusted without retraining (Sec.~\ref{sec:method:shield}).
+  \item \textbf{VMAF-aware runtime shielding.} We design an auditable projection that uses the perceptual ladder to select emergency downgrades. The parameters \(\sigma_{\mathrm{soft}}\) and \(\rho_{\mathrm{cat}}\) can be adjusted without retraining (Section~\ref{sec:method:shield}).
 
-  \item \textbf{Paired statistical evaluation.} We evaluate shield variants on \(n{=}\VNepisodes\) paired episodes. At \(\sigma_{\mathrm{soft}}{=}0.8\) and \(\tau{=}8\), rebuffering falls from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\), QoE increases, and VMAF does not decrease. All three paired differences are statistically significant, although the positive VMAF effect is small. The QoE and rebuffering results persist under synthetic \mbox{5G/mmWave} stress replay (Secs.~\ref{sec:eval}--\ref{sec:eval:ood}).
+  \item \textbf{Paired statistical evaluation.} We evaluate shield variants on \(n{=}\VNepisodes\) paired episodes. At \(\sigma_{\mathrm{soft}}{=}0.8\), rebuffering falls from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\), QoE increases, and VMAF does not decrease. All three paired differences are statistically significant, although the positive VMAF effect is small. The QoE and rebuffering results persist under synthetic \mbox{5G/mmWave} stress replay (Sections~\ref{sec:eval}--\ref{sec:eval:ood}).
 
-  \item \textbf{Policy--shield co-design.} We evaluate the policy and shield as complementary layers rather than interchangeable safety mechanisms. We quantify the policy's dependence on inference-time shielding and show that \(\VShieldVariants\) configurations form \(\VShieldBehaviors\) tolerance-defined behavioral groups. The largest observed differences are associated with enabling the VMAF-aware fallback.
+  \item \textbf{Which shield parameters are identifiable.} We show that a perceptual-loss budget over a monotone ladder is provably inert, and that a risk gate whose ratio lies below the catastrophic threshold is redundant. Both predictions hold exactly across the evaluated grid, leaving \(\sigma_{\mathrm{soft}}\) and \(\rho_{\mathrm{cat}}\) as the only parameters that move the operating point. Measuring the ladder from per-frame logs shows it is nonmonotone in \(\LadPctChunksInverted\%\) of chunks, which identifies chunk-level VMAF as the condition under which a perceptual budget becomes meaningful (Sections~\ref{sec:system:ladder} and~\ref{sec:eval:shields}).
+
+  \item \textbf{Policy--shield co-design.} We evaluate the policy and shield as complementary layers, not interchangeable safety mechanisms. We quantify the policy's dependence on inference-time shielding and show that \(\VShieldVariants\) configurations form \(\VShieldBehaviors\) tolerance-defined behavioral groups.
 \end{itemize}
 
 The remainder of this paper is organized as follows.
@@ -329,7 +354,7 @@ Section~\ref{sec:eval} presents the evaluation, Section~\ref{sec:limits} discuss
 \label{sec:related}
 
 We review three areas relevant to client-side representation selection: model-based ABR, learned ABR, and constrained control with runtime shielding.
-Our focus is the control policy and its runtime action projection, rather than throughput prediction.
+Our focus is the control policy and its runtime action projection, not throughput prediction.
 Predictors such as CS2P~\cite{sun2016cs2p} can provide inputs to model-based or learned controllers~\cite{yin2015control,mao2017neural}.
 ABR surveys~\cite{bentaleb2018survey,seufert2015survey} and \mbox{5G/mmWave} measurements~\cite{narayanan2021variegated} further motivate control mechanisms that remain effective under volatile throughput.
 
@@ -339,7 +364,7 @@ MPEG Dynamic Adaptive Streaming over HTTP (DASH) decouples packaging from transp
 Buffer-threshold heuristics such as BBA~\cite{huang2014buffer} are simple and transparent, whereas BOLA~\cite{spiteri2018bola} derives its decisions from a Lyapunov-based utility formulation.
 RobustMPC~\cite{yin2015control} selects representations by solving a short-horizon model predictive control (MPC) problem under estimated future throughput.
 These approaches expose interpretable thresholds and horizons, but their performance can depend on manual calibration and prediction accuracy across networks and devices~\cite{narayanan2021variegated,cisco2023}.
-Moreover, conventional feasibility rules generally do not use the nonlinear perceptual spacing of the encoding ladder~\cite{li2016vmaf}.
+Conventional feasibility rules also generally do not use the nonlinear perceptual spacing of the encoding ladder~\cite{li2016vmaf}.
 SODA~\cite{chen2024soda} addresses smoothness-aware online control, while edge assistance~\cite{mehrabi2019edge} and Oboe-style automatic tuning~\cite{akhtar2018oboe} modify complementary parts of the delivery system.
 
 \subsection{Deep reinforcement learning for ABR}
@@ -352,8 +377,8 @@ Loki~\cite{zhang2021loki} combines learned features with a rule-based model to r
 Fugu~\cite{yan2019learning} evaluates learned control in live networks and illustrates the importance of distribution shift between simulation and deployment.
 These systems motivate complementary constrained-learning and decision-time mechanisms because an expected-return objective alone does not impose an explicit per-episode stall or smoothness budget~\cite{hu2023corel,gu2024safereview}.
 Even when a learned controller is trained with explicit CMDP constraints, its guarantees and empirical performance are defined with respect to the sampled trajectory distribution.
-A previously unseen blockage pattern can therefore induce an unsafe proposal at an individual chunk boundary.
-This observation motivates a separation between a learned performance layer and a runtime enforcement layer, rather than treating additional policy training as a substitute for runtime validation.
+A previously unseen blockage pattern can still induce an unsafe proposal at an individual chunk boundary.
+This observation motivates a separation between a learned performance layer and a runtime enforcement layer; additional policy training is not a substitute for runtime validation.
 
 \subsection{Safe/constrained RL, shields, and the content-blindness gap}
 
@@ -368,13 +393,13 @@ Our method combines these two levels of control.
 Lagrangian PPO addresses expectation-level stall and smoothness budgets and learns how to trade fidelity, rebuffering, and switching over the training distribution.
 The VMAF-aware shield addresses a different requirement.
 Before every download, it checks the proposed action against an explicit buffer-feasibility model using current client and manifest observations.
-Thus, the shield does not replace learning, and learning does not replace the shield.
+The shield does not replace learning, and learning does not replace the shield.
 The former provides auditable decision-time enforcement, while the latter supplies the adaptive performance needed across the broader operating regime.
 The distinction from perceptually aware policies such as Comyco is that VMAF also enters the decision-time projection, rather than only the learned objective.
 Table~\ref{tab:rw_safety_vmaf} summarizes this positioning.
 
 \begin{table}[H]
-    \caption{Positioning of client-side ABR methods by constraint handling, deterministic prefetch projection, and VMAF-aware emergency logic. The symbol~\mbox{$\approx$}~denotes partial support.}
+    \caption{Positioning of client-side ABR methods by constraint handling, deterministic prefetch projection, and VMAF-aware emergency logic.}
     \label{tab:rw_safety_vmaf}
     \centering
     \evaltable{%
@@ -388,9 +413,9 @@ Table~\ref{tab:rw_safety_vmaf} summarizes this positioning.
     Pensieve~\cite{mao2017neural} & 2017 & DRL & N & N & N \\
     D-DASH~\cite{gadaleta2017ddash} & 2017 & DRL & N & N & N \\
     Oboe~\cite{akhtar2018oboe} & 2018 & Meta-tuning & N & N & N \\
-    Comyco~\cite{huang2019comyco} & 2019 & Quality-aware IL & N & N & $\approx$ \\
+    Comyco~\cite{huang2019comyco} & 2019 & Quality-aware IL & N & N & \(\approx\) \\
     Fugu / in-situ~\cite{yan2019learning} & 2020 & Field DRL & N & N & N \\
-    Loki~\cite{zhang2021loki} & 2021 & Rule--RL fusion & N & $\approx$ & N \\
+    Loki~\cite{zhang2021loki} & 2021 & Rule--RL fusion & N & \(\approx\) & N \\
     COREL~\cite{hu2023corel} & 2023 & Constr.\ DRL & Y & N & N \\
     SODA~\cite{chen2024soda} & 2024 & Online control & N & N & N \\
     \textbf{Ours} & --- & CMDP + shield & \textbf{Y} & \textbf{Y} & \textbf{Y} \\
@@ -400,7 +425,7 @@ Table~\ref{tab:rw_safety_vmaf} summarizes this positioning.
     \tablenotecols{%
     \textbf{Constr.:} explicit stall/smoothness budget during training (Y), implicit handling (Imp.), or no explicit budget (N).
     \textbf{Det.\ guard:} auditable action projection before chunk download~\cite{alshiekh2018shielding}.}{%
-    \textbf{VMAF:} emergency logic uses per-chunk VMAF ladder spacing~\cite{li2016vmaf}. The symbol~\mbox{$\approx$}~denotes partial support within a learned or fused component rather than a separate deterministic guard.}%
+    \textbf{VMAF:} emergency logic uses per-chunk VMAF ladder spacing~\cite{li2016vmaf}. The symbol~\mbox{\(\approx\)}~denotes partial support within a learned or fused component rather than a separate deterministic guard.}%
 \end{table}
 
 % =========================================
@@ -410,11 +435,11 @@ Table~\ref{tab:rw_safety_vmaf} summarizes this positioning.
 \subsection{Streaming architecture and control loop}
 
 We adopt the standard Hypertext Transfer Protocol (HTTP) adaptive-streaming abstraction~\cite{yin2015control,mao2017neural,sodagar2011mpeg}.
-A video origin or content delivery network exposes \(L\) encoded representations.
+A video origin or content delivery network (CDN) exposes \(L\) encoded representations.
 We denote their indices by \(\mathcal{B}=\{0,\ldots,L{-}1\}\); the DASH/HTTP Live Streaming (HLS) manifest provides the corresponding per-chunk sizes and perceptual metadata.
 At decision step \(k\), the client requests chunk \(k\) while maintaining a playout buffer \(B_k\).
 The effective trace throughput \(\hat{C}_k\) is exogenous to the controller.
-On sub-6\,GHz and \mbox{5G/mmWave} access, this throughput can change abruptly because of blockage, line-of-sight transitions, scheduling, and mobility~\cite{narayanan2021variegated,cisco2023}.
+On sub-6\,GHz and \mbox{5G/mmWave} access, this throughput can change abruptly because of blockage, LOS/NLOS transitions, scheduling, and mobility~\cite{narayanan2021variegated,cisco2023}.
 
 A neural policy \(\pi_\theta\) maps an augmented state \(s_k\) to a stochastic proposed action \(a^{\mathrm{raw}}_k\in\mathcal{B}\).
 Actions are sampled during training, whereas evaluation uses the most probable action.
@@ -436,14 +461,14 @@ The shield provides a complementary deterministic repair: for each proposal, it 
 \emph{State \(s_k\).}
 The observation includes buffer occupancy, past throughput samples, and the previous decision.
 It also includes manifest lookahead: upcoming chunk sizes across the representation ladder and spatial/temporal complexity tags (SI/TI)~\cite{yin2015control,sodagar2011mpeg,mao2017neural}.
-The state also includes the per-chunk VMAF ladder \(\{V_k(j)\}_{j\in\mathcal{B}}\), where \(V_k(j)\) is the perceptual score for chunk \(k\) at representation \(j\)~\cite{li2016vmaf}.
+The state also includes the VMAF ladder \(\{V_k(j)\}_{j\in\mathcal{B}}\), where \(V_k(j)\) is the perceptual score for chunk \(k\) at representation \(j\)~\cite{li2016vmaf}.
 Without \(\{V_k(j)\}\), neither the policy nor the shield could exploit content-dependent ladder spacing for emergency downgrade decisions.
 
 \emph{Nonlinear, content-dependent fidelity.}
 For each chunk \(k\), the map \(j\mapsto V_k(j)\) is not affine in the discrete index \(j\).
 It also varies across chunks because different group-of-pictures (GOP) and texture structures produce different marginal VMAF gains between adjacent rungs.
 The mapping from nominal bitrate to VMAF is therefore nonlinear and content dependent.
-Consequently, legacy index-decrement projection can retain less perceptual quality than a VMAF-aware search over the same feasible set~\cite{li2016vmaf}.
+As a result, legacy index-decrement projection can retain less perceptual quality than a VMAF-aware search over the same feasible set~\cite{li2016vmaf}.
 
 \emph{Action.}
 \(a^{\mathrm{raw}}_k\in\mathcal{B}\) is the policy's proposed representation index for chunk \(k\); the environment executes only \(a^{\mathrm{exec}}_k\).
@@ -460,6 +485,42 @@ The shared evaluation harness fixes \(\beta{=}4.3\) per stall second and \(\alph
 The rebuffering weight follows a Pensieve-style penalty rescaled to the VMAF fidelity axis.
 Session QoE is \(\sum_{k\in\mathcal{K}_e}\mathrm{QoE}^{\mathrm{(rep)}}_{k}\) (Section~\ref{sec:eval}).
 The CMDP objective below separates the fidelity objective \(\sum q_k\) from explicit constraints on rebuffering and smoothness~\cite{altman1999constrained,paternain2019dual}.
+
+\subsection{Ladder structure and the per-video approximation}
+\label{sec:system:ladder}
+
+The evaluated system supplies one VMAF value per representation and video, obtained by pooling the per-frame scores of the encode, so the ladder entries it consumes do not vary with \(k\).
+To quantify what this approximation discards, we recomputed \(V_k(j)\) directly from the per-frame VMAF logs, aggregating frames into the same four-second chunks that the simulator uses.
+This yields \(\LadNChunks\) chunks and \(\LadNPairs\) adjacent-rung gaps across the four test videos.
+The per-frame logs cover a prefix of each encode, and CrowdRun contributes only two usable chunks, so its stability figures are not informative; BigBuckBunny and TearsOfSteel supply \(165\) of the \(\LadNChunks\) chunks.
+
+Figure~\ref{fig:ladder} and Table~\ref{tab:ladder:spacing} summarize the outcome.
+Spacing between adjacent rungs is strongly nonuniform and, more consequentially for projection, unstable across chunks: for \LadWidestVideo{} the \(\LadWidestPair\)~kb/s gap ranges from \(\LadWidestMin\) to \(\LadWidestMax\) VMAF points depending on the chunk.
+Using the per-video gap to predict the chunk-level gap incurs a mean absolute error of \(\LadGapErrMean\) VMAF points, rising to \(\LadGapErrPNinety\) at the \(90\)th percentile and \(\LadGapErrMax\) in the worst chunk.
+
+Two structural properties matter for the projection rule.
+First, \(\LadPctPairsFlat\%\) of adjacent pairs differ by at most \(\LadFlatThresh\) VMAF point, so in those chunks a one-step downgrade is perceptually almost free and the index order carries little information about perceptual cost.
+Second, the per-chunk ladder is not monotone: \(\LadPctPairsInverted\%\) of adjacent pairs are inverted, and at least one inversion appears in \(\LadPctChunksInverted\%\) of chunks.
+For \LadCheapVideo{}, the \(\LadCheapPair\)~kb/s step has a mean gap of \(\LadCheapMean\) VMAF points, meaning the higher rung is on average no better than the lower one.
+
+The per-video ladder is monotone by construction, and Section~\ref{sec:system:proj} shows that monotonicity alone makes the perceptual-loss budget of~\eqref{eq:shield-argmax} unable to bind, with VMAF-ordered selection collapsing onto highest-feasible-index selection.
+The per-chunk ladder is not monotone, so a per-chunk instantiation of the same rule would admit decisions that no index-based rule can express.
+We did not retrain or re-evaluate the controller with per-chunk ladders; we therefore report this as a scoped limitation of the evaluated system and a concrete extension, not as a result.
+
+\begin{figure}[!htbp]
+    \centering
+    \evalfiglarge{figures/fig_ladder_perchunk.pdf}
+    \caption{Representation ladder measured from the per-frame VMAF logs. (a)~Per-video pooled ladder (markers) against the range spanned by individual chunks (shaded). (b)~Distribution of the VMAF gap between adjacent representations across all \(\LadNChunks\) chunks; the dashed line marks a zero gap, below which the higher representation scores worse.}
+    \label{fig:ladder}
+\end{figure}
+
+\begin{table}[H]
+    \caption{Chunk-level stability of the representation ladder.}
+    \label{tab:ladder:spacing}
+    \centering
+    \evaltable{\input{tables/table_ladder_spacing.tex}}
+    \tablenote{Inv.\ chunks is the percentage of chunks containing at least one inverted adjacent pair. Flat pairs is the percentage of adjacent pairs differing by at most \(\LadFlatThresh\) VMAF point. Widest pair is the adjacent pair whose gap varies most across chunks, shown with its observed range. CrowdRun has only two usable chunks.}
+\end{table}
 
 \subsection{Chunk-timescale dynamics}
 
@@ -518,8 +579,8 @@ The constrained program motivating training is
 with targets fixed at \(\delta_{\mathrm{rf}}{=}0.05\) (rebuffering ratio) and \(\delta_{\mathrm{sm}}{=}3.5\) (mean absolute VMAF change per chunk)~\cite{yin2015control}.
 
 Because these constraints are generally difficult to enforce directly during nonconvex policy optimization, we form a Lagrangian relaxation.
-We define the per-step normalized costs \(\widetilde{\mathrm{RB}}_k=c^{\mathrm{stall}}_k/T^{\mathrm{play}}_e\) and \(\widetilde{\mathrm{SM}}_k=c^{\mathrm{sm}}_k/K_e\).
-Their episodic sums equal \(\mathrm{RB}(e)\) and \(\mathrm{SM}(e)\), respectively:
+We define the per-step normalized costs \(\widetilde{\mathrm{RB}}_k=c^{\mathrm{stall}}_k/T^{\mathrm{play}}_e\) and \(\widetilde{\mathrm{SM}}_k=c^{\mathrm{sm}}_k/K_e\), whose episodic sums equal \(\mathrm{RB}(e)\) and \(\mathrm{SM}(e)\), respectively.
+The relaxed objective is
 \begin{equation}
 \label{eq:L}
     \mathcal{L}(\theta,\lambda_{r},\lambda_{s})
@@ -529,7 +590,7 @@ Their episodic sums equal \(\mathrm{RB}(e)\) and \(\mathrm{SM}(e)\), respectivel
         q_{k}
         -\lambda_{r}\widetilde{\mathrm{RB}}_{k}
         -\lambda_{s}\widetilde{\mathrm{SM}}_{k}
-    \bigr)\right].
+    \bigr)\right],
 \end{equation}
 where \(\lambda_r,\lambda_s\ge 0\) are adapted by projected dual ascent on empirical constraint gaps \(g_r=\hat{\mathrm{RB}}-\delta_{\mathrm{rf}}\), \(g_s=\hat{\mathrm{SM}}-\delta_{\mathrm{sm}}\)~\cite{paternain2019dual,altman1999constrained}.
 The PPO reward is defined as \(q_k-\lambda_r\widetilde{\mathrm{RB}}_k-\lambda_s\widetilde{\mathrm{SM}}_k\), with optional stabilizers described in Section~\ref{sec:method}.
@@ -539,8 +600,9 @@ Finite-sample PPO with clipped objectives does not certify constraint satisfacti
 Training optionally subtracts buffer-deviation and simulator Lyapunov penalties~\cite{neely2010stochastic} outside \((\lambda_r,\lambda_s)\); these serve as stabilizers, not formal certificates.
 
 \subsection{VMAF-aware shield as a hard projection}
+\label{sec:system:proj}
 
-Let \(\mathcal{A}_{\mathrm{safe},k}(a^{\mathrm{raw}}_k)\subseteq\mathcal{B}\) denote the representation indices that do not exceed \(a^{\mathrm{raw}}_k\) and pass the shield's buffer-margin tests (Sec.~\ref{sec:method:shield}).
+Let \(\mathcal{A}_{\mathrm{safe},k}(a^{\mathrm{raw}}_k)\subseteq\mathcal{B}\) denote the representation indices that do not exceed \(a^{\mathrm{raw}}_k\) and pass the shield's buffer-margin tests (Section~\ref{sec:method:shield}).
 The set is computed from pessimistic throughput, manifest sizes \(\sigma_k(\cdot)\), and buffer \(B_k\).
 Legacy index-decrement projection repeatedly decreases \(a^{\mathrm{raw}}_k\) until it finds a feasible index~\cite{alshiekh2018shielding}.
 
@@ -559,10 +621,17 @@ Among feasible rungs, we select the one that maximizes perceptual score subject 
     V_{k}(j).
 \end{equation}
 \(\tau\) has a direct perceptual interpretation: it is the maximum VMAF-point reduction admitted relative to the policy proposal before the fallback rule is invoked.
-It therefore controls how much perceptual quality the shield may exchange for additional buffer protection.
 If no safe candidate satisfies the VMAF-loss budget, the shield selects the lexicographically best candidate from \(\mathcal{A}_{\mathrm{safe},k}\); if the safe set itself is empty, it selects index~\(0\)~\cite{li2016vmaf}.
-Thus, \(\mathcal{S}\) is a deterministic perceptual projection that maximizes retained VMAF over the available safe candidates rather than selecting solely by index order.
+By construction, \(\mathcal{S}\) is a deterministic perceptual projection that maximizes retained VMAF over the available safe candidates rather than selecting solely by index order.
 Section~\ref{sec:method:shield} specifies the catastrophic-download threshold \(\rho_{\mathrm{cat}}\), throughput pessimism factor \(\rho\), and buffer margins.
+
+\emph{The budget is inactive on a monotone ladder.}
+The combination of~\eqref{eq:shield-argmax} with this fallback makes \(\tau\) unable to change the executed action whenever \(V_k\) is nondecreasing in the representation index, which is the case for the per-video ladder used in our evaluation.
+Let \(j^{\star}\in\arg\max_{j\in\mathcal{A}_{\mathrm{safe},k}}V_k(j)\).
+Because \(j^{\star}\) attains the largest retained VMAF, it also attains the smallest perceptual loss \(V_k(a^{\mathrm{raw}}_k)-V_k(j)\) over the safe set.
+If \(j^{\star}\) satisfies the budget, it belongs to the constrained set and~\eqref{eq:shield-argmax} returns it; if \(j^{\star}\) violates the budget, then so does every safe candidate, the constrained set is empty, and the fallback returns \(j^{\star}\) as well.
+The executed action is thus independent of \(\tau\), and the budget becomes a live degree of freedom only when the ladder is not monotone, which Section~\ref{sec:system:ladder} shows to hold for chunk-level but not video-level VMAF.
+Section~\ref{sec:eval:shields} confirms this behavior empirically across the evaluated grid.
 
 % =========================================
 \section{Method: Lagrangian PPO and runtime shields}
@@ -590,10 +659,10 @@ In addition to the dual-weighted rebuffering and smoothness costs, training uses
 The buffer term penalizes deviations toward low-buffer states during early exploration, while the drift cue provides a queue-stability signal from the emulator.
 These auxiliary terms are not safety certificates; they are intended to stabilize optimization while the dual variables adapt~\cite{paternain2019dual,gu2024safereview}.
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
     \centering
-    \input{figures/fig_system_arch_tikz.tex}%
-    \caption{End-to-end control loop. Solid arrows mark the deployed inference path \(s_k\!\rightarrow\!\pi_\theta\!\rightarrow\!a^{\mathrm{raw}}_k\!\rightarrow\!\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\!\rightarrow\!a^{\mathrm{exec}}_k\); the shield consumes both the proposal and the augmented state (buffer, throughput, VMAF ladder). Dashed arrows mark training-only signals (critic, reward \(r_k\), and Lagrangian cues \(\phi,\psi^{\mathrm{Lya}}\)).}
+    \adjustbox{width=\linewidth}{\input{figures/fig_system_arch_tikz.tex}}%
+    \caption{End-to-end control loop. Solid black arrows mark the deployed inference path Environment\(\rightarrow\)State \(s_k\)\(\rightarrow\)Actor \(\pi_\theta\)\(\rightarrow\)Shield \(\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\)\(\rightarrow\)Client, where the shield's notation reflects that it consumes both the state and the raw proposal before releasing \(a^{\mathrm{exec}}_k\). The gray arc returns the post-download buffer state to the environment for the next decision step. Dashed blue arrows mark training-only signals feeding the Critic \(V_\phi(s)\) (reward \(r_k\) and the Lagrangian cues \(\phi,\psi^{\mathrm{Lya}}\) that update \(\lambda_r,\lambda_s\)).}
     \label{fig:arch}
 \end{figure}
 
@@ -650,7 +719,7 @@ Representation \(j\) is deemed infeasible for emergency repair when \(\widetilde
 \label{eq:risk-gate}
     d^{\mathrm{est}}_k(a^{\mathrm{raw}}_k)\le \max\{B_k,0.1\}\cdot\rho_{\mathrm{risk}},
 \end{equation}
-with \(\rho_{\mathrm{risk}}{=}1.35\) as default; benign proposals therefore bypass projection~\cite{alshiekh2018shielding}.
+with \(\rho_{\mathrm{risk}}{=}1.35\) as default, so benign proposals bypass projection~\cite{alshiekh2018shielding}.
 
 \textbf{Catastrophic-download threshold.} In the VMAF-aware path, if \(d^{\mathrm{est}}_k(a^{\mathrm{raw}}_k)\le B_k\,\rho_{\mathrm{cat}}\), the shield accepts \(a^{\mathrm{raw}}_k\) without constructing the VMAF candidate pool (Algorithm~\ref{alg:shield-vmaf}).
 The \texttt{light} mode uses the same inequality as a fast no-intervention check before margin-based repair.
@@ -730,14 +799,14 @@ Third, an optional \(H\)-step pessimistic lookahead gate can bypass projection b
 
 \textbf{Physical role of \(\rho_{\mathrm{cat}}\).}
 The ratio \(d^{\mathrm{est}}_k(a)/B_k\) compares predicted download duration with available playback time.
-The VMAF branch is activated only when this ratio exceeds \(\rho_{\mathrm{cat}}\); increasing \(\rho_{\mathrm{cat}}\) therefore makes the shield less intervention-prone, whereas a lower value reacts earlier to predicted buffer depletion.
+The VMAF branch is activated only when this ratio exceeds \(\rho_{\mathrm{cat}}\); increasing \(\rho_{\mathrm{cat}}\) makes the shield less intervention-prone, whereas a lower value reacts earlier to predicted buffer depletion.
 
 \textbf{Parameter-selection protocol.}
 The reported values are obtained from a finite sensitivity grid rather than learned jointly with PPO.
 Section~\ref{sec:eval:shields} evaluates \(\VShieldVariants\) configurations on identical paired episodes.
 The grid includes \(\sigma_{\mathrm{soft}}\in\{0.8,1.0,1.2,1.5\}\), \(\tau\in\{4,8,12\}\), and \(\rho_{\mathrm{cat}}\in\{2,3,4,5\}\).
-The VMAF budget \(\tau{=}8\) is the middle tested setting: \(\tau{=}4\) imposes a stricter perceptual-loss constraint and can leave no candidate inside the budget, whereas \(\tau{=}12\) is more permissive of quality reductions.
-We report \((\sigma_{\mathrm{soft}},\tau,\rho_{\mathrm{cat}})=(0.8,8,2)\) as the primary broadband operating point.
+The budget axis is included for completeness even though Section~\ref{sec:system:proj} shows it cannot affect the executed action on this ladder; Section~\ref{sec:eval:shields} verifies that the three settings produce identical measurements.
+We report \((\sigma_{\mathrm{soft}},\rho_{\mathrm{cat}})=(0.8,2)\) with \(\tau{=}8\) as the primary broadband operating point.
 It lies on the empirical nondominated set and reduces rebuffering while increasing QoE without reducing mean VMAF.
 This is an empirically selected point within the tested grid, not a claim of global optimality.
 Because the same episode suite is used to compare configurations, the selection should be interpreted as exploratory.
@@ -802,8 +871,8 @@ The deterministic shield repairs such proposals before execution~\cite{alshiekh2
 \textbf{Co-design.} Training with shielding changes the action sequences observed by the policy and value function.
 The QoE-oriented guard (Algorithm~\ref{alg:shield-v13}) pairs with Lagrangian PPO during training, while the VMAF-aware perceptual projection (Algorithm~\ref{alg:shield-vmaf}) constrains catastrophic downloads under explicit VMAF budgets at inference~\cite{li2016vmaf}.
 For the evaluated policy, removing the shield at inference increases rebuffering (Section~\ref{sec:eval:codesign}).
-The reported operating points therefore describe the joint policy--shield system rather than either component in isolation.
-Deployment should retain the shield used during training and adjust \(\sigma_{\mathrm{soft}}\), \(\tau\), and \(\rho_{\mathrm{cat}}\) instead of disabling projection.
+The reported operating points describe the joint policy--shield system, not either component in isolation.
+Deployment should retain the shield used during training and adjust \(\sigma_{\mathrm{soft}}\) and \(\rho_{\mathrm{cat}}\) instead of disabling projection.
 
 \subsection{Implementation notes and hyperparameters}
 
@@ -828,9 +897,9 @@ Table~\ref{tab:hypers} summarizes the PPO and Lagrangian hyperparameters, includ
     Auxiliary stabilizers & \(w_b{=}0.03\) (buffer deviation); \(w_\ell{=}0.4\) (Lyapunov drift cue) \\
     Entropy coefficient & \(0.04\) for the proposed policy (lower values for ablations)\\
     Reward scaling & Divide shaped reward by \(100\) for SB3 numerical range\\
-    Shield sweep & \(\sigma_{\mathrm{soft}}\in\{0.8,1.0,1.2,1.5\}\); \(\tau\in\{4,8,12\}\); \(\rho_{\mathrm{cat}}\in\{2,3,4,5\}\)\\
-    Primary broadband point & \(\sigma_{\mathrm{soft}}{=}0.8\), \(\tau{=}8\), \(\rho_{\mathrm{cat}}{=}2\); empirical nondominated point\\
-    Throughput pessimism \(\rho\) & \(0.90\) (VMAF-aware sweep); \(0.97\) (training; Sec.~\ref{sec:method:risk})\\\bottomrule
+    Shield sweep & \(\sigma_{\mathrm{soft}}\in\{0.8,1.0,1.2,1.5\}\); \(\rho_{\mathrm{cat}}\in\{2,3,4,5\}\); \(\tau\in\{4,8,12\}\) (inert, Section~\ref{sec:eval:shields})\\
+    Primary broadband point & \(\sigma_{\mathrm{soft}}{=}0.8\), \(\rho_{\mathrm{cat}}{=}2\) (with \(\tau{=}8\) configured); empirical nondominated point\\
+    Throughput pessimism \(\rho\) & \(0.90\) (VMAF-aware sweep); \(0.97\) (training; Section~\ref{sec:method:risk})\\\bottomrule
     \end{tabularx}%
     }
 \end{table}
@@ -845,18 +914,18 @@ We organize the evaluation around five research questions:
   \item[\textbf{RQ1}] \emph{Pareto comparison.} How do VMAF-aware configurations compare with legacy index-decrement projection across QoE, rebuffering, and VMAF?
   \item[\textbf{RQ2}] \emph{Baseline competitiveness.} Where do the recommended operating points sit relative to RobustMPC and Pensieve?
   \item[\textbf{RQ3}] \emph{Component ablations.} How does removing manifest lookahead, Lyapunov cues, or Lagrangian dual updates change performance?
-  \item[\textbf{RQ4}] \emph{Shield design-space structure.} Do the \(\VShieldVariants\) evaluated configurations form a smaller number of tolerance-defined behavioral groups?
+  \item[\textbf{RQ4}] \emph{Shield design-space structure.} Do the \(\VShieldVariants\) evaluated configurations form a smaller number of tolerance-defined behavioral groups, and which of the exposed parameters actually change the executed decisions?
   \item[\textbf{RQ5}] \emph{Policy--shield co-design.} How does inference-time shield removal affect a policy trained with shielding?
 \end{itemize}
 
 \subsection{Experimental setup and datasets}
 
-We evaluate on a multi-video trace-driven emulator (\(K_e{=}48\) chunks per episode, fixed segment duration \(T_{\mathrm{c}}\) as in Sec.~\ref{sec:system}).
+We evaluate on a multi-video trace-driven emulator (\(K_e{=}48\) chunks per episode, fixed segment duration \(T_{\mathrm{c}}\) as in Section~\ref{sec:system}).
 
 \textbf{Primary broadband suite.} We use partitioned FCC/Norway-style throughput traces from public releases~\cite{fcc2015mba,kvalbein2014}.
 Each method is evaluated on four videos and 20 paired random seeds after the warm-up period, giving 80 episodes.
 
-\textbf{Out-of-distribution stress suite.} Synthetic \mbox{5G/mmWave} stress traces contain intermittent line-of-sight/non-line-of-sight (LOS/NLOS) transitions and outage intervals designed to evaluate behavior under severe throughput variation~\cite{narayanan2021variegated}.
+\textbf{Out-of-distribution (OOD) stress suite.} Synthetic \mbox{5G/mmWave} stress traces contain intermittent LOS/NLOS transitions and outage intervals designed to evaluate behavior under severe throughput variation~\cite{narayanan2021variegated}.
 Section~\ref{sec:eval:ood} reports paired replay of the same constrained policy under the same evaluation assumptions.
 
 \textbf{Baselines.} We implement Pensieve with observation masking and RobustMPC following~\cite{yin2015control}.
@@ -865,19 +934,27 @@ Genie~\cite{mao2017neural} uses noncausal trace knowledge and is reported only a
 \textbf{Shield pairing protocol.} Comparisons between legacy and VMAF-aware projection hold the trained policy, ladder, traces, and video--episode identifiers fixed.
 Only the inference-time shield logic changes, enabling paired episode-level tests.
 
+\textbf{Reported evaluation runs.} The reported numbers come from two runs of this harness, which share the environment, the four videos, the \(\VNepisodes\) video--seed episodes, the ladder, and the QoE definition of~\eqref{eq:qoe-rep} with \(\alpha{=}1.0\) and \(\beta{=}4.3\).
+The distinct-policy run compares the baselines with the constrained policy under its training-time shield configuration (Table~\ref{tab:main:results}).
+The shield-sweep run replays one fixed policy checkpoint through the \(\VShieldVariants\) inference-time shield configurations (Tables~\ref{tab:headline:perf} and~\ref{tab:pareto:family}).
+The two runs use different checkpoints of the constrained policy, and the shield-sweep checkpoint switches representations more often (about \(19\) switches per episode against \(6.5\)), so its absolute QoE sums are lower even though the metric is computed identically.
+Absolute levels are therefore not interchangeable between the two groups of tables, and every paired test we report is computed within a single run.
+Numbers quoted across the two runs, such as the two blocks of Table~\ref{tab:headline:perf}, are contextual reference points and not paired effects.
+
 \subsection{Performance headline and baselines}
 
-Table~\ref{tab:headline:perf} summarizes the primary comparison: classical baselines (distinct policies) versus the same constrained policy under legacy and VMAF-aware projection.
-The upper block contains distinct policies, whereas the lower block holds the policy fixed and varies only the shield.
-Cross-policy comparisons are paired by episode but are interpreted as contextual contrasts; the lower-block comparison directly isolates the shield logic.
-Extended results including Genie and ablated agents appear in Table~\ref{tab:main:results}.
-Figure~\ref{fig:tradeoff} illustrates the method-level mean session QoE and rebuffering ratio, highlighting the competitive performance of the proposed CMDP policy against distinct baselines.
+Table~\ref{tab:headline:perf} summarizes the primary comparison, which holds one policy checkpoint fixed and varies only the inference-time projection.
+Legacy projection removes roughly half of the unshielded rebuffering but also costs QoE and VMAF, whereas both VMAF-aware settings reduce rebuffering further while recovering the QoE lost by the legacy rule.
+Unshielded replay retains the highest mean VMAF, which is expected: any downward projection trades fidelity for buffer safety, and the VMAF-aware variants narrow that gap to roughly half a VMAF point.
+Baseline controllers with distinct trained policies are reported separately in Table~\ref{tab:main:results}, because they were measured in a different run of the harness (Section~\ref{sec:eval}).
+Figure~\ref{fig:tradeoff} illustrates the method-level mean session QoE and rebuffering ratio for that run.
 
 \begin{table}[H]
-    \caption{Performance of distinct-policy baselines and a fixed CMDP policy under two shield configurations (\(n{=}80\) episodes per row).}
+    \caption{One fixed CMDP policy checkpoint under three projection settings and unshielded replay (\(n{=}80\) paired episodes per row).}
     \label{tab:headline:perf}
     \centering
     \evaltable{\input{tables/table_headline_performance.tex}}
+    \tablenote{All rows come from the shield-sweep run and share the policy checkpoint, ladder, traces, and video--seed episodes, so every contrast in this table isolates the projection logic. Intervals are 95\% bootstrap confidence intervals for the mean. Interv.\ is the percentage of chunk decisions modified by the shield.}
 \end{table}
 
 \begin{figure}[!htbp]
@@ -894,7 +971,7 @@ Figure~\ref{fig:tradeoff} illustrates the method-level mean session QoE and rebu
     \label{tab:main:results}
     \centering
     \evaltable{\input{tables/table_main_results_ci.tex}}
-    \tablenote{Intervals are 95\% bootstrap confidence intervals for the mean across 80 episodes. $^{\dagger}$Shield-QoE denotes the variant with elevated representation switching. Sw.\ $=$ mean number of representation switches; S, RG, and Q denote shield, risk gate, and shield-QoE, respectively.}
+    \tablenote{Intervals are 95\% bootstrap confidence intervals for the mean across 80 episodes. \(^{\dagger}\)Shield-QoE denotes the variant with elevated representation switching. Switches is the mean number of representation switches per episode; in the Type column, S, RG, and Q denote shield, risk gate, and shield-QoE, respectively.}
 \end{table}
 
 \begin{table}[H]
@@ -902,7 +979,7 @@ Figure~\ref{fig:tradeoff} illustrates the method-level mean session QoE and rebu
     \label{tab:wilcoxon:qoe}
     \centering
     \evaltable{\input{tables/table_paired_wilcoxon_qoe_headline.tex}}
-    \tablenote{Two-sided paired Wilcoxon signed-rank; $\Delta$QoE is the per-episode paired difference (method minus baseline).}
+    \tablenote{Two-sided paired Wilcoxon signed-rank; \(\Delta\)QoE is the per-episode paired difference (method minus baseline).}
 \end{table}
 
 \begin{table}[H]
@@ -924,9 +1001,11 @@ The motion-heavy \texttt{crowd\_run} sequence yields lower QoE across controller
 \end{figure}
 
 \textbf{RQ2: Cross-baseline context.}
-Under the same evaluation harness, the VMAF-aware operating point has a mean rebuffering ratio \(\VRbReductionVsPen\) percentage points below Pensieve (\(\VRbPen\%\)) and \(\VRbReductionVsMPC\) percentage points below RobustMPC (\(\VRbMPC\%\)).
-Because these methods use distinct trained policies, the comparisons characterize end-to-end controllers rather than isolate the shield.
-Tables~\ref{tab:main:results}--\ref{tab:wilcoxon:rb} report the paired episode-level contrasts, and Figure~\ref{fig:forest:baseline} shows the corresponding QoE differences relative to Pensieve and RobustMPC.
+We answer this question inside the distinct-policy run so that the baselines and our controller share the run as well as the traces and seeds.
+The unshielded constrained policy is statistically indistinguishable from Pensieve on both axes: the median paired differences are \(+6.0\) QoE points (\(p{=}0.259\)) and \(-0.11\) rebuffering percentage points (\(p{=}0.310\)).
+Enabling the training-time shield then exchanges quality for stall protection, with median paired differences of \(-59.4\) QoE points (\(p{=}3.4\!\times\!10^{-10}\)) and \(-10.25\) rebuffering percentage points (\(p{=}4.6\!\times\!10^{-14}\)) against Pensieve; the corresponding contrasts against RobustMPC are \(-55.7\) QoE points and \(-29.86\) percentage points.
+Tables~\ref{tab:wilcoxon:qoe}--\ref{tab:wilcoxon:rb} report these paired episode-level contrasts, and Figure~\ref{fig:forest:baseline} shows the QoE differences per video.
+Because the baselines use distinct trained policies, these figures characterize end-to-end controllers; the projection logic itself is isolated in Table~\ref{tab:headline:perf}.
 
 \begin{figure}[!htbp]
     \centering
@@ -938,7 +1017,7 @@ Tables~\ref{tab:main:results}--\ref{tab:wilcoxon:rb} report the paired episode-l
 \subsection{Statistical significance (paired shield vs.\ legacy)}
 
 Because means do not describe episode-level variation, we additionally compare paired outcomes using two-sided Wilcoxon signed-rank tests.
-Table~\ref{tab:wilcoxon:vmaf:legacy} reports the results for the VMAF-aware operating point with \(\sigma_{\mathrm{soft}}{=}1.0\) and \(\tau{=}8\).
+Table~\ref{tab:wilcoxon:vmaf:legacy} reports the results for the VMAF-aware operating point with \(\sigma_{\mathrm{soft}}{=}1.0\).
 This configuration is denoted \texttt{tol1.0\_bud08} in the evaluation artifacts and is compared with legacy projection on \(n{=}80\) paired episodes.
 
 \textbf{Result.} QoE and rebuffering improve with \(p<0.01\).
@@ -946,7 +1025,7 @@ The VMAF test yields \(p=0.056\) and therefore does not meet the \(\alpha=0.05\)
 For the stricter soft tolerance \(\sigma_{\mathrm{soft}}{=}0.8\), all three unadjusted tests yield \(p<0.05\) (VMAF \(p=0.041\); Table~\ref{tab:pareto:family}).
 
 \begin{table}[H]
-    \caption{Paired Wilcoxon signed-rank comparison of VMAF-aware projection (\(\sigma_{\mathrm{soft}}{=}1.0\), \(\tau{=}8\)) and legacy projection (\(n{=}80\)).}
+    \caption{Paired Wilcoxon signed-rank comparison of VMAF-aware projection (\(\sigma_{\mathrm{soft}}{=}1.0\)) and legacy projection (\(n{=}80\)).}
     \label{tab:wilcoxon:vmaf:legacy}
     \centering
     \evaltable{\input{tables/table_wilcoxon_vmaf_vs_legacy.tex}}
@@ -961,8 +1040,14 @@ All three unadjusted tests yield \(p<0.05\).
 \textbf{Engineering interpretation.} This operating point reduces mean rebuffering from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\) and increases QoE while preserving perceptual quality: the mean VMAF difference is positive rather than negative.
 The VMAF effect is below \(0.5\) points, so the contribution is not a large fidelity increase.
 Instead, it is the removal of the usual fidelity-for-safety penalty observed with content-blind projection.
-We describe this finding as empirical quality preservation, not as a formal non-inferiority guarantee, because the study did not prespecify a perceptual margin or perform an equivalence test.
-Section~\ref{sec:eval:ood} evaluates whether the QoE and rebuffering differences persist under synthetic \mbox{5G/mmWave} stress traces.
+We describe this finding as empirical quality preservation, not a formal non-inferiority guarantee: the perceptual margin used below was fixed post-hoc rather than prespecified before data collection.
+A nonsignificant or small mean difference is not by itself evidence of equivalence, so we also ran an equivalence analysis of the paired VMAF differences using two one-sided tests (TOST)~\cite{lakens2017equivalence}.
+The margin, \(\pm\VEqMargin\) VMAF points, plays the role of the smallest effect size of practical interest; it is roughly one third of the value commonly cited as a just-noticeable difference for VMAF~\cite{li2016vmaf}.
+Because this margin was chosen after inspecting the data rather than registered in advance, the result below should be read as an exploratory equivalence check and not a confirmatory non-inferiority claim.
+At \(\sigma_{\mathrm{soft}}{=}0.8\), the mean paired VMAF difference is \(\VEqDEight\) points (90\% CI \([\VEqCILoEight,\VEqCIHiEight]\)), and both one-sided tests reject the corresponding null hypotheses (\(p_{\mathrm{TOST}}=\VEqPEight\)).
+The difference is statistically equivalent to zero within \(\pm\VEqMargin\) VMAF points.
+At \(\sigma_{\mathrm{soft}}{=}1.0\) the conclusion is the same (mean difference \(\VEqDOne\); 90\% CI \([\VEqCILoOne,\VEqCIHiOne]\); \(p_{\mathrm{TOST}}=\VEqPOne\)).
+Section~\ref{sec:eval:ood} evaluates whether the QoE and rebuffering differences persist under synthetic \mbox{5G/mmWave} stress traces, and reports the corresponding equivalence test for that suite.
 
 Table~\ref{tab:pareto:family} reports the full sweep.
 The reported mean operating points for the VMAF-aware family (rows 2--5) empirically dominate the legacy point on QoE, rebuffering, and VMAF.
@@ -979,15 +1064,15 @@ Within the evaluated grid, enabling the VMAF-aware fallback accounts for the pri
 \subsection{Tail behavior: empirical CDFs}
 
 Figure~\ref{fig:cdf:policy} presents the empirical distributions of session QoE and rebuffering ratio for the distinct learned controllers in Table~\ref{tab:main:results}.
-Figure~\ref{fig:cdf:paired} holds the constrained policy fixed and compares unshielded replay, legacy projection, and VMAF-aware projection with \(\sigma_{\mathrm{soft}}{=}1.0\) and \(\tau{=}8\).
+Figure~\ref{fig:cdf:paired} holds the constrained policy fixed and compares unshielded replay, legacy projection, and VMAF-aware projection with \(\sigma_{\mathrm{soft}}{=}1.0\).
 Relative to legacy projection, the VMAF-aware QoE curve is shifted to the right, and its rebuffering CDF assigns greater probability to low rebuffering ratios.
 
 \begin{figure}[!htbp]
     \centering
     \evalfigpanel{figures/fig_cdf_qoe.pdf}\\[0.25em]
-    {\small\textbf{(a)} Session QoE}\label{fig:cdf:qoe}\\[0.45em]
+    {\small\textbf{(a)} Session QoE}\\[0.45em]
     \evalfigpanel{figures/fig_cdf_rebuffer.pdf}\\[0.25em]
-    {\small\textbf{(b)} Rebuffering ratio}\label{fig:cdf:rb}
+    {\small\textbf{(b)} Rebuffering ratio}
     \caption{Empirical CDFs for distinct learned controllers (Table~\ref{tab:main:results}). Higher QoE and greater cumulative probability at low rebuffering ratios indicate better performance.}
     \label{fig:cdf:policy}
 \end{figure}
@@ -995,9 +1080,9 @@ Relative to legacy projection, the VMAF-aware QoE curve is shifted to the right,
 \begin{figure}[!htbp]
     \centering
     \evalfigpanel{figures/fig_cdf_qoe_v123_paired.pdf}\\[0.25em]
-    {\small\textbf{(a)} Session QoE}\label{fig:cdf:qoe:paired}\\[0.45em]
+    {\small\textbf{(a)} Session QoE}\\[0.45em]
     \evalfigpanel{figures/fig_cdf_rebuffer_v123_paired.pdf}\\[0.25em]
-    {\small\textbf{(b)} Rebuffering ratio}\label{fig:cdf:rb:paired}
+    {\small\textbf{(b)} Rebuffering ratio}
     \caption{Paired-replay CDFs (\(n{=}80\)). The policy, traces, and seeds are fixed, and only the shield logic varies. VMAF-aware projection assigns greater probability to low rebuffering ratios than legacy projection.}
     \label{fig:cdf:paired}
 \end{figure}
@@ -1010,9 +1095,9 @@ Figure~\ref{fig:paired_legacy} shows paired episode-level QoE differences relati
 \begin{figure}[!htbp]
     \centering
     \evalfigpanel{figures/fig_v123_pareto_qoe_rebuffer.pdf}\\[0.25em]
-    {\small\textbf{(a)} Behavioral groups (95\% CIs)}\label{fig:pareto_scatter}\\[0.45em]
+    {\small\textbf{(a)} Behavioral groups (95\% CIs)}\\[0.45em]
     \evalfigpanel{figures/fig_v123_empirical_pareto_front.pdf}\\[0.25em]
-    {\small\textbf{(b)} Empirical nondominated set}\label{fig:pareto_front}
+    {\small\textbf{(b)} Empirical nondominated set}
     \caption{Shield-sweep Pareto view. (a)~Mean QoE and rebuffering ratio for tolerance-defined behavioral groups. (b)~Empirical nondominated operating points (blue) and dominated points (gray); connecting lines are visual guides only.}
     \label{fig:pareto}
 \end{figure}
@@ -1028,24 +1113,36 @@ Figure~\ref{fig:paired_legacy} shows paired episode-level QoE differences relati
 The reported \(p\)-values are unadjusted and should be interpreted as exploratory across the full shield sweep.
 Because the \(\VNepisodes\) episodes comprise four videos crossed with 20 seeds, pooled signed-rank tests assume exchangeability across video--seed pairs.
 The per-video results in Figure~\ref{fig:forest:baseline} and episode-level differences in Figure~\ref{fig:paired_legacy} provide sensitivity views but do not remove this clustering limitation.
-Under the synthetic stress suite (Sec.~\ref{sec:eval:ood}), the data support QoE and rebuffering differences but do not establish VMAF equivalence; a prespecified non-inferiority margin and an appropriate equivalence test would be required for that claim~\cite{lakens2018equivalence}.
+Under both the broadband and synthetic stress suites, a post-hoc TOST equivalence analysis (margin \(\pm\VEqMargin\) VMAF points; Sections~\ref{sec:eval} and~\ref{sec:eval:ood}) supports statistical equivalence of the paired VMAF differences, on top of the significant QoE and rebuffering differences.
+The margin was not prespecified before data collection, so a formal claim would still require a preregistered non-inferiority margin and a confirmatory equivalence test~\cite{lakens2017equivalence}.
 
 \subsection{Shield design-space structure (RQ4)}
 \label{sec:eval:shields}
 
 \textbf{Sweep design.} We instantiate \(\VShieldVariants\) configurations across four main axes.
-The first two are the catastrophic ratio \(\rho_{\mathrm{cat}}\in\{2,3,4,5\}\) and the VMAF-aware fallback with \(\sigma_{\mathrm{soft}}\in\{0.8,1.0,1.2,1.5\}\) and \(\tau\in\{4,8,12\}\).
+The first two are the catastrophic ratio \(\rho_{\mathrm{cat}}\in\{2,3,4,5\}\) and the VMAF-aware fallback with \(\sigma_{\mathrm{soft}}\in\{0.8,1.0,1.2,1.5\}\) crossed with \(\tau\in\{4,8,12\}\).
 The remaining axes are lookahead pre-gating with \(H\in\{2,3,5\}\) and associated minimum-buffer thresholds, and the risk-gate settings.
 Every configuration is evaluated on the same 80 paired episodes.
 
 \textbf{Behavioral grouping.} The \(\VShieldVariants\)-point grid yields \(\VShieldBehaviors\) empirical groups under tolerances of \(\pm5\) QoE points and \(\pm0.3\) rebuffering percentage points.
 Within the evaluated grid, configurations in the same soft-tolerance band often fall into the same group despite changes in lookahead horizon, minimum-buffer threshold, throughput scaling, or risk gating.
-After fixing the VMAF-aware fallback and \(\rho_{\mathrm{cat}}\), the largest observed lookahead-related QoE difference is \(1.5\) points; risk gating primarily changes intervention frequency.
+After fixing the VMAF-aware fallback and \(\rho_{\mathrm{cat}}\), the largest observed lookahead-related QoE difference is \(1.5\) points.
+
+\textbf{Two axes are inert.} The collapse is sharper than tolerance-based grouping alone suggests, because two of the four exposed parameters cannot alter any decision on this ladder.
+The perceptual-loss budget is inert for the reason derived in Section~\ref{sec:system:proj}: at every soft tolerance, \(\tau\in\{4,8,12\}\) reproduces the same mean QoE, the same bootstrap interval, the same rebuffering ratio, and the same intervention rate to the reported precision, so the \(12\) VMAF-aware configurations realize only four distinct behaviors.
+Risk gating is inert as well, for a different and narrower reason: the gate accepts a proposal when its predicted download fits within \(\rho_{\mathrm{risk}}B_k\), whereas the following test accepts it when the download fits within \(\rho_{\mathrm{cat}}B_k\), so whenever \(\rho_{\mathrm{risk}}\le\rho_{\mathrm{cat}}\) the gate can only suppress interventions that the next test would have suppressed anyway.
+Every gated configuration in our grid satisfies that inequality, and each one reproduces its ungated counterpart exactly.
+A gate with \(\rho_{\mathrm{risk}}>\rho_{\mathrm{cat}}\) would be a live parameter, but it was not evaluated.
+The reachable trade-off in this design space is therefore governed by \(\sigma_{\mathrm{soft}}\) and \(\rho_{\mathrm{cat}}\) alone.
+We report this because an auditable shield that exposes parameters without effect is misleading in deployment: an operator tuning \(\tau\) would observe no response and could conclude that perceptual budgeting is ineffective, when in fact the budget cannot bind until the ladder is measured per chunk (Section~\ref{sec:system:ladder}).
+
+\textbf{Effect of \(\rho_{\mathrm{cat}}\).} Raising the catastrophic ratio monotonically reduces intervention frequency and increases rebuffering: \(\rho_{\mathrm{cat}}\in\{2,3,4,5\}\) yields intervention rates of \(3.23\%\), \(1.35\%\), \(0.60\%\), and \(0.36\%\) with mean rebuffering of \(5.67\%\), \(8.94\%\), \(9.96\%\), and \(10.49\%\).
+This axis, not the perceptual budget, is the operative control for how aggressively the shield intervenes.
 
 \textbf{Effect of the VMAF-aware fallback.} At \(\rho_{\mathrm{cat}}{=}3\), enabling the fallback changes mean QoE from \(\VQoThreshThree\) to \(\VQoThreshThreeVmafFB\) and mean rebuffering from \(\VRbThreshThree\%\) to \(\VRbThreshThreeVmafFB\%\) (Table~\ref{tab:pareto:family}).
 This corresponds to \(+19.71\) QoE points and \(-0.49\) rebuffering percentage points.
 The comparison at \(\rho_{\mathrm{cat}}{=}4\) shows a smaller change.
-These results support treating the VMAF-aware fallback as a primary architectural setting while retaining \(\sigma_{\mathrm{soft}}\), \(\tau\), and \(\rho_{\mathrm{cat}}\) as configurable parameters.
+These results support treating the VMAF-aware fallback as a primary architectural setting, with \(\sigma_{\mathrm{soft}}\) and \(\rho_{\mathrm{cat}}\) as the two parameters that actually shift the operating point.
 Figure~\ref{fig:shield_rate} compares the percentage of chunk decisions modified by each shield configuration, quantifying how often the projection intervenes relative to the unshielded baseline.
 
 \begin{figure}[!htbp]
@@ -1063,14 +1160,14 @@ Figure~\ref{fig:shield_rate} compares the percentage of chunk decisions modified
 \textbf{Result.} Removing the shield increases mean rebuffering from \(\VRbVmAwareOne\%\) to \(\VRbOff\%\).
 Equivalently, the shielded-minus-unshielded paired difference is \(\VPairedDRbvsOff\) percentage points with \(p=\VPairedPRbvsOff\) (\(n=\VNepisodes\)).
 The mean paired QoE difference is \(+2.4\) points and is not statistically significant.
-Thus, the evaluated policy's rebuffering performance depends strongly on inference-time projection.
+The evaluated policy's rebuffering performance depends strongly on inference-time projection.
 
-\textbf{Implication.} For this trained policy, deployment should retain the shield and tune \(\sigma_{\mathrm{soft}}\), \(\tau\), and \(\rho_{\mathrm{cat}}\) rather than remove projection.
+\textbf{Implication.} For this trained policy, deployment should retain the shield and tune \(\sigma_{\mathrm{soft}}\) and \(\rho_{\mathrm{cat}}\) rather than remove projection.
 Comparisons involving shield-trained policies should report the shield configuration explicitly.
 
 \subsection{Generalization across heterogeneous networks}\label{sec:eval:generalization}
 
-\textbf{Broadband versus volatile cellular traces.} On the primary FCC/Norway-style suite, the constrained policy has mean QoE comparable to Pensieve, and the shield modifies a small fraction of proposals (Table~\ref{tab:headline:perf}).
+\textbf{Broadband versus volatile cellular traces.} On the primary FCC/Norway-style suite, the unshielded constrained policy has a mean QoE comparable to that of Pensieve (Table~\ref{tab:main:results}), and the shield modifies a small fraction of proposals (Table~\ref{tab:headline:perf}).
 
 \textbf{Highly volatile traces.} On the synthetic \mbox{5G/mmWave} stress traces, unshielded replay has substantially higher rebuffering, and legacy projection does not eliminate large stall events.
 The shield intervenes more often when predicted download duration exceeds the available buffer margin, consistent with its risk-based feasibility tests.
@@ -1082,8 +1179,8 @@ To evaluate behavior beyond the partitioned broadband traces, we replay the same
 The difference indicates that the stress suite frequently activates the catastrophic-download logic.
 
 \textbf{Paired outcomes vs.\ legacy.}
-At \(\sigma_{\mathrm{soft}}{=}1.0\) and \(\tau{=}8\), the mean paired differences are \(\VFiveGPairedDQoEten\) QoE points (\(p=\VFiveGPairedPQoEten\)) and \(\VFiveGPairedDRbten\) rebuffering percentage points (\(p=\VFiveGPairedPRbten\), \(n=\VNepisodes\)).
-At \(\sigma_{\mathrm{soft}}{=}0.8\) and \(\tau{=}8\), the corresponding differences are \(\VFiveGPairedDQoE\) QoE points (\(p=\VFiveGPairedPQoE\)) and \(\VFiveGPairedDRb\) rebuffering percentage points (\(p=\VFiveGPairedPRb\)).
+At \(\sigma_{\mathrm{soft}}{=}1.0\), the mean paired differences are \(\VFiveGPairedDQoEten\) QoE points (\(p=\VFiveGPairedPQoEten\)) and \(\VFiveGPairedDRbten\) rebuffering percentage points (\(p=\VFiveGPairedPRbten\), \(n=\VNepisodes\)).
+At \(\sigma_{\mathrm{soft}}{=}0.8\), the corresponding differences are \(\VFiveGPairedDQoE\) QoE points (\(p=\VFiveGPairedPQoE\)) and \(\VFiveGPairedDRb\) rebuffering percentage points (\(p=\VFiveGPairedPRb\)).
 Table~\ref{tab:wilcoxon:5g:stress} lists the corresponding Wilcoxon statistics.
 
 \begin{table}[H]
@@ -1094,8 +1191,10 @@ Table~\ref{tab:wilcoxon:5g:stress} lists the corresponding Wilcoxon statistics.
 \end{table}
 
 \textbf{VMAF reporting under stress.} The mean paired VMAF differences are fractions of a point, and the two-sided tests do not reject the null (\(p=\VFiveGPairedPVm\) at \(\sigma_{\mathrm{soft}}{=}0.8\); \(p=\VFiveGPairedPVmten\) at \(\sigma_{\mathrm{soft}}{=}1.0\)).
-These tests establish neither a VMAF difference nor equivalence.
-Accordingly, the stress-suite result is limited to statistically significant QoE and rebuffering improvements; a non-inferiority claim would require a prespecified perceptual margin and a dedicated equivalence analysis~\cite{lakens2018equivalence}.
+A nonsignificant two-sided test alone does not establish equivalence, so we applied the same post-hoc TOST procedure used in Section~\ref{sec:eval}, with the margin fixed at \(\pm\VEqMargin\) VMAF points after inspecting the data instead of being prespecified~\cite{lakens2017equivalence}.
+At \(\sigma_{\mathrm{soft}}{=}0.8\), the mean paired difference is \(\VEqDFiveGEight\) points (90\% CI \([\VEqCILoFiveGEight,\VEqCIHiFiveGEight]\), \(p_{\mathrm{TOST}}=\VEqPFiveGEight\)); at \(\sigma_{\mathrm{soft}}{=}1.0\), it is \(\VEqDFiveGOne\) points (90\% CI \([\VEqCILoFiveGOne,\VEqCIHiFiveGOne]\), \(p_{\mathrm{TOST}}=\VEqPFiveGOne\)).
+Both configurations satisfy the equivalence criterion, so under the stress suite the VMAF-aware shield is statistically equivalent to legacy projection within \(\pm\VEqMargin\) points, on top of the significant QoE and rebuffering improvements.
+The margin was not agreed in advance of data collection, so we present this result as supportive evidence, not a formal, preregistered non-inferiority claim.
 
 \subsection{Ablation study (RQ3)}
 
@@ -1109,17 +1208,17 @@ All variants are evaluated without shielding so that the table characterizes pol
     \evaltable{\input{tables/table_ablation.tex}}
 \end{table}
 
-\textbf{$-$~Lagrangian:} Removing the constraint mechanism increases mean rebuffering from \(14.73\%\) to \(31.46\%\) while increasing mean VMAF from \(71.65\) to \(73.58\).
+\textbf{\(-\)~Lagrangian constraints:} Removing the constraint mechanism increases mean rebuffering from \(14.73\%\) to \(31.46\%\) while increasing mean VMAF from \(71.65\) to \(73.58\).
 This operating point assigns more weight to fidelity at the expense of rebuffering.
 
-\textbf{$-$~Lookahead:} Removing manifest lookahead reduces mean QoE by 45 points and increases the mean number of switches from \(6.5\) to \(12.8\), consistent with less stable representation selection.
+\textbf{\(-\)~Manifest lookahead:} Removing manifest lookahead reduces mean QoE by \(45\) points and increases the mean number of switches from \(6.5\) to \(12.8\), consistent with less stable representation selection.
 
-\textbf{$-$~Lyapunov:} Removing the buffer regularizers lowers mean rebuffering from \(14.73\%\) to \(11.63\%\) but also lowers mean VMAF by \(1.38\) points.
+\textbf{\(-\)~Lyapunov regularizers:} Removing the buffer regularizers lowers mean rebuffering from \(14.73\%\) to \(11.63\%\) but also lowers mean VMAF by \(1.38\) points.
 
 \textbf{Interaction-aware interpretation.}
 The ablations reveal a coupled fidelity--stability trade-off rather than three independent additive effects.
 In particular, removing the Lagrangian constraints eliminates the adaptive penalty on rebuffering violations, allowing the policy to select higher-fidelity but less buffer-feasible representations.
-Mean VMAF consequently rises from \(71.65\) to \(73.58\), but the associated increase in download demand raises mean rebuffering from \(14.73\%\) to \(31.46\%\).
+Mean VMAF rises accordingly from \(71.65\) to \(73.58\), but the associated increase in download demand raises mean rebuffering from \(14.73\%\) to \(31.46\%\).
 The stall penalty offsets the fidelity gain, leaving QoE slightly below that of the full policy (\(3260.5\) versus \(3269.6\)).
 Manifest lookahead and Lyapunov regularization also influence the state trajectories on which the dual variables act: lookahead provides anticipatory chunk-size information, while the regularizers bias exploration away from unstable buffer regions.
 Their effects are therefore not expected to sum linearly, because removing one component changes the observations, actions, and constraint violations encountered by the remaining components.
@@ -1129,7 +1228,10 @@ Because these are one-at-a-time ablations without uncertainty intervals, they de
 A factorial ablation with repeated training runs would be required to estimate pairwise or higher-order interactions directly.
 
 \textbf{Operational complexity.} The shield performs deterministic arithmetic and a linear scan over the representation ladder using manifest sizes, buffer state, conservative throughput estimates, and per-representation VMAF values.
-Its per-decision computational complexity is \(O(L)\); runtime latency was not separately benchmarked.
+Its per-decision computational complexity is \(O(L)\), with \(L{=}6\) representation levels in our ladder.
+We measured the wall-clock cost of the VMAF-aware shield (\(\sigma_{\mathrm{soft}}{=}0.8\)) directly in a single-threaded, pure-Python implementation over \(\VLatNcalls\) decision calls spanning the evaluation suite: mean \(\VLatMeanUs\)\,\(\mu\)s, median \(\VLatMedianUs\)\,\(\mu\)s, and \(99\)th-percentile \(\VLatPNinetyNineUs\)\,\(\mu\)s (maximum \(\VLatMaxUs\)\,\(\mu\)s).
+This is five to six orders of magnitude below the \(4\)-second chunk duration and below typical chunk download times.
+The projection step is therefore not a practical bottleneck relative to network- and playback-timescale events, and a compiled or vectorized implementation would only widen this margin.
 
 Figure~\ref{fig:ablation:scatter} shows how each ablation changes the QoE--rebuffering operating point relative to the full CMDP policy.
 
@@ -1159,29 +1261,34 @@ During the displayed throughput reductions, the shielded trajectory avoids buffe
 \label{sec:limits}
 
 \textbf{Scope.}
-The proposed shield provides an auditable mechanism for adjusting the QoE--rebuffering trade-off through the VMAF-loss budget \(\tau\), soft feasibility tolerance \(\sigma_{\mathrm{soft}}\), and catastrophic-download threshold \(\rho_{\mathrm{cat}}\).
-These parameters can be changed without retraining the policy.
+The proposed shield provides an auditable mechanism for adjusting the QoE--rebuffering trade-off through the soft feasibility tolerance \(\sigma_{\mathrm{soft}}\) and the catastrophic-download threshold \(\rho_{\mathrm{cat}}\), both of which can be changed without retraining the policy.
+The perceptual-loss budget \(\tau\) is part of the projection rule but, as Section~\ref{sec:eval:shields} shows, it is inert on a monotone ladder and therefore does not extend the reachable trade-off.
 The method does not provide a formal worst-case safety guarantee, and the evaluation does not establish dominance over every ABR controller or operating point.
-Under the reported harness, the mean VMAF-aware operating points empirically dominate legacy projection and have lower mean rebuffering than Pensieve and RobustMPC.
-The primary broadband result is therefore a quality-preserving safety improvement: the shield reduces stalls and raises QoE without an observed decrease in mean VMAF.
+Within the shield-sweep run, the mean VMAF-aware operating points empirically dominate legacy projection; within the distinct-policy run, the shielded controller reduces median rebuffering by more than ten percentage points against Pensieve at a median cost of \(59.4\) QoE points (Section~\ref{sec:eval}).
+The primary broadband result is therefore a quality-preserving safety improvement relative to legacy projection: at equal intervention cost the shield reduces stalls and raises QoE without an observed decrease in mean VMAF.
 
 \textbf{Threats to validity.}
 \begin{enumerate}
-  \item The evaluation is simulation based and may not capture live cellular dynamics, transport-stack effects, or content delivery network (CDN) cache behavior~\cite{narayanan2021variegated}.
+  \item The evaluation is simulation based and may not capture live cellular dynamics, transport-stack effects, or CDN cache behavior~\cite{narayanan2021variegated}.
   \item The test set contains four videos and a finite trace pool. Broader content and trace diversity is needed before deployment-level claims can be made~\cite{kvalbein2014}.
   \item QoE is measured via a VMAF-based surrogate; subjective user studies may rank stall, fidelity, and switching differently~\cite{seufert2015survey}.
   \item The reduction to \(\VShieldBehaviors\) tolerance-defined behavioral groups is specific to the evaluated policy, ladder, traces, and grouping thresholds. Other ladders, including HDR content, require separate characterization.
   \item The reported operating points apply to the joint policy--shield configuration. They may not transfer when the shield is removed or replaced.
-  \item The synthetic \mbox{5G/mmWave} suite isolates throughput volatility but does not reproduce a complete network stack. Under severe rebuffering, the observed VMAF differences are small. They establish neither a difference nor equivalence~\cite{lakens2018equivalence}.
+  \item The results are drawn from two evaluation runs of the same harness that use different checkpoints of the constrained policy (Section~\ref{sec:eval}). The metric definition is identical, but the shield-sweep checkpoint switches representations more often and therefore reports lower absolute QoE sums. Every contrast we report is computed within one run; absolute levels should not be carried across the two groups of tables. Reproducing all rows under a single checkpoint remains open.
+  \item The synthetic \mbox{5G/mmWave} suite isolates throughput volatility but does not reproduce a complete network stack. Under severe rebuffering, the observed VMAF differences are small; a post-hoc TOST analysis (Section~\ref{sec:eval:ood}) supports statistical equivalence within \(\pm\VEqMargin\) VMAF points, but because the margin was not prespecified, this is exploratory rather than a formal, preregistered non-inferiority result~\cite{lakens2017equivalence}.
   \item Genie uses non-causal trace knowledge and serves only as an oracle reference.
-  \item All shield-to-shield comparisons use the same constrained policy. The projection consumes only manifest, buffer, and throughput observations, so applying it to other host controllers is architecturally feasible. However, its performance with Pensieve-, MPC-, or other learned policies has not been evaluated. Such performance should not be inferred from the present results.
+  \item All shield-to-shield comparisons use the same constrained policy. The projection consumes only manifest, buffer, and throughput observations, so applying it to other host controllers is architecturally feasible. However, we have not evaluated its performance with Pensieve, MPC, or other learned policies, and such performance should not be inferred from the present results.
   \item The paired episodes share four videos and a common trace pool, so pooled tests assume exchangeability across video--seed pairs. Per-video breakdowns provide a sensitivity analysis but do not eliminate this dependence.
+  \item The chunk-level ladder statistics of Section~\ref{sec:system:ladder} are computed from the per-frame VMAF logs available for each encode, which cover a prefix rather than the full clip, and CrowdRun contributes only two usable chunks. The inversion and flat-pair rates should therefore be read as evidence that chunk-level structure exists in this ladder, not as population estimates for a general catalogue.
+  \item The inertness of the perceptual-loss budget is a property of the projection rule combined with a monotone ladder, not evidence that perceptual budgeting is ineffective in general. We could not test an active budget because that requires a nonmonotone, chunk-level ladder and a re-evaluated controller.
 \end{enumerate}
 
 \textbf{Future work.}
 First, live or packet-level emulation and field-collected \mbox{5G/mmWave} traces are needed to evaluate transport and deployment effects~\cite{narayanan2021variegated}.
 Second, applying the projection to heterogeneous host policies, including Pensieve, MPC, and quality-aware learners such as Comyco~\cite{huang2019comyco}, would separate its standalone contribution from policy--shield co-design.
-Third, future controllers could incorporate per-trace tail metrics, risk-sensitive objectives such as CVaR~\cite{rockafellar2000}, uncertainty-aware throughput prediction, and telemetry-driven adaptation of \(\tau\).
+Third, future controllers could incorporate per-trace tail metrics, risk-sensitive objectives such as CVaR~\cite{rockafellar2000}, uncertainty-aware throughput prediction, and telemetry-driven adaptation of \(\sigma_{\mathrm{soft}}\) and \(\rho_{\mathrm{cat}}\).
+A chunk-level ladder would additionally make the perceptual-loss budget an active parameter, since Section~\ref{sec:system:ladder} shows that the chunk-level map is nonmonotone often enough for VMAF-ordered selection to diverge from index order.
+Fourth, a follow-up study that preregisters the perceptual equivalence margin before data collection, rather than fixing it post-hoc as in Section~\ref{sec:eval}, would upgrade the present exploratory equivalence result to a confirmatory non-inferiority claim~\cite{lakens2017equivalence}.
 
 % =========================================
 \section{Conclusion}
@@ -1190,11 +1297,12 @@ Third, future controllers could incorporate per-trace tail metrics, risk-sensiti
 We introduced a deterministic VMAF-aware runtime shield for a constrained DRL-based ABR controller.
 The shield uses manifest VMAF values, conservative download-time estimates, and buffer-feasibility tests to select an emergency downgrade rather than relying only on representation-index order.
 
-On \(\VNepisodes\) paired broadband episodes, the configuration with \(\sigma_{\mathrm{soft}}{=}0.8\) and \(\tau{=}8\) reduces mean rebuffering from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\) and increases mean QoE by approximately \(2.6\%\) relative to legacy projection.
+On \(\VNepisodes\) paired broadband episodes, the configuration with \(\sigma_{\mathrm{soft}}{=}0.8\) reduces mean rebuffering from \(\VRbLegacy\%\) to \(\VRbVmAwareEpt\%\) and increases mean QoE by approximately \(2.6\%\) relative to legacy projection.
 It achieves these gains without an observed reduction in perceptual quality: mean VMAF increases slightly, and all three unadjusted paired tests yield \(p<0.05\).
 This quality-preserving reduction in stalls is the principal engineering benefit of the VMAF-aware projection.
 Under synthetic \mbox{5G/mmWave} stress traces, the QoE and rebuffering improvements remain statistically significant, whereas VMAF is not statistically distinguishable from legacy projection.
-The shield sweep further shows that enabling the VMAF-aware fallback is associated with the principal changes in the empirical Pareto set.
+The shield sweep further shows that enabling the VMAF-aware fallback is associated with the principal changes in the empirical Pareto set, and that only two of the four exposed parameters are identifiable: a perceptual-loss budget cannot bind while the ladder is monotone, and a risk gate below the catastrophic threshold is redundant.
+Measuring the ladder from per-frame logs shows that the chunk-level map is nonmonotone in \(\LadPctChunksInverted\%\) of chunks, which identifies chunk-level VMAF as the condition under which perceptual budgeting becomes a live design choice.
 
 \emph{For the evaluated shield-trained policy, removing inference-time projection increases mean rebuffering from \(\VRbVmAwareOne\%\) to \(\VRbOff\%\).}
 \emph{Deployment should therefore retain the shield as part of the joint policy--shield configuration.}
@@ -1204,6 +1312,9 @@ Future work should test this projection with other host policies and under packe
 \section*{Data availability}
 The reproducibility artifacts include the code, evaluation scripts, and exported CSV files underlying Tables~\ref{tab:headline:perf}--\ref{tab:ablation}.
 The deterministic shield implementations and their parameters are documented with the code.
+
+\section*{Funding}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors. % TODO: replace with the actual grant/funder name and number if applicable, and state the funder's role (or lack thereof) in study design, analysis, and the decision to publish.
 
 \section*{Declaration of competing interest}
 The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.

@@ -50,33 +50,35 @@ def main() -> None:
         {
             "font.family": "serif",
             "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
-            "font.size": 12,
-            "axes.titlesize": 12,
-            "axes.labelsize": 12,
-            "legend.fontsize": 10,
-            "xtick.labelsize": 11,
-            "ytick.labelsize": 11,
+            # STIX matches the Times/serif body font; without this, the mathtext
+            # legend label "VMAF-aware ($\tau{=}1.0$)" falls back to DejaVu Sans.
+            "mathtext.fontset": "stix",
+            "font.size": 22,
+            "axes.titlesize": 22,
+            "axes.labelsize": 22,
+            "legend.fontsize": 18,
+            "xtick.labelsize": 20,
+            "ytick.labelsize": 20,
             "figure.dpi": 150,
             "savefig.dpi": 600,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
             "axes.spines.top": False,
             "axes.spines.right": False,
-            "axes.linewidth": 1.0,
-            "lines.linewidth": 1.8,
+            "axes.linewidth": 1.3,
+            "lines.linewidth": 2.3,
         }
     )
 
-    stack_figsize = (6.8, 3.9)
-    stack_label = 13
-    stack_tick = 12
-    stack_legend = 11
-
+    stack_figsize = (7.2, 4.7)
+    stack_label = 24
+    stack_tick = 22
+    stack_legend = 20
     for col, xlabel, stem in [
         ("QoE", "Session QoE (sum surrogate)", "fig_cdf_qoe_v123_paired"),
         ("Rebuffer", "Rebuffer ratio (% of session)", "fig_cdf_rebuffer_v123_paired"),
     ]:
-        fig, ax = plt.subplots(figsize=stack_figsize, constrained_layout=False)
+        fig, ax = plt.subplots(figsize=stack_figsize, layout="constrained")
         for key, label in METHODS.items():
             sub = df[df["Method"] == key][col].astype(float).values
             if len(sub) == 0:
@@ -99,14 +101,14 @@ def main() -> None:
         ax.tick_params(axis="both", labelsize=stack_tick)
         ax.set_ylim(0, 1.05)
         ax.grid(True, alpha=0.35, linestyle=":")
-        ax.legend(
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.14),
+        # Figure-level legend outside the axes so the constrained layout
+        # engine can reserve exact space for it (no manual margin tuning).
+        fig.legend(
+            loc="outside lower center",
             fontsize=stack_legend,
-            ncol=1,
+            ncol=3,
             frameon=True,
         )
-        fig.subplots_adjust(bottom=0.24, left=0.10, right=0.98, top=0.97)
         for ext in ("pdf", "png"):
             p = out_dir / f"{stem}.{ext}"
             fig.savefig(p, bbox_inches="tight", facecolor="white", edgecolor="none")
