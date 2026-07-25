@@ -81,6 +81,29 @@ def _check_ffmpeg() -> bool:
     return True
 
 
+def _probe_res(path: Path) -> tuple[int, int]:
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "0", "-select_streams", "v:0", "-show_entries",
+             "stream=width,height", "-of", "csv=p=0:s=x", str(path)],
+            capture_output=True, text=True, check=True).stdout.strip()
+        w, h = out.split("x")[:2]
+        return int(w), int(h)
+    except Exception:
+        return VMAF_REF_W, VMAF_REF_H
+
+
+def _cap_ladder(ladder: dict, native_w: int, native_h: int) -> dict:
+    """Never upscale: cap each rung's height to the source height, keeping even,
+    16:9-consistent dimensions."""
+    capped = {}
+    for br, (w, h) in ladder.items():
+        if h > native_h:
+            w, h = native_w, native_h
+        capped[br] = (int(w) - int(w) % 2, int(h) - int(h) % 2)
+    return capped
+
+
 def _probe_fps(path: Path) -> float:
     try:
         out = subprocess.run(
@@ -139,7 +162,10 @@ def _chunk_means(perframe: list[float], fps: float) -> list[float]:
 def build_for_video(video: str, ref: Path, ladder: dict, enc_dir: Path,
                     log_dir: Path, threads: int) -> list[dict]:
     fps = _probe_fps(ref)
-    print(f"\n=== {video} (fps={fps:.3f}) ref={ref.name} ===")
+    nat_w, nat_h = _probe_res(ref)
+    ladder = _cap_ladder(ladder, nat_w, nat_h)
+    print(f"\n=== {video} (fps={fps:.3f}, native={nat_w}x{nat_h}) ref={ref.name} ===")
+    print(f"    effective ladder: {[(b, ladder[b]) for b in BITRATES]}")
     rows = []
     for br in BITRATES:
         w, h = ladder[br]
