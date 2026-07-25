@@ -150,6 +150,13 @@ METHOD_CLASS: dict[str, str] = {
 }
 
 # Short axis labels for dense plots (heatmap rows, forest y-axis).
+VIDEO_SHORT_LABEL: dict[str, str] = {
+    "bigbuckbunny": "BigBuckBunny",
+    "crowd_run": "CrowdRun",
+    "sintel": "Sintel",
+    "tearsofsteel_short": "TearsOfSteel",
+}
+
 HEATMAP_ROW_LABEL: dict[str, str] = {
     "Genie": "Genie",
     "RobustMPC": "RobustMPC",
@@ -233,6 +240,15 @@ STACK_PANEL_LABELSIZE = 24
 STACK_PANEL_TICKSIZE = 22
 STACK_PANEL_LEGENDSIZE = 20
 FOREST_FIGSIZE_W = 10.5
+# Heatmap: smaller type than scatter/CDF panels so axis labels do not dominate the grid.
+HEATMAP_TICKSIZE = 13
+HEATMAP_AXISLABELSIZE = 14
+HEATMAP_CBARSIZE = 13
+# Compact bar charts (shield intervention, ablation panels).
+COMPACT_TICKSIZE = 13
+COMPACT_LABELSIZE = 14
+COMPACT_TITLESIZE = 14
+COMPACT_BARLABELSIZE = 11
 
 
 def _repo_new() -> Path:
@@ -378,16 +394,17 @@ def fig_shield_intervention(decisions: pd.DataFrame, out_dir: Path) -> None:
     if not rows:
         return
     rows.sort(key=lambda t: t[2])
-    labels = [r[0] for r in rows]
+    labels = [
+        HEATMAP_ROW_LABEL.get(r[1], DISPLAY_NAME.get(r[1], r[0])) for r in rows
+    ]
     vals = [r[2] for r in rows]
     colors = [COLORS.get(r[1], "#888888") for r in rows]
 
-    fig, ax = plt.subplots(figsize=(7.2, 4.2), constrained_layout=False)
+    fig, ax = plt.subplots(figsize=(7.0, 3.8), constrained_layout=False)
     ax.barh(labels, vals, color=colors, edgecolor="white", linewidth=0.6, height=0.62)
-    ax.set_xlabel("Shield intervention rate (% of chunk steps)", fontsize=22)
-    ax.set_title("Runtime shield activity", fontsize=22)
-    ax.tick_params(axis="y", labelsize=20)
-    ax.tick_params(axis="x", labelsize=20)
+    ax.set_xlabel("Intervention rate (% of chunk steps)", fontsize=COMPACT_LABELSIZE)
+    ax.tick_params(axis="y", labelsize=COMPACT_TICKSIZE)
+    ax.tick_params(axis="x", labelsize=COMPACT_TICKSIZE, length=3, pad=2)
     ax.grid(True, axis="x", which="major", alpha=0.55, linestyle="--", linewidth=0.8, zorder=0)
     ax.set_axisbelow(True)
     fig.tight_layout()
@@ -403,7 +420,7 @@ def fig_ablation_bars(df: pd.DataFrame, out_dir: Path) -> None:
     agg["Label"] = agg["Method"].map(lambda m: ABLATION_LABEL.get(m, DISPLAY_NAME.get(m, m)))
     order = [ABLATION_LABEL.get(m, DISPLAY_NAME[m]) for m in methods if m in set(agg["Method"])]
 
-    fig, axes = plt.subplots(1, 2, figsize=(6.8, 3.4))
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.2), constrained_layout=False)
     for ax, col, title in zip(
         axes,
         ["QoE", "Rebuffer"],
@@ -414,17 +431,23 @@ def fig_ablation_bars(df: pd.DataFrame, out_dir: Path) -> None:
         sub = sub.set_index("Label").loc[[l for l in order if l in sub["Label"].values]].reset_index()
         cols = [COLORS.get(m, "#888888") for m in sub["Method"]]
         bars = ax.bar(sub["Label"], sub[col], color=cols, edgecolor="white", linewidth=0.6)
-        ax.set_title(title, fontsize=22)
-        ax.tick_params(axis="both", labelsize=20)
-        ax.tick_params(axis="x", rotation=25)
+        ax.set_title(title, fontsize=COMPACT_TITLESIZE)
+        ax.tick_params(axis="both", labelsize=COMPACT_TICKSIZE, length=3, pad=2)
+        ax.tick_params(axis="x", rotation=20)
         ax.grid(True, axis="y", alpha=0.35, linestyle="--")
         # Bar charts must start at zero to avoid exaggerating small gaps.
         ax.set_ylim(bottom=0)
         # With a zero baseline the QoE bars differ by about 1%, so print the
         # values; the axis stays honest and the numbers stay readable.
         fmt = "{:.0f}" if col == "QoE" else "{:.1f}"
-        ax.bar_label(bars, labels=[fmt.format(v) for v in sub[col]], fontsize=17, padding=2)
+        ax.bar_label(
+            bars,
+            labels=[fmt.format(v) for v in sub[col]],
+            fontsize=COMPACT_BARLABELSIZE,
+            padding=2,
+        )
         ax.set_ylim(top=float(sub[col].max()) * 1.16)
+    fig.tight_layout()
     _save(fig, out_dir, "fig_ablation_qoe_rebuffer")
     plt.close(fig)
 
@@ -438,8 +461,9 @@ def fig_per_video_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
         .pivot(index="Video", columns="Method", values="QoE")
     )
     pv = pv[[c for c in ORDER_MAIN if c in pv.columns]]
-    # Short video names for the horizontal axis (methods stay on y for readability).
-    video_labels = [str(i).replace("_", " ")[:14] for i in pv.index]
+    video_labels = [
+        VIDEO_SHORT_LABEL.get(str(v), str(v).replace("_", " ")) for v in pv.index
+    ]
     # Transpose: methods = rows (horizontal labels), videos = columns.
     pv_t = pv.T
 
@@ -447,8 +471,8 @@ def fig_per_video_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
     n_videos = len(pv_t.columns)
     if n_methods == 0 or n_videos == 0:
         return
-    fig_h = max(5.0, 0.48 * n_methods + 1.6)
-    fig_w = max(7.0, 1.20 * n_videos + 2.2)
+    fig_h = max(4.4, 0.40 * n_methods + 1.5)
+    fig_w = max(6.8, 1.05 * n_videos + 2.6)
     fig, ax = plt.subplots(figsize=(fig_w, fig_h), constrained_layout=False)
     im = ax.imshow(
         pv_t.values,
@@ -460,16 +484,21 @@ def fig_per_video_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
     ax.set_yticks(range(n_methods))
     ax.set_yticklabels(
         [HEATMAP_ROW_LABEL.get(c, DISPLAY_NAME.get(c, c)) for c in pv_t.index],
-        fontsize=20,
+        fontsize=HEATMAP_TICKSIZE,
     )
     ax.set_xticks(range(n_videos))
-    ax.set_xticklabels(video_labels, rotation=30, ha="right", fontsize=20)
-    ax.set_xlabel("Video sequence", fontsize=22)
-    ax.set_ylabel("Method", fontsize=22)
-    ax.tick_params(axis="both", labelsize=20)
-    cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.04)
-    cbar.set_label("Mean session QoE", fontsize=20)
-    cbar.ax.tick_params(labelsize=18)
+    ax.set_xticklabels(
+        video_labels,
+        rotation=25,
+        ha="right",
+        fontsize=HEATMAP_TICKSIZE,
+    )
+    ax.set_xlabel("Video sequence", fontsize=HEATMAP_AXISLABELSIZE)
+    ax.set_ylabel("Method", fontsize=HEATMAP_AXISLABELSIZE)
+    ax.tick_params(axis="both", labelsize=HEATMAP_TICKSIZE, length=3, pad=2)
+    cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.03)
+    cbar.set_label("Mean session QoE", fontsize=HEATMAP_CBARSIZE)
+    cbar.ax.tick_params(labelsize=HEATMAP_TICKSIZE - 1, length=2, pad=1)
     fig.tight_layout()
     _save(fig, out_dir, "fig_heatmap_qoe_by_video")
     plt.close(fig)
@@ -691,13 +720,16 @@ def _summarize_wide_bootstrap(df: pd.DataFrame, rng: np.random.Generator) -> pd.
 
 
 def _fmt_cell(mu: float, lo: float, hi: float, digits: int) -> str:
+    """Two-line CI cell via \\cici (matches headline tables; avoids column overflow)."""
     if digits <= 0:
         mtxt = f"{mu:.0f}"
-        bracket = rf"\scriptsize $[{lo:.0f},\,{hi:.0f}]$"
+        lotxt = f"{lo:.0f}"
+        hitxt = f"{hi:.0f}"
     else:
         mtxt = f"{mu:.{digits}f}"
-        bracket = rf"\scriptsize $[{lo:.{digits}f},\,{hi:.{digits}f}]$"
-    return f"{mtxt}\\,{bracket}"
+        lotxt = f"{lo:.{digits}f}"
+        hitxt = f"{hi:.{digits}f}"
+    return rf"\cici{{{mtxt}}}{{{lotxt}}}{{{hitxt}}}"
 
 
 def export_latex_main_table(summary_wide: pd.DataFrame, tex_dir: Path) -> None:

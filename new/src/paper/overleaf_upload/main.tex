@@ -425,7 +425,7 @@ Table~\ref{tab:rw_safety_vmaf} summarizes this positioning.
     \tablenotecols{%
     \textbf{Constr.:} explicit stall/smoothness budget during training (Y), implicit handling (Imp.), or no explicit budget (N).
     \textbf{Det.\ guard:} auditable action projection before chunk download~\cite{alshiekh2018shielding}.}{%
-    \textbf{VMAF:} emergency logic uses per-chunk VMAF ladder spacing~\cite{li2016vmaf}. The symbol~\mbox{\(\approx\)}~denotes partial support within a learned or fused component rather than a separate deterministic guard.}%
+    \textbf{VMAF:} emergency logic uses per-chunk VMAF ladder spacing~\cite{li2016vmaf}. The symbol~$\approx$~denotes partial support within a learned or fused component rather than a separate deterministic guard.}%
 \end{table}
 
 % =========================================
@@ -612,12 +612,12 @@ Among feasible rungs, we select the one that maximizes perceptual score subject 
 \label{eq:shield-argmax}
     a^{\mathrm{exec}}_{k}
     =
-    \underset{
+    \arg\max_{
         \substack{
-            j\in\mathcal{A}_{\mathrm{safe},k}(a^{\mathrm{raw}}_{k}) \\[1pt]
+            j\in\mathcal{A}_{\mathrm{safe},k}(a^{\mathrm{raw}}_{k}) \\
             V_{k}(a^{\mathrm{raw}}_{k})-V_{k}(j)\le\tau
         }
-    }{\arg\max}\,
+    }
     V_{k}(j).
 \end{equation}
 \(\tau\) has a direct perceptual interpretation: it is the maximum VMAF-point reduction admitted relative to the policy proposal before the fallback rule is invoked.
@@ -1016,7 +1016,8 @@ Because the baselines use distinct trained policies, these figures characterize 
 
 \subsection{Statistical significance (paired shield vs.\ legacy)}
 
-Because means do not describe episode-level variation, we additionally compare paired outcomes using two-sided Wilcoxon signed-rank tests.
+Because means do not describe episode-level variation, we additionally compare paired outcomes using two-sided Wilcoxon signed-rank tests; reported \(p\)-values are unadjusted and should be interpreted as exploratory across the full evaluation grid.
+Because the \(\VNepisodes\) episodes comprise four videos crossed with twenty seeds, pooled tests assume exchangeability across video--seed pairs; per-video results in Figure~\ref{fig:forest:baseline} and episode-level differences in Figure~\ref{fig:paired_legacy} provide sensitivity views but do not remove this clustering limitation.
 Table~\ref{tab:wilcoxon:vmaf:legacy} reports the results for the VMAF-aware operating point with \(\sigma_{\mathrm{soft}}{=}1.0\).
 This configuration is denoted \texttt{tol1.0\_bud08} in the evaluation artifacts and is compared with legacy projection on \(n{=}80\) paired episodes.
 
@@ -1108,13 +1109,6 @@ Figure~\ref{fig:paired_legacy} shows paired episode-level QoE differences relati
     \caption{Paired episode-level QoE differences between VMAF-aware and legacy projection (\(n{=}80\)); positive values favor VMAF-aware projection.}
     \label{fig:paired_legacy}
 \end{figure}
-
-\textbf{Statistical reporting.} Tables~\ref{tab:wilcoxon:qoe}--\ref{tab:wilcoxon:rb} summarize paired Wilcoxon results; the complete grid is provided as CSV in the reproducibility artifacts.
-The reported \(p\)-values are unadjusted and should be interpreted as exploratory across the full shield sweep.
-Because the \(\VNepisodes\) episodes comprise four videos crossed with 20 seeds, pooled signed-rank tests assume exchangeability across video--seed pairs.
-The per-video results in Figure~\ref{fig:forest:baseline} and episode-level differences in Figure~\ref{fig:paired_legacy} provide sensitivity views but do not remove this clustering limitation.
-Under both the broadband and synthetic stress suites, a post-hoc TOST equivalence analysis (margin \(\pm\VEqMargin\) VMAF points; Sections~\ref{sec:eval} and~\ref{sec:eval:ood}) supports statistical equivalence of the paired VMAF differences, on top of the significant QoE and rebuffering differences.
-The margin was not prespecified before data collection, so a formal claim would still require a preregistered non-inferiority margin and a confirmatory equivalence test~\cite{lakens2017equivalence}.
 
 \subsection{Shield design-space structure (RQ4)}
 \label{sec:eval:shields}
