@@ -1,0 +1,40 @@
+bitrate-greedy policy | 80 eps | eps=1.0 VMAF | alpha=0.1
+Isolating BANKING: SAFETY (banking off) vs CERTIFIED (banking on), same conformal safety.
+
+### A) Real train traces, moderate buffers (throughput-limited regime)
+===== real traces | buffer 8s =====
+       arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
+       raw 1031.497 2029.972     0.000   84.47     6000    4.00   0.000    nan
+    safety   14.486   61.129     0.062   62.02     1306    6.73   0.982  0.874
+ certified   14.166   55.193     0.075   62.02     1272    6.76   0.993  0.874
+  BANKING (certified - safety): reb -0.321  stallfree +0.012  bitrate -2.6%  VMAF +0.007 (budget 1.0)
+
+===== real traces | buffer 12s =====
+       arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
+       raw 1031.497 2029.972     0.000   84.47     6000    4.00   0.000    nan
+    safety   14.994   62.720     0.050   63.13     1418    7.35   0.971  0.874
+ certified   14.831   62.720     0.062   63.16     1376    7.45   0.988  0.874
+  BANKING (certified - safety): reb -0.163  stallfree +0.012  bitrate -3.0%  VMAF +0.024 (budget 1.0)
+
+===== real traces | buffer 20s =====
+       arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
+       raw 1031.497 2029.972     0.000   84.47     6000    4.00   0.000    nan
+    safety   15.185   72.040     0.050   63.21     1427    7.44   0.971  0.874
+ certified   14.743   62.961     0.062   63.24     1386    7.64   0.988  0.874
+  BANKING (certified - safety): reb -0.442  stallfree +0.012  bitrate -2.9%  VMAF +0.025 (budget 1.0)
+
+### B) High-throughput 5G-like traces (saturated rungs feasible -> banking has headroom)
+===== 5G steady ~9Mbps | buffer 12s =====
+       arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
+       raw    2.897    5.265     0.000   84.47     6000   11.20   0.000    nan
+    safety    0.000    0.000     1.000   83.62     5881   11.39   0.021  0.936
+ certified    0.000    0.000     1.000   83.28     3954   11.62   0.633  0.936
+  BANKING (certified - safety): reb +0.000  stallfree +0.000  bitrate -32.8%  VMAF -0.334 (budget 1.0)
+
+===== 5G with dips | buffer 12s =====
+       arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
+       raw  132.976  148.633     0.000   84.47     6000    8.46   0.000    nan
+    safety  126.674  140.708     0.000   80.33     4735   10.11   0.324  0.881
+ certified   70.499  140.708     0.000   80.17     3403   10.35   0.753  0.881
+  BANKING (certified - safety): reb -56.175  stallfree +0.000  bitrate -28.1%  VMAF -0.160 (budget 1.0)
+

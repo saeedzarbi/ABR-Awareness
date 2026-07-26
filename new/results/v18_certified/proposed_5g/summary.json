@@ -1,0 +1,165 @@
+{
+  "tag": "ppo",
+  "epsilon": 1.0,
+  "alpha": 0.1,
+  "arms": {
+    "raw": {
+      "rebuffer_total": {
+        "mean": 5.070515118983351,
+        "ci_lo": 4.123687194472296,
+        "ci_hi": 6.078954637802543
+      },
+      "rebuffer_p95_chunk": {
+        "mean": 0.005866176712801648,
+        "ci_lo": 0.0,
+        "ci_hi": 0.016451274908095823
+      },
+      "rebuffer_p99_chunk": {
+        "mean": 2.6138071353177526,
+        "ci_lo": 2.127559013063358,
+        "ci_hi": 3.131620213410604
+      },
+      "stallfree": {
+        "mean": 0.355,
+        "ci_lo": 0.29,
+        "ci_hi": 0.42
+      },
+      "vmaf_mean": {
+        "mean": 73.16961041666667,
+        "ci_lo": 68.77853963541668,
+        "ci_hi": 77.29051749999999
+      },
+      "bitrate_mean_kbps": {
+        "mean": 1559.677083333333,
+        "ci_lo": 1540.728776041667,
+        "ci_hi": 1577.4690104166666
+      },
+      "buffer_mean": {
+        "mean": 11.268979483700662,
+        "ci_lo": 11.249335011382309,
+        "ci_hi": 11.288087145698846
+      },
+      "interv_rate": {
+        "mean": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 0.0
+      },
+      "conformal_coverage": NaN
+    },
+    "safety": {
+      "rebuffer_total": {
+        "mean": 5.070515118983351,
+        "ci_lo": 4.123687194472296,
+        "ci_hi": 6.078954637802543
+      },
+      "rebuffer_p95_chunk": {
+        "mean": 0.005866176712801648,
+        "ci_lo": 0.0,
+        "ci_hi": 0.016451274908095823
+      },
+      "rebuffer_p99_chunk": {
+        "mean": 2.6138071353177526,
+        "ci_lo": 2.127559013063358,
+        "ci_hi": 3.131620213410604
+      },
+      "stallfree": {
+        "mean": 0.355,
+        "ci_lo": 0.29,
+        "ci_hi": 0.42
+      },
+      "vmaf_mean": {
+        "mean": 73.16961041666667,
+        "ci_lo": 68.77853963541668,
+        "ci_hi": 77.29051749999999
+      },
+      "bitrate_mean_kbps": {
+        "mean": 1559.677083333333,
+        "ci_lo": 1540.728776041667,
+        "ci_hi": 1577.4690104166666
+      },
+      "buffer_mean": {
+        "mean": 11.268979483700662,
+        "ci_lo": 11.249335011382309,
+        "ci_hi": 11.288087145698846
+      },
+      "interv_rate": {
+        "mean": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 0.0
+      },
+      "conformal_coverage": 0.8894791666666667
+    },
+    "certified": {
+      "rebuffer_total": {
+        "mean": 4.0198922669615476,
+        "ci_lo": 3.216927590144969,
+        "ci_hi": 4.903435296170336
+      },
+      "rebuffer_p95_chunk": {
+        "mean": 0.005866176712801648,
+        "ci_lo": 0.0,
+        "ci_hi": 0.016451274908095823
+      },
+      "rebuffer_p99_chunk": {
+        "mean": 2.0790989618971882,
+        "ci_lo": 1.6641576855004765,
+        "ci_hi": 2.532288761834206
+      },
+      "stallfree": {
+        "mean": 0.425,
+        "ci_lo": 0.355,
+        "ci_hi": 0.495
+      },
+      "vmaf_mean": {
+        "mean": 73.18035520833334,
+        "ci_lo": 68.78530229166668,
+        "ci_hi": 77.302887109375
+      },
+      "bitrate_mean_kbps": {
+        "mean": 1451.447916666667,
+        "ci_lo": 1422.6420572916663,
+        "ci_hi": 1480.7765625
+      },
+      "buffer_mean": {
+        "mean": 11.326588059291337,
+        "ci_lo": 11.299688083827345,
+        "ci_hi": 11.352653106299805
+      },
+      "interv_rate": {
+        "mean": 0.17052083333333332,
+        "ci_lo": 0.125,
+        "ci_hi": 0.2176432291666661
+      },
+      "conformal_coverage": 0.8894791666666667
+    }
+  },
+  "comparisons": {
+    "certified_vs_safety": {
+      "bandwidth_reduction_pct": -6.939203494313022,
+      "bandwidth_wilcoxon_p": 1.4909039272912287e-06,
+      "rebuffer_change_pct": -20.720239016513478,
+      "rebuffer_wilcoxon_p": 0.0016880158016846956,
+      "vmaf_mean_diff": 0.010744791666667126,
+      "vmaf_tost_p_equiv": 3.8342239030684e-188,
+      "vmaf_within_epsilon": true
+    },
+    "certified_vs_raw": {
+      "bandwidth_reduction_pct": -6.939203494313022,
+      "bandwidth_wilcoxon_p": 1.4909039272912287e-06,
+      "rebuffer_change_pct": -20.720239016513478,
+      "rebuffer_wilcoxon_p": 0.0016880158016846956,
+      "vmaf_mean_diff": 0.010744791666667126,
+      "vmaf_tost_p_equiv": 3.8342239030684e-188,
+      "vmaf_within_epsilon": true
+    },
+    "safety_vs_raw": {
+      "bandwidth_reduction_pct": 0.0,
+      "bandwidth_wilcoxon_p": 1.0,
+      "rebuffer_change_pct": 0.0,
+      "rebuffer_wilcoxon_p": 1.0,
+      "vmaf_mean_diff": 0.0,
+      "vmaf_tost_p_equiv": 0.0,
+      "vmaf_within_epsilon": true
+    }
+  }
+}
