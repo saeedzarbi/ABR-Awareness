@@ -1,0 +1,6 @@
+arm,n_interventions,mean_vmaf_given_up,ci_lo,ci_hi,frac_exceed_margin,noninferior
+vmaf_aware_tol0.8_bud08,0,0.0,0.0,0.0,0.0,True
+vmaf_aware_tol1.0_bud08,0,0.0,0.0,0.0,0.0,True
+shield_legacy,20,0.0,0.0,0.0,0.0,True
+highest_feasible_tol0.8,0,0.0,0.0,0.0,0.0,True
+highest_feasible_tol1.0,0,0.0,0.0,0.0,0.0,True
