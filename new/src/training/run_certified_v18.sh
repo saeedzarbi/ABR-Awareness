@@ -123,8 +123,28 @@ echo "[5] FULL: train proposed + pensieve on v18 env"
     --models proposed,pensieve --seeds "${SEEDS}" --num-envs "${NUM_ENVS}" \
     --timesteps-scale "${TS_SCALE}"
 
-CKPT_PROP="models/master_v18_5g/proposed_v14/seed_${SEEDS%%,*}/final_model.zip"
-CKPT_PEN="models/master_v18_5g/pensieve_v14/seed_${SEEDS%%,*}/final_model.zip"
+# SB3 save() writes final_model.zip under results/models (see configs/paths.py).
+# Pass path without .zip — PPO.load appends it. Prefer best_model if present.
+_resolve_ckpt() {
+    local base="$1"
+    if [ -f "${base}/best_model/best_model.zip" ]; then
+        echo "${base}/best_model/best_model"
+    elif [ -f "${base}/final_model.zip" ]; then
+        echo "${base}/final_model"
+    else
+        echo "${base}/final_model"
+    fi
+}
+CKPT_PROP="$(_resolve_ckpt "results/models/master_v18_5g/proposed_v14/seed_${SEEDS%%,*}")"
+CKPT_PEN="$(_resolve_ckpt "results/models/master_v18_5g/pensieve_v14/seed_${SEEDS%%,*}")"
+echo "CKPT proposed=${CKPT_PROP}"
+echo "CKPT pensieve=${CKPT_PEN}"
+for _c in "${CKPT_PROP}" "${CKPT_PEN}"; do
+    if [ ! -f "${_c}.zip" ]; then
+        echo "ERROR: missing checkpoint ${_c}.zip (did FULL training finish?)"
+        exit 1
+    fi
+done
 
 echo ""
 echo "[6] FULL: CPS eval on proposed"

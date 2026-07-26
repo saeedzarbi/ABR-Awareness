@@ -19,7 +19,7 @@ so Wilcoxon signed-rank and TOST equivalence tests are valid. Reports:
 
 Usage (run per policy; see run_certified_v18.sh):
   python src/evaluation/eval_certified_shield_v18.py \
-      --policy ppo --ckpt models/master_v18_5g/proposed_v14/seed_0/final_model.zip \
+      --policy ppo --ckpt results/models/master_v18_5g/proposed_v14/seed_0/final_model \
       --trace-dir data/standardized/test_traces_5g_v18 \
       --episodes 200 --epsilon 1.0 --alpha 0.10 \
       --out results/v18_certified/proposed
@@ -72,10 +72,19 @@ class BBAPolicy:
         return int(round(frac * (self.n - 1))), None
 
 
+def _resolve_ppo_ckpt(ckpt: str | Path) -> str:
+    """Normalize SB3 checkpoint path (strip .zip; SB3 appends it on load)."""
+    p = Path(ckpt)
+    candidate = p.with_suffix("") if p.suffix == ".zip" else p
+    if candidate.with_suffix(".zip").exists():
+        return str(candidate)
+    raise FileNotFoundError(f"PPO checkpoint not found: {candidate}.zip")
+
+
 class PPOWrapperPolicy:
     def __init__(self, ckpt, blind, obs_len):
         from stable_baselines3 import PPO
-        self.model = PPO.load(ckpt, device="cpu")
+        self.model = PPO.load(_resolve_ppo_ckpt(ckpt), device="cpu")
         self.blind = blind
         self.obs_len = obs_len
 
