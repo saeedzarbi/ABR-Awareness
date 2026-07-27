@@ -1,2 +1,14 @@
-
 *.pyc
+__pycache__/
+
+# Generated V18 datasets (rebuild: python data/prepare_traces_v18.py)
+new/data/standardized/train_traces_v18/
+new/data/standardized/test_traces_v18/
+new/data/standardized/train_traces_5g_v18/
+new/data/standardized/test_traces_5g_v18/
+
+# Large / regenerable media and artifacts
+new/raw_videos/
+new/data/encoded_multires/
+new/data/vmaf_scores/_multires_logs/
+new/**/__pycache__/
