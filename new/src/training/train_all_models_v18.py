@@ -146,12 +146,18 @@ class ContentBlindWrapper(ObservationWrapper):
         return modified
 
 
-def make_env(rank: int, model_key: str, base_seed: int = 0, is_eval: bool = False):
+def make_env(rank: int, model_key: str, base_seed: int = 0, is_eval: bool = False,
+             train_dir: str | None = None, test_dir: str | None = None):
     spec = MODEL_SPECS[model_key]
+    # Resolve here so the (picklable) strings are captured in the closure -- on
+    # Windows 'spawn', the subprocess re-imports this module with default globals,
+    # so trace-dir overrides MUST travel inside the closure, not via globals.
+    train_dir = train_dir if train_dir is not None else str(PATHS["train_traces"])
+    test_dir = test_dir if test_dir is not None else str(PATHS["test_traces"])
 
     def _init():
         videos = Config.TEST_VIDEOS if is_eval else Config.TRAIN_VIDEOS
-        traces = PATHS["test_traces"] if is_eval else PATHS["train_traces"]
+        traces = test_dir if is_eval else train_dir
         env = ABREnv(
             video_names=videos,
             trace_dir=str(traces),
@@ -184,11 +190,13 @@ def make_env(rank: int, model_key: str, base_seed: int = 0, is_eval: bool = Fals
     return _init
 
 
-def train_one_model(model_key: str, seed: int, timesteps_scale: float, num_envs: int):
+def train_one_model(model_key: str, seed: int, timesteps_scale: float, num_envs: int,
+                    train_dir: str | None = None, test_dir: str | None = None,
+                    model_tag: str = MODEL_TAG):
     spec = MODEL_SPECS[model_key]
     seed_tag = f"seed_{seed}"
-    model_root = PATHS["models"] / MODEL_TAG / spec["folder"] / seed_tag
-    log_root = PATHS["logs"] / MODEL_TAG / spec["folder"] / seed_tag
+    model_root = PATHS["models"] / model_tag / spec["folder"] / seed_tag
+    log_root = PATHS["logs"] / model_tag / spec["folder"] / seed_tag
     model_root.mkdir(parents=True, exist_ok=True)
     log_root.mkdir(parents=True, exist_ok=True)
 
@@ -204,9 +212,11 @@ def train_one_model(model_key: str, seed: int, timesteps_scale: float, num_envs:
     print("=" * 72)
 
     train_env = SubprocVecEnv(
-        [make_env(i, model_key, base_seed=seed, is_eval=False) for i in range(num_envs)]
+        [make_env(i, model_key, base_seed=seed, is_eval=False,
+                  train_dir=train_dir, test_dir=test_dir) for i in range(num_envs)]
     )
-    eval_env = SubprocVecEnv([make_env(0, model_key, base_seed=seed, is_eval=True)])
+    eval_env = SubprocVecEnv([make_env(0, model_key, base_seed=seed, is_eval=True,
+                                       train_dir=train_dir, test_dir=test_dir)])
 
     policy_kwargs = {"net_arch": {"pi": [256, 256], "vf": [256, 256]}, "activation_fn": torch.nn.Tanh}
 
@@ -264,15 +274,35 @@ def main():
     parser.add_argument("--timesteps-scale", type=float, default=1.0)
     parser.add_argument("--num-envs", type=int, default=Config.NUM_ENVS)
     parser.add_argument("--torch-threads", type=int, default=1)
+    parser.add_argument("--trace-dir", type=str, default=None,
+                        help="override TRAIN trace directory (default: source-disjoint broadband).")
+    parser.add_argument("--test-trace-dir", type=str, default=None,
+                        help="override in-training EVAL trace directory.")
+    parser.add_argument("--tag", type=str, default=MODEL_TAG,
+                        help="output tag under results/models/<tag>/ (isolate regimes).")
     args = parser.parse_args()
 
     torch.set_num_threads(max(1, int(args.torch_threads)))
     order = list(MODEL_SPECS) if args.all else args.models
 
+    # Default to the provenance-correct broadband split; fall back to legacy if the
+    # V18 datasets have not been prepared yet.
+    train_dir = args.trace_dir
+    test_dir = args.test_trace_dir
+    if train_dir is None:
+        cand = PATHS["train_traces_v18"]
+        train_dir = str(cand) if cand.exists() else str(PATHS["train_traces"])
+    if test_dir is None:
+        cand = PATHS["test_traces_v18"]
+        test_dir = str(cand) if cand.exists() else str(PATHS["test_traces"])
+    print(f"[v18-train] train_dir={train_dir}\n[v18-train] test_dir={test_dir}\n[v18-train] tag={args.tag}")
+
     for k in order:
         for s in args.seeds:
-            train_one_model(k, seed=s, timesteps_scale=args.timesteps_scale, num_envs=args.num_envs)
-    print("\nAll requested v18 (5G) trainings finished.")
+            train_one_model(k, seed=s, timesteps_scale=args.timesteps_scale,
+                            num_envs=args.num_envs, train_dir=train_dir,
+                            test_dir=test_dir, model_tag=args.tag)
+    print("\nAll requested v18 trainings finished.")
 
 
 if __name__ == "__main__":

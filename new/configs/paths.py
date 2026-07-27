@@ -22,6 +22,14 @@ STANDARDIZED_DIR = DATA_DIR / 'standardized'
 TRAIN_TRACES_DIR = STANDARDIZED_DIR / 'train_traces'  # For Training (FCC)
 TEST_TRACES_DIR = STANDARDIZED_DIR / 'test_traces'    # For Evaluation (Norway + Test FCC)
 
+# --- V18 provenance-correct datasets (see data/prepare_traces_v18.py) ---
+# Source-DISJOINT broadband split (no FCC id / Norway route shared across splits):
+TRAIN_TRACES_V18_DIR = STANDARDIZED_DIR / 'train_traces_v18'
+TEST_TRACES_V18_DIR = STANDARDIZED_DIR / 'test_traces_v18'
+# Matched synthetic 5G sets with DISJOINT seeds (train seed 7000, test seed 42):
+TRAIN_TRACES_5G_V18_DIR = STANDARDIZED_DIR / 'train_traces_5g_v18'
+TEST_TRACES_5G_V18_DIR = STANDARDIZED_DIR / 'test_traces_5g_v18'
+
 # Fallback for legacy scripts (optional)
 # NETWORK_TRACES_DIR = DATA_DIR / 'network_traces'
 
@@ -53,6 +61,12 @@ def get_paths():
         
         'train_traces': TRAIN_TRACES_DIR,  # Use this for training loop
         'test_traces': TEST_TRACES_DIR,    # Use this for final evaluation
+
+        # V18 provenance-correct datasets
+        'train_traces_v18': TRAIN_TRACES_V18_DIR,
+        'test_traces_v18': TEST_TRACES_V18_DIR,
+        'train_traces_5g_v18': TRAIN_TRACES_5G_V18_DIR,
+        'test_traces_5g_v18': TEST_TRACES_5G_V18_DIR,
         
         'results': RESULTS_DIR,
         'models': MODELS_DIR,
