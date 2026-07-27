@@ -70,18 +70,25 @@ def make_env(buffer_max: float, trace_kind: str | None = None):
     return env
 
 
-def run(arm: str, buffer_max: float, policy: str = "greedy", trace_kind: str | None = None):
+def run(arm: str, buffer_max: float, policy: str = "greedy", trace_kind: str | None = None,
+        eps: float | None = None):
     wrapped = arm != "raw"
+    eps = EPS if eps is None else eps
     if not wrapped:
         env = make_env(buffer_max, trace_kind)
     else:
+        predictive = arm in ("certified_plus", "certified_fc")
         cfg = CPShieldConfig(
             enabled=True,
-            enable_banking=(arm == "certified"),
-            epsilon_vmaf=EPS,
+            enable_banking=(arm in ("certified", "certified_plus", "certified_fc")),
+            epsilon_vmaf=eps,
             enable_conformal=True,
             conformal=ConformalConfig(alpha=ALPHA, window=200, k_predict=5),
             safety_margin=0.5, min_buffer=0.3,
+            predictive=predictive,
+            lookahead=(6 if arm == "certified_fc" else 1),
+            epsilon_risk=max(4.0, eps), risk_buffer=8.0,
+            forecast_dips=(arm == "certified_fc"), horizon_quantile=0.2,
         )
         env = CertifiedPerceptualShieldWrapper(make_env(buffer_max, trace_kind), cfg)
 
@@ -112,10 +119,15 @@ def run(arm: str, buffer_max: float, policy: str = "greedy", trace_kind: str | N
             c = info.get("conformal_coverage", float("nan"))
             if not np.isnan(c):
                 cover.append(float(c))
+    reb_arr = np.array(reb)
+    thr = np.percentile(reb_arr, 90)
+    tail = reb_arr[reb_arr >= thr]
+    reb_cvar = float(tail.mean()) if tail.size else float(reb_arr.max())
     return {
         "arm": arm,
         "reb": float(np.mean(reb)),
         "reb_p95": float(np.percentile(reb, 95)),
+        "reb_cvar10": reb_cvar,
         "stallfree": float(np.mean(stallfree)),
         "vmaf": float(np.mean(vmaf)),
         "bitrate": float(np.mean(bitrates)),
@@ -140,6 +152,63 @@ def _report(title, rows):
           f"VMAF {c['vmaf']-s['vmaf']:+.3f} (budget {EPS})\n")
 
 
+def _report_plus(title, buffer_max, trace_kind):
+    """4-arm report incl. CERTIFIED+ (predictive pre-banking). Isolates the value
+    of the conformal look-ahead: certified+ vs certified at the SAME budget."""
+    rows = [run("raw", buffer_max, trace_kind=trace_kind),
+            run("safety", buffer_max, trace_kind=trace_kind),
+            run("certified", buffer_max, trace_kind=trace_kind),
+            run("certified_plus", buffer_max, trace_kind=trace_kind)]
+    print(f"===== {title} =====")
+    print(f"{'arm':>14}{'reb':>9}{'reb_p95':>9}{'stallfree':>10}{'vmaf':>8}"
+          f"{'bitrate':>9}{'buffer':>8}{'interv':>8}{'cover':>7}")
+    for r in rows:
+        print(f"{r['arm']:>14}{r['reb']:>9.3f}{r['reb_p95']:>9.3f}{r['stallfree']:>10.3f}"
+              f"{r['vmaf']:>8.2f}{r['bitrate']:>9.0f}{r['buffer']:>8.2f}{r['interv']:>8.3f}{r['cover']:>7.3f}")
+    c, p = rows[2], rows[3]
+    bw = 100 * (p["bitrate"] - c["bitrate"]) / max(c["bitrate"], 1e-9)
+    print(f"  PREDICTIVE (certified+ - certified): reb {p['reb']-c['reb']:+.3f}  "
+          f"reb_p95 {p['reb_p95']-c['reb_p95']:+.3f}  stallfree {p['stallfree']-c['stallfree']:+.3f}  "
+          f"bitrate {bw:+.1f}%  VMAF {p['vmaf']-c['vmaf']:+.3f}\n")
+
+
+def _eps_frontier(title, buffer_max, trace_kind, eps_grid=(0.25, 0.5, 1.0, 2.0, 4.0)):
+    """Sweep the perceptual budget for reactive certified banking. Because the
+    VMAF-rate curve saturates, a large fraction of the bandwidth/stall benefit
+    is retained even at very tight epsilon -> a favourable operating frontier."""
+    base = run("safety", buffer_max, trace_kind=trace_kind)  # banking OFF reference
+    print(f"===== {title} =====")
+    print(f"{'eps':>6}{'reb':>9}{'reb_p95':>9}{'reb_cvar10':>11}{'vmaf':>8}"
+          f"{'bitrate':>9}{'bwSaved%':>9}{'dVMAF':>8}")
+    print(f"{'off':>6}{base['reb']:>9.3f}{base['reb_p95']:>9.3f}{base['reb_cvar10']:>11.3f}"
+          f"{base['vmaf']:>8.2f}{base['bitrate']:>9.0f}{0.0:>9.1f}{0.0:>8.3f}")
+    for e in eps_grid:
+        r = run("certified", buffer_max, trace_kind=trace_kind, eps=e)
+        bw = 100 * (base["bitrate"] - r["bitrate"]) / max(base["bitrate"], 1e-9)
+        print(f"{e:>6.2f}{r['reb']:>9.3f}{r['reb_p95']:>9.3f}{r['reb_cvar10']:>11.3f}"
+              f"{r['vmaf']:>8.2f}{r['bitrate']:>9.0f}{bw:>9.1f}{r['vmaf']-base['vmaf']:>8.3f}")
+    print()
+
+
+def _tail_report(title, buffer_max, trace_kind):
+    rows = [run("safety", buffer_max, trace_kind=trace_kind),
+            run("certified", buffer_max, trace_kind=trace_kind),
+            run("certified_plus", buffer_max, trace_kind=trace_kind),
+            run("certified_fc", buffer_max, trace_kind=trace_kind)]
+    print(f"===== {title} =====")
+    print(f"{'arm':>14}{'reb_mean':>10}{'reb_cvar10':>11}{'reb_p95':>9}{'vmaf':>8}{'bitrate':>9}")
+    for r in rows:
+        print(f"{r['arm']:>14}{r['reb']:>10.3f}{r['reb_cvar10']:>11.3f}"
+              f"{r['reb_p95']:>9.3f}{r['vmaf']:>8.2f}{r['bitrate']:>9.0f}")
+    s, fc = rows[0], rows[3]
+    d = lambda x: 100 * (x - s['reb_cvar10']) / max(s['reb_cvar10'], 1e-9)
+    print(f"  tail CVaR@10% vs safety: certified {d(rows[1]['reb_cvar10']):+.1f}%  "
+          f"certified+ {d(rows[2]['reb_cvar10']):+.1f}%  certified_fc {d(fc['reb_cvar10']):+.1f}%")
+    print(f"  p95 vs safety: certified {rows[1]['reb_p95']-s['reb_p95']:+.1f}  "
+          f"certified_fc {fc['reb_p95']-s['reb_p95']:+.1f}  "
+          f"(VMAF cost fc {fc['vmaf']-s['vmaf']:+.2f})\n")
+
+
 def main():
     print(f"bitrate-greedy policy | {EPISODES} eps | eps={EPS} VMAF | alpha={ALPHA}")
     print("Isolating BANKING: SAFETY (banking off) vs CERTIFIED (banking on), same conformal safety.\n")
@@ -158,6 +227,21 @@ def main():
             [run("raw", 12.0, trace_kind="dips"),
              run("safety", 12.0, trace_kind="dips"),
              run("certified", 12.0, trace_kind="dips")])
+
+    print("### C) PREDICTIVE pre-banking (conformal look-ahead) vs reactive banking")
+    print("    Certainty check: does the look-ahead cut stalls FURTHER at ~equal VMAF?\n")
+    _report_plus("5G with dips | buffer 12s (predictive)", 12.0, "dips")
+    _report_plus("5G with dips | buffer 8s  (tighter, predictive)", 8.0, "dips")
+    _report_plus("real traces | buffer 8s  (predictive)", 8.0, None)
+
+    print("### D) epsilon-FRONTIER (Pareto): perceptual budget vs bandwidth saved / stalls")
+    print("    Certainty check: VMAF saturation => most savings survive at TIGHT budgets.\n")
+    _eps_frontier("5G with dips | buffer 12s", 12.0, "dips")
+    _eps_frontier("real traces | buffer 8s", 8.0, None)
+
+    print("### E) TAIL (CVaR@10%) of rebuffering: banking concentrates gains in the tail")
+    _tail_report("5G with dips | buffer 8s", 8.0, "dips")
+    _tail_report("5G with dips | buffer 12s", 12.0, "dips")
 
 
 if __name__ == "__main__":

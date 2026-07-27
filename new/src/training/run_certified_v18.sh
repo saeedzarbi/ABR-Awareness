@@ -99,6 +99,22 @@ echo "[4] Eval BBA on 5G traces"
     --trace-dir "${TRACE_5G}" --buffer 12 \
     --out "${OUT}/bba_5g"
 
+# ---- [4b] IMPROVED shield (items 1/3/4): risk-aware budget + dip forecasting ----
+echo ""
+echo "[4b] Eval GREEDY + BBA on 5G traces with the IMPROVED shield (predictive+forecast)"
+"${PY}" src/evaluation/eval_certified_shield_v18.py \
+    --policy greedy --episodes "${EPISODES}" \
+    --epsilon "${EPSILON}" --alpha "${ALPHA}" \
+    --trace-dir "${TRACE_5G}" --buffer 12 \
+    --predictive --forecast \
+    --out "${OUT}/greedy_5g_improved"
+"${PY}" src/evaluation/eval_certified_shield_v18.py \
+    --policy bba --episodes "${EPISODES}" \
+    --epsilon "${EPSILON}" --alpha "${ALPHA}" \
+    --trace-dir "${TRACE_5G}" --buffer 12 \
+    --predictive --forecast \
+    --out "${OUT}/bba_5g_improved"
+
 echo ""
 echo "=============================================================="
 echo "QUICK SIGNAL READY. Inspect:"
@@ -116,11 +132,15 @@ if [ "${FULL}" != "1" ]; then
     exit 0
 fi
 
-# ---- FULL: train RL policies (NO shield during training; applied at eval) ----
+# ---- FULL: train RL policies ----
+#  proposed / pensieve : NO shield during training (shield is a runtime wrapper).
+#  proposed_cps        : shield-aware CO-DESIGN (item 5) -- the certified shield is
+#                        active INSIDE training so the policy learns to exploit the
+#                        banked buffer instead of collapsing to a conservative rung.
 echo ""
-echo "[5] FULL: train proposed + pensieve on v18 env"
+echo "[5] FULL: train proposed + pensieve + proposed_cps (co-design) on v18 env"
 "${PY}" src/training/train_all_models_v18.py \
-    --models proposed,pensieve --seeds "${SEEDS}" --num-envs "${NUM_ENVS}" \
+    --models proposed,pensieve,proposed_cps --seeds "${SEEDS}" --num-envs "${NUM_ENVS}" \
     --timesteps-scale "${TS_SCALE}"
 
 # SB3 save() writes final_model.zip under results/models (see configs/paths.py).
@@ -137,9 +157,11 @@ _resolve_ckpt() {
 }
 CKPT_PROP="$(_resolve_ckpt "results/models/master_v18_5g/proposed_v14/seed_${SEEDS%%,*}")"
 CKPT_PEN="$(_resolve_ckpt "results/models/master_v18_5g/pensieve_v14/seed_${SEEDS%%,*}")"
+CKPT_PROP_CPS="$(_resolve_ckpt "results/models/master_v18_5g/proposed_cps_v18/seed_${SEEDS%%,*}")"
 echo "CKPT proposed=${CKPT_PROP}"
 echo "CKPT pensieve=${CKPT_PEN}"
-for _c in "${CKPT_PROP}" "${CKPT_PEN}"; do
+echo "CKPT proposed_cps=${CKPT_PROP_CPS}"
+for _c in "${CKPT_PROP}" "${CKPT_PEN}" "${CKPT_PROP_CPS}"; do
     if [ ! -f "${_c}.zip" ]; then
         echo "ERROR: missing checkpoint ${_c}.zip (did FULL training finish?)"
         exit 1
@@ -147,12 +169,18 @@ for _c in "${CKPT_PROP}" "${CKPT_PEN}"; do
 done
 
 echo ""
-echo "[6] FULL: CPS eval on proposed"
+echo "[6] FULL: CPS eval on proposed (base banking + IMPROVED shield)"
 "${PY}" src/evaluation/eval_certified_shield_v18.py \
     --policy ppo --ckpt "${CKPT_PROP}" --episodes "${EPISODES}" \
     --epsilon "${EPSILON}" --alpha "${ALPHA}" \
     --trace-dir "${TRACE_5G}" --buffer 12 \
     --out "${OUT}/proposed_5g"
+"${PY}" src/evaluation/eval_certified_shield_v18.py \
+    --policy ppo --ckpt "${CKPT_PROP}" --episodes "${EPISODES}" \
+    --epsilon "${EPSILON}" --alpha "${ALPHA}" \
+    --trace-dir "${TRACE_5G}" --buffer 12 \
+    --predictive --forecast \
+    --out "${OUT}/proposed_5g_improved"
 
 echo ""
 echo "[7] FULL: CPS eval on pensieve (content-blind)"
@@ -162,5 +190,22 @@ echo "[7] FULL: CPS eval on pensieve (content-blind)"
     --trace-dir "${TRACE_5G}" --buffer 12 \
     --out "${OUT}/pensieve_5g"
 
+# ---- [8] CO-DESIGN comparison (item 5): shield-aware policy vs shield-at-eval ----
+# Both evaluated UNDER the improved shield. proposed_cps should reach higher QoE
+# (learned to exploit banking) -> compare proposed_5g_improved vs proposed_cps_5g.
+echo ""
+echo "[8] FULL: CPS eval on proposed_cps (shield-aware CO-DESIGN, IMPROVED shield)"
+"${PY}" src/evaluation/eval_certified_shield_v18.py \
+    --policy ppo --ckpt "${CKPT_PROP_CPS}" --episodes "${EPISODES}" \
+    --epsilon "${EPSILON}" --alpha "${ALPHA}" \
+    --trace-dir "${TRACE_5G}" --buffer 12 \
+    --predictive --forecast \
+    --out "${OUT}/proposed_cps_5g"
+
 echo ""
 echo "DONE (FULL). Key outputs under ${OUT}/"
+echo "  Co-design (item 5): both policies deployed UNDER the improved shield --"
+echo "  compare the CERTIFIED arm of:"
+echo "    ${OUT}/proposed_5g_improved/summary.json   (policy trained WITHOUT shield)"
+echo "    ${OUT}/proposed_cps_5g/summary.json        (policy CO-TRAINED with shield)"
+echo "  Expect proposed_cps to reach higher VMAF / lower rebuffer in the certified arm."

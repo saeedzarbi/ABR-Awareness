@@ -128,16 +128,27 @@ def make_policy(kind, env, ckpt, blind):
 # --------------------------------------------------------------------------- #
 # Rollouts
 # --------------------------------------------------------------------------- #
-def run_arm(arm, kind, ckpt, blind, trace_dir, buffer_max, episodes, epsilon, alpha):
+def run_arm(arm, kind, ckpt, blind, trace_dir, buffer_max, episodes, epsilon, alpha,
+            shield=None):
+    shield = shield or {}
     base = build_base_env(trace_dir, buffer_max, blind)
     if arm == "raw":
         env = base
     else:
+        banking = (arm == "certified")
         cfg = CPShieldConfig(
-            enabled=True, enable_banking=(arm == "certified"), epsilon_vmaf=epsilon,
+            enabled=True, enable_banking=banking, epsilon_vmaf=epsilon,
             enable_conformal=True,
             conformal=ConformalConfig(alpha=alpha, window=200, k_predict=5),
             safety_margin=0.5, min_buffer=0.3,
+            # improvements (items 1/3/4): risk-aware budget + dip forecasting.
+            # Only meaningful when banking is on; default off for back-compat.
+            predictive=bool(banking and shield.get("predictive", False)),
+            lookahead=int(shield.get("lookahead", 1)),
+            epsilon_risk=float(shield.get("epsilon_risk", max(4.0, epsilon))),
+            risk_buffer=float(shield.get("risk_buffer", 8.0)),
+            forecast_dips=bool(banking and shield.get("forecast", False)),
+            horizon_quantile=float(shield.get("horizon_quantile", 0.2)),
         )
         env = CertifiedPerceptualShieldWrapper(base, cfg)
 
@@ -319,15 +330,32 @@ def main():
     ap.add_argument("--alpha", type=float, default=0.10)
     ap.add_argument("--arms", type=str, default="raw,safety,certified")
     ap.add_argument("--out", type=str, required=True)
+    # shield improvements (items 1/3/4): applied to the `certified` arm.
+    ap.add_argument("--predictive", action="store_true",
+                    help="risk-aware perceptual budget eps(B) + look-ahead pre-banking.")
+    ap.add_argument("--forecast", action="store_true",
+                    help="plan the look-ahead against a low quantile of recent throughput (tail).")
+    ap.add_argument("--epsilon-risk", type=float, default=4.0)
+    ap.add_argument("--risk-buffer", type=float, default=8.0)
+    ap.add_argument("--lookahead", type=int, default=1)
+    ap.add_argument("--horizon-quantile", type=float, default=0.2)
     args = ap.parse_args()
+
+    shield = {
+        "predictive": args.predictive, "forecast": args.forecast,
+        "epsilon_risk": args.epsilon_risk, "risk_buffer": args.risk_buffer,
+        "lookahead": (max(args.lookahead, 6) if args.forecast else args.lookahead),
+        "horizon_quantile": args.horizon_quantile,
+    }
 
     arms = [a.strip() for a in args.arms.split(",") if a.strip()]
     all_rows = {}
     for arm in arms:
         print(f"[v18-eval] arm={arm} policy={args.policy} episodes={args.episodes} "
-              f"trace_dir={args.trace_dir}")
+              f"trace_dir={args.trace_dir} predictive={args.predictive} forecast={args.forecast}")
         all_rows[arm] = run_arm(arm, args.policy, args.ckpt, args.blind, args.trace_dir,
-                                args.buffer, args.episodes, args.epsilon, args.alpha)
+                                args.buffer, args.episodes, args.epsilon, args.alpha,
+                                shield=shield)
 
     tag = f"{args.policy}{'_blind' if args.blind else ''}"
     summary = summarize(all_rows, args.epsilon, args.alpha, args.out, tag)

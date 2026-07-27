@@ -40,6 +40,11 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from configs.paths import get_paths
 from src.environment.abr_multi_env_v18 import ABREnv
+from src.training.certified_perceptual_shield import (
+    CertifiedPerceptualShieldWrapper,
+    CPShieldConfig,
+    ConformalConfig,
+)
 from src.training.constrained_abr_v14 import (
     ConstraintDiagnosticsLogger,
     LagrangianRewardWrapperV14,
@@ -56,6 +61,21 @@ PATHS = get_paths()
 REBUF_TARGET = 0.05
 SMOOTH_TARGET = 3.5
 MODEL_TAG = "master_v18_5g"
+
+
+def make_cps_cfg() -> CPShieldConfig:
+    """Certified perceptual shield used FOR CO-TRAINING (item 5): banking +
+    risk-aware perceptual budget + dip forecasting. Kept identical to the best
+    evaluation-time shield so the co-designed policy sees the same dynamics it
+    will be deployed under."""
+    return CPShieldConfig(
+        enabled=True, enable_banking=True, epsilon_vmaf=1.0,
+        enable_conformal=True,
+        conformal=ConformalConfig(alpha=0.10, window=200, k_predict=5),
+        safety_margin=0.5, min_buffer=0.3,
+        predictive=True, lookahead=6, epsilon_risk=4.0, risk_buffer=8.0,
+        forecast_dips=True, horizon_quantile=0.2,
+    )
 
 
 def linear_schedule(initial_value: float, final_value: float = 1e-5):
@@ -91,6 +111,16 @@ MODEL_SPECS: Dict[str, Dict] = {
         "folder": "proposed_v14", "use_lyapunov": True, "use_future": True,
         "blind_features": False, "use_lagrangian": True, "shield": "off",
         "penalty": False, "hysteresis": False, "ent_coef": 0.04, "timesteps": 2_000_000,
+    },
+    # Shield-aware CO-DESIGN (item 5): identical to `proposed` but the certified
+    # perceptual shield is active INSIDE the training loop, so the policy learns to
+    # exploit the banked buffer (chase fidelity without causing stalls) instead of
+    # collapsing to a conservative low-rung policy.
+    "proposed_cps": {
+        "folder": "proposed_cps_v18", "use_lyapunov": True, "use_future": True,
+        "blind_features": False, "use_lagrangian": True, "shield": "off",
+        "penalty": False, "hysteresis": False, "ent_coef": 0.04, "timesteps": 2_000_000,
+        "cps_train": True,
     },
     "pensieve": {
         "folder": "pensieve_v14", "use_lyapunov": False, "use_future": False,
@@ -140,6 +170,14 @@ def make_env(rank: int, model_key: str, base_seed: int = 0, is_eval: bool = Fals
 
         if spec["blind_features"]:
             env = ContentBlindWrapper(env)
+
+        # Shield-aware co-design: apply the certified perceptual shield inside the
+        # loop so the policy is trained (and model-selected) under the deployment
+        # dynamics. The policy still proposes actions; the shield projects/banks and
+        # the resulting reward flows back -> the policy learns a shield-exploiting
+        # strategy. Applied to BOTH train and eval envs for consistent selection.
+        if spec.get("cps_train"):
+            env = CertifiedPerceptualShieldWrapper(env, make_cps_cfg())
 
         return Monitor(env, info_keywords=("avg_quality", "total_rebuffer"))
 

@@ -71,7 +71,18 @@ class ConformalThroughputEstimator:
         self.cfg = cfg
         self._obs: deque[float] = deque(maxlen=max(cfg.k_predict, 1))
         self._ratios: deque[float] = deque(maxlen=cfg.window)
+        self._hist: deque[float] = deque(maxlen=cfg.window)   # raw throughput history
         self._last_pred: float | None = None
+
+    def horizon_floor(self, q: float) -> float:
+        """A distribution-free planning floor for multi-step look-ahead: the
+        ``q``-quantile of recently OBSERVED throughput. Because it reflects the
+        empirical spread (including recurring dips), it lets the shield pre-bank
+        during good phases in anticipation of dips it has already seen -- the
+        mechanism that attacks the rebuffering TAIL. Uses only past observations."""
+        if len(self._hist) < max(self.cfg.min_calib, 4):
+            return 0.0
+        return float(np.quantile(np.asarray(self._hist, dtype=float), q))
 
     def predict(self) -> float:
         if not self._obs:
@@ -98,6 +109,7 @@ class ConformalThroughputEstimator:
         if self._last_pred and self._last_pred > 0:
             self._ratios.append(actual / self._last_pred)
         self._obs.append(actual)
+        self._hist.append(actual)
 
     def empirical_coverage(self) -> float:
         if len(self._ratios) == 0:
@@ -123,6 +135,20 @@ class CPShieldConfig:
     safety_margin: float = 0.5         # keep dl_time <= buffer - margin (seconds)
     min_buffer: float = 0.3            # below this -> emergency lowest rung
     never_upgrade: bool = True
+    # (4) PREDICTIVE banking: use the conformal lower bound to look ahead H chunks;
+    # if the buffer is predicted to fall below `risk_buffer`, widen the perceptual
+    # budget to `epsilon_risk` so we PRE-bank (build headroom before a dip). When
+    # no risk is predicted, the plain `epsilon_vmaf` budget is used (quality kept).
+    predictive: bool = False
+    lookahead: int = 4
+    epsilon_risk: float = 4.0
+    risk_buffer: float = 2.0
+    # (4b) DIP FORECASTING for the tail: when enabled, the H-step look-ahead plans
+    # against a low quantile of recently observed throughput (not the instantaneous
+    # value), so recurring dips trigger pre-banking during good phases. Distribution
+    # -free and uses only past observations. `horizon_quantile` is that quantile.
+    forecast_dips: bool = False
+    horizon_quantile: float = 0.2
 
 
 def _vmaf(env, j: int) -> float:
@@ -173,11 +199,48 @@ def certified_safe_action(env, action, cfg: CPShieldConfig, est: ConformalThroug
 
         va = _vmaf(env, a)
 
-        # (1) perceptual-knee banking: smallest rung within epsilon of the policy's VMAF
+        # (4) RISK-AWARE perceptual budget: the budget we are willing to spend grows
+        # smoothly as the buffer shrinks below `risk_buffer`. When the buffer is
+        # comfortable, only the perceptually-lossless budget `epsilon_vmaf` is used
+        # (quality preserved); as the buffer enters the danger zone we widen toward
+        # `epsilon_risk`, banking DEEPER to rebuild headroom BEFORE a dip forces a
+        # stall. A one-step conformal look-ahead can escalate to full risk budget
+        # when even the next download would breach the danger zone.
+        eps_eff = cfg.epsilon_vmaf
+        info["predicted_risk"] = 0
+        if cfg.enable_banking and cfg.predictive:
+            rb = max(cfg.risk_buffer, 1e-6)
+            frac = min(max((rb - buf) / rb, 0.0), 1.0)         # current-buffer ramp
+            cd = float(getattr(env, "CHUNK_DURATION", 4.0))
+            # planning throughput for the look-ahead: the conformal bound, optionally
+            # floored by a low quantile of recently observed throughput so recurring
+            # dips are anticipated during good phases (tail breaker).
+            tp_plan = tp_lb
+            if cfg.forecast_dips:
+                floor = est.horizon_floor(cfg.horizon_quantile)
+                if floor > 0.0:
+                    tp_plan = min(tp_plan, max(floor, float(env.MIN_NETWORK_THROUGHPUT)))
+            if cfg.lookahead > 0:
+                max_c = int(getattr(env, "max_chunks", env.chunk_idx + cfg.lookahead))
+                br_a = int(env.BITRATE_LEVELS[a])
+                buf_sim = buf
+                for h in range(1, cfg.lookahead + 1):
+                    cidx_h = min(env.chunk_idx + h, max_c - 1)
+                    bits_h = env.get_chunk_size_bits(br_a, cidx_h)
+                    dt_h = min(bits_h / (tp_plan * 1000.0 + 1e-6), 60.0)
+                    buf_sim = max(0.0, buf_sim - dt_h) + cd
+                    if buf_sim < rb:
+                        frac = 1.0
+                        break
+            eps_eff = cfg.epsilon_vmaf + (cfg.epsilon_risk - cfg.epsilon_vmaf) * frac
+            info["predicted_risk"] = int(frac > 0.0)
+        info["eps_eff"] = float(eps_eff)
+
+        # (1) perceptual-knee banking: smallest rung within eps_eff of the policy's VMAF
         j_knee = a
         if cfg.enable_banking:
             for j in range(a + 1):
-                if va - _vmaf(env, j) <= cfg.epsilon_vmaf:
+                if va - _vmaf(env, j) <= eps_eff:
                     j_knee = j
                     break
 
