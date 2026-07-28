@@ -4,37 +4,104 @@ Isolating BANKING: SAFETY (banking off) vs CERTIFIED (banking on), same conforma
 ### A) Real train traces, moderate buffers (throughput-limited regime)
 ===== real traces | buffer 8s =====
        arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
-       raw 1031.497 2029.972     0.000   84.47     6000    4.00   0.000    nan
-    safety   14.486   61.129     0.062   62.02     1306    6.73   0.982  0.874
- certified   14.166   55.193     0.075   62.02     1272    6.76   0.993  0.874
-  BANKING (certified - safety): reb -0.321  stallfree +0.012  bitrate -2.6%  VMAF +0.007 (budget 1.0)
+       raw 1006.933 1944.808     0.000   84.47     6000    4.01   0.000    nan
+    safety   13.763   56.728     0.087   62.32     1327    6.73   0.980  0.874
+ certified   13.590   56.728     0.100   62.33     1291    6.76   0.993  0.874
+  BANKING (certified - safety): reb -0.173  stallfree +0.013  bitrate -2.8%  VMAF +0.006 (budget 1.0)
 
 ===== real traces | buffer 12s =====
        arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
-       raw 1031.497 2029.972     0.000   84.47     6000    4.00   0.000    nan
-    safety   14.994   62.720     0.050   63.13     1418    7.35   0.971  0.874
- certified   14.831   62.720     0.062   63.16     1376    7.45   0.988  0.874
-  BANKING (certified - safety): reb -0.163  stallfree +0.012  bitrate -3.0%  VMAF +0.024 (budget 1.0)
+       raw 1006.933 1944.808     0.000   84.47     6000    4.01   0.000    nan
+    safety   14.072   56.304     0.100   63.41     1436    7.37   0.968  0.874
+ certified   13.910   56.304     0.113   63.44     1390    7.50   0.988  0.874
+  BANKING (certified - safety): reb -0.162  stallfree +0.012  bitrate -3.2%  VMAF +0.032 (budget 1.0)
 
 ===== real traces | buffer 20s =====
        arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
-       raw 1031.497 2029.972     0.000   84.47     6000    4.00   0.000    nan
-    safety   15.185   72.040     0.050   63.21     1427    7.44   0.971  0.874
- certified   14.743   62.961     0.062   63.24     1386    7.64   0.988  0.874
-  BANKING (certified - safety): reb -0.442  stallfree +0.012  bitrate -2.9%  VMAF +0.025 (budget 1.0)
+       raw 1006.933 1944.808     0.000   84.47     6000    4.01   0.000    nan
+    safety   13.976   56.304     0.100   63.48     1447    7.43   0.967  0.874
+ certified   13.646   56.304     0.113   63.51     1402    7.67   0.987  0.874
+  BANKING (certified - safety): reb -0.330  stallfree +0.012  bitrate -3.1%  VMAF +0.030 (budget 1.0)
 
 ### B) High-throughput 5G-like traces (saturated rungs feasible -> banking has headroom)
 ===== 5G steady ~9Mbps | buffer 12s =====
        arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
-       raw    2.897    5.265     0.000   84.47     6000   11.20   0.000    nan
-    safety    0.000    0.000     1.000   83.62     5881   11.39   0.021  0.936
- certified    0.000    0.000     1.000   83.28     3954   11.62   0.633  0.936
+       raw    1.900    4.037     0.062   84.47     6000   11.26   0.000    nan
+    safety    0.000    0.000     1.000   83.62     5881   11.45   0.021  0.936
+ certified    0.000    0.000     1.000   83.28     3954   11.67   0.633  0.936
   BANKING (certified - safety): reb +0.000  stallfree +0.000  bitrate -32.8%  VMAF -0.334 (budget 1.0)
 
 ===== 5G with dips | buffer 12s =====
        arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
-       raw  132.976  148.633     0.000   84.47     6000    8.46   0.000    nan
-    safety  126.674  140.708     0.000   80.33     4735   10.11   0.324  0.881
- certified   70.499  140.708     0.000   80.17     3403   10.35   0.753  0.881
-  BANKING (certified - safety): reb -56.175  stallfree +0.000  bitrate -28.1%  VMAF -0.160 (budget 1.0)
+       raw  115.205  126.109     0.000   84.47     6000    8.48   0.000    nan
+    safety  110.539  122.651     0.000   79.87     4691   10.15   0.333  0.881
+ certified   54.850  122.651     0.000   79.68     3384   10.36   0.752  0.881
+  BANKING (certified - safety): reb -55.689  stallfree +0.000  bitrate -27.9%  VMAF -0.191 (budget 1.0)
+
+### C) PREDICTIVE pre-banking (conformal look-ahead) vs reactive banking
+    Certainty check: does the look-ahead cut stalls FURTHER at ~equal VMAF?
+
+===== 5G with dips | buffer 12s (predictive) =====
+           arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
+           raw  115.205  126.109     0.000   84.47     6000    8.48   0.000    nan
+        safety  110.539  122.651     0.000   79.87     4691   10.15   0.333  0.881
+     certified   54.850  122.651     0.000   79.68     3384   10.36   0.752  0.881
+certified_plus   54.850  122.651     0.000   79.34     3180   10.38   0.752  0.881
+  PREDICTIVE (certified+ - certified): reb +0.000  reb_p95 +0.000  stallfree +0.000  bitrate -6.0%  VMAF -0.338
+
+===== 5G with dips | buffer 8s  (tighter, predictive) =====
+           arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
+           raw  132.320  144.078     0.000   84.47     6000    6.72   0.000    nan
+        safety  128.989  142.651     0.000   79.11     4345    7.40   0.427  0.881
+     certified   74.244  142.651     0.000   78.92     3239    7.46   0.778  0.881
+certified_plus   72.594  142.651     0.000   78.52     2996    7.46   0.778  0.881
+  PREDICTIVE (certified+ - certified): reb -1.650  reb_p95 +0.000  stallfree +0.000  bitrate -7.5%  VMAF -0.400
+
+===== real traces | buffer 8s  (predictive) =====
+           arm      reb  reb_p95 stallfree    vmaf  bitrate  buffer  interv  cover
+           raw 1006.933 1944.808     0.000   84.47     6000    4.01   0.000    nan
+        safety   13.763   56.728     0.087   62.32     1327    6.73   0.980  0.874
+     certified   13.590   56.728     0.100   62.33     1291    6.76   0.993  0.874
+certified_plus   12.846   56.291     0.100   62.25     1199    6.86   0.993  0.874
+  PREDICTIVE (certified+ - certified): reb -0.744  reb_p95 -0.437  stallfree +0.000  bitrate -7.1%  VMAF -0.076
+
+### D) epsilon-FRONTIER (Pareto): perceptual budget vs bandwidth saved / stalls
+    Certainty check: VMAF saturation => most savings survive at TIGHT budgets.
+
+===== 5G with dips | buffer 12s =====
+   eps      reb  reb_p95 reb_cvar10    vmaf  bitrate bwSaved%   dVMAF
+   off  110.539  122.651    122.795   79.87     4691      0.0   0.000
+  0.25   88.088  122.651    122.778   79.87     4136     11.8  -0.005
+  0.50   88.088  122.651    122.778   79.87     4136     11.8  -0.005
+  1.00   54.850  122.651    120.542   79.68     3384     27.9  -0.191
+  2.00   49.997  122.651    120.542   79.44     3183     32.1  -0.430
+  4.00   43.496  122.651    120.542   79.01     2864     38.9  -0.861
+
+===== real traces | buffer 8s =====
+   eps      reb  reb_p95 reb_cvar10    vmaf  bitrate bwSaved%   dVMAF
+   off   13.763   56.728     79.912   62.32     1327      0.0   0.000
+  0.25   13.757   56.728     79.912   62.33     1324      0.2   0.007
+  0.50   13.757   56.728     79.912   62.33     1324      0.2   0.007
+  1.00   13.590   56.728     79.912   62.33     1291      2.8   0.006
+  2.00   13.429   56.728     79.912   62.32     1262      4.9  -0.007
+  4.00   12.846   56.291     78.818   62.25     1198      9.7  -0.072
+
+### E) TAIL (CVaR@10%) of rebuffering: banking concentrates gains in the tail
+===== 5G with dips | buffer 8s =====
+           arm  reb_mean reb_cvar10  reb_p95    vmaf  bitrate
+        safety   128.989    142.778  142.651   79.11     4345
+     certified    74.244    140.542  142.651   78.92     3239
+certified_plus    72.594    140.542  142.651   78.52     2996
+  certified_fc    69.152    140.542  142.651   78.42     2934
+  tail CVaR@10% vs safety: certified -1.6%  certified+ -1.6%  certified_fc -1.6%
+  p95 vs safety: certified +0.0  certified_fc +0.0  (VMAF cost fc -0.69)
+
+===== 5G with dips | buffer 12s =====
+           arm  reb_mean reb_cvar10  reb_p95    vmaf  bitrate
+        safety   110.539    122.795  122.651   79.87     4691
+     certified    54.850    120.542  122.651   79.68     3384
+certified_plus    54.850    120.542  122.651   79.34     3180
+  certified_fc    54.850    120.542  122.651   79.28     3145
+  tail CVaR@10% vs safety: certified -1.8%  certified+ -1.8%  certified_fc -1.8%
+  p95 vs safety: certified +0.0  certified_fc +0.0  (VMAF cost fc -0.59)
 
