@@ -270,7 +270,11 @@ def summarize(all_rows, epsilon, alpha, out_dir, tag):
     def col(arm, key):
         return [r[key] for r in all_rows[arm]]
 
-    summary = {"tag": tag, "epsilon": epsilon, "alpha": alpha, "arms": {}}
+    cov_target = 1.0 - alpha
+    summary = {"tag": tag, "epsilon": epsilon, "alpha": alpha,
+               "coverage_target": cov_target,
+               "conformal_method": "split-conformal (n+1) finite-sample lower bound",
+               "arms": {}}
     for arm in all_rows:
         m = {}
         for key in ["rebuffer_total", "rebuffer_p95_chunk", "rebuffer_p99_chunk",
@@ -278,7 +282,10 @@ def summarize(all_rows, epsilon, alpha, out_dir, tag):
             mean, lo, hi = _bootstrap_ci(col(arm, key))
             m[key] = {"mean": mean, "ci_lo": lo, "ci_hi": hi}
         cov = [c for c in col(arm, "conformal_coverage") if not np.isnan(c)]
-        m["conformal_coverage"] = float(np.mean(cov)) if cov else float("nan")
+        cov_mean = float(np.mean(cov)) if cov else float("nan")
+        m["conformal_coverage"] = cov_mean
+        m["conformal_coverage_meets_target"] = (
+            bool(cov_mean >= cov_target) if cov else None)
         summary["arms"][arm] = m
 
     comps = {}
@@ -293,6 +300,33 @@ def summarize(all_rows, epsilon, alpha, out_dir, tag):
     with open(out_dir / "summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
     return summary
+
+
+# QoE stall weights: VMAF points lost per second of rebuffering.
+# ~1-3 fidelity-favoring, ~5-10 balanced, >=~20 stall-averse.
+QOE_WEIGHTS = (0.0, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0)
+
+
+def _qoe_report(vm_t, vm_r, reb_t, reb_r, weights=QOE_WEIGHTS):
+    """Paired fidelity-vs-stall QoE, QoE(w) = mean_VMAF - w * rebuffer_seconds.
+
+    Reports the crossover weight ``w* = dVMAF / dReb`` (the stall weight at which
+    the two arms have equal mean QoE) plus a paired Wilcoxon test of the QoE
+    difference at reference weights, so a reader can see over what QoE regime the
+    treatment (e.g. banking, or a co-trained policy) is the net winner."""
+    d_vmaf = float(vm_t.mean() - vm_r.mean())
+    d_reb = float(reb_t.mean() - reb_r.mean())
+    w_star = float(d_vmaf / d_reb) if abs(d_reb) > 1e-12 else None
+    table = []
+    for w in weights:
+        q_t, q_r = vm_t - w * reb_t, vm_r - w * reb_r
+        _, p = _wilcoxon(q_t, q_r)
+        d = float(q_t.mean() - q_r.mean())
+        table.append({"w": float(w), "qoe_treat": float(q_t.mean()),
+                      "qoe_ref": float(q_r.mean()), "qoe_diff": d,
+                      "wilcoxon_p": float(p), "treat_wins": bool(d > 0)})
+    return {"vmaf_diff": d_vmaf, "rebuffer_diff_s": d_reb,
+            "qoe_crossover_w": w_star, "qoe_by_weight": table}
 
 
 def _pair_report(all_rows, treat, ref, epsilon):
@@ -315,6 +349,7 @@ def _pair_report(all_rows, treat, ref, epsilon):
         "vmaf_mean_diff": float(md_vmaf),
         "vmaf_tost_p_equiv": float(p_equiv),
         "vmaf_within_epsilon": bool(p_equiv < 0.05),
+        "qoe": _qoe_report(vm_t, vm_r, reb_t, reb_r),
     }
 
 
@@ -361,20 +396,32 @@ def main():
     summary = summarize(all_rows, args.epsilon, args.alpha, args.out, tag)
 
     print("\n================ V18 CERTIFIED PERCEPTUAL SHIELD ================")
-    print(f"policy={tag} | episodes={args.episodes} | eps={args.epsilon} VMAF | alpha={args.alpha}")
+    print(f"policy={tag} | episodes={args.episodes} | eps={args.epsilon} VMAF | "
+          f"alpha={args.alpha} (coverage target {1.0 - args.alpha:.3f}, split-conformal n+1)")
     print(f"{'arm':>10}{'reb_mean':>10}{'reb_p95':>9}{'stallfree':>10}{'vmaf':>8}"
-          f"{'bitrate':>9}{'buffer':>8}{'interv':>8}{'cover':>7}")
+          f"{'bitrate':>9}{'buffer':>8}{'interv':>8}{'cover':>7}{'>=tgt':>7}")
     for arm in arms:
         a = summary["arms"][arm]
+        meets = a.get("conformal_coverage_meets_target")
+        meets_s = "-" if meets is None else ("yes" if meets else "NO")
         print(f"{arm:>10}{a['rebuffer_total']['mean']:>10.3f}{a['rebuffer_p95_chunk']['mean']:>9.3f}"
               f"{a['stallfree']['mean']:>10.3f}{a['vmaf_mean']['mean']:>8.2f}"
               f"{a['bitrate_mean_kbps']['mean']:>9.0f}{a['buffer_mean']['mean']:>8.2f}"
-              f"{a['interv_rate']['mean']:>8.3f}{a['conformal_coverage']:>7.3f}")
+              f"{a['interv_rate']['mean']:>8.3f}{a['conformal_coverage']:>7.3f}{meets_s:>7}")
     for name, c in summary["comparisons"].items():
         print(f"\n[{name}]  bandwidth {c['bandwidth_reduction_pct']:+.1f}% (p={c['bandwidth_wilcoxon_p']:.1e})  "
               f"rebuffer {c['rebuffer_change_pct']:+.1f}% (p={c['rebuffer_wilcoxon_p']:.1e})")
         print(f"           VMAF diff {c['vmaf_mean_diff']:+.3f}  TOST p_equiv={c['vmaf_tost_p_equiv']:.1e}  "
               f"within +/-{args.epsilon}: {c['vmaf_within_epsilon']}")
+        q = c.get("qoe", {})
+        ws = q.get("qoe_crossover_w")
+        ws_s = "n/a" if ws is None else f"{ws:.2f} VMAF/s"
+        print(f"           QoE: dVMAF {q.get('vmaf_diff', float('nan')):+.2f}  dReb "
+              f"{q.get('rebuffer_diff_s', float('nan')):+.2f}s  crossover w*={ws_s}")
+        for row in q.get("qoe_by_weight", []):
+            win = "treat" if row["treat_wins"] else "ref"
+            print(f"             w={row['w']:>5.1f}  QoE_diff {row['qoe_diff']:+7.2f}  "
+                  f"p={row['wilcoxon_p']:.1e}  winner={win}")
     print(f"\nWrote {args.out}/summary.json and episodes.csv")
 
 

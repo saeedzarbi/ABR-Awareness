@@ -93,14 +93,31 @@ class ConformalThroughputEstimator:
         self._last_pred = pred
         return pred
 
+    def _conformal_q(self) -> float:
+        """Finite-sample conformal alpha-quantile of the residual ratios.
+
+        Uses the split-conformal (n+1) rank correction: with ``n`` calibration
+        ratios, the lower bound is the ``rank``-th order statistic where
+        ``rank = floor(alpha * (n + 1))`` (1-based). Under exchangeability this
+        guarantees P(actual >= pred * q) >= 1 - alpha in FINITE samples, unlike
+        the plain linearly-interpolated empirical quantile (``np.quantile``),
+        which sits above this order statistic and mildly UNDER-covers (the
+        observed ~0.889 vs the 0.90 target). When ``rank < 1`` no finite-sample
+        bound can certify coverage, so we fall back to the conservative scale."""
+        arr = np.sort(np.asarray(self._ratios, dtype=float))
+        n = arr.size
+        rank = int(np.floor(self.cfg.alpha * (n + 1)))
+        if rank < 1:
+            return self.cfg.fallback_scale
+        return float(arr[rank - 1])
+
     def lower_bound(self) -> float:
         pred = self.predict()
         if pred <= 0.0:
             return 0.0
         if len(self._ratios) < self.cfg.min_calib:
             return pred * self.cfg.fallback_scale
-        q = float(np.quantile(np.asarray(self._ratios, dtype=float), self.cfg.alpha))
-        q = min(q, 1.0)  # a lower bound should not exceed the point prediction
+        q = min(self._conformal_q(), 1.0)  # a lower bound cannot exceed the point prediction
         return pred * max(q, 1e-3)
 
     def update(self, actual_kbps: float):
@@ -114,7 +131,7 @@ class ConformalThroughputEstimator:
     def empirical_coverage(self) -> float:
         if len(self._ratios) == 0:
             return float("nan")
-        q = float(np.quantile(np.asarray(self._ratios, dtype=float), self.cfg.alpha))
+        q = min(self._conformal_q(), 1.0)
         arr = np.asarray(self._ratios, dtype=float)
         return float((arr >= q).mean())
 
