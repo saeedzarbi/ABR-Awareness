@@ -34,10 +34,10 @@
         {\textbf{State} \(s_k\)\\[3pt]{\footnotesize throughput, buffer,}\\[0pt]{\footnotesize VMAF, lookahead}};
 
     \node[actorbox] (actor) at (6.9, 0)
-        {\textbf{Actor} \(\pi_\theta\)\\[3pt]{\footnotesize proposes \(a^{\mathrm{raw}}_k\)}};
+        {\textbf{Base policy}\\[3pt]{\footnotesize heuristic or \(\pi_\theta\)}\\[0pt]{\footnotesize proposes \(a^{\mathrm{raw}}_k\)}};
 
     \node[shieldbox] (shield) at (10.3, 0)
-        {\textbf{Runtime Shield}\\[3pt]{\footnotesize \(\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\)}};
+        {\textbf{CPS}\\[3pt]{\footnotesize banking + conformal}\\[0pt]{\footnotesize \(\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\)}};
 
     \node[clientbox] (client) at (13.5, 0)
         {\textbf{Client}\\[2pt]{\footnotesize player}};
@@ -64,7 +64,7 @@
     % Group caption sits in the free band above the Shield box; centered above
     % the group it would run into the State box on the left.
     \node[anchor=south west, font=\normalsize\bfseries, text=archPolicy]
-        at (ppogrp.north east) {Lagrangian PPO agent};
+        at (ppogrp.north east) {Optional RL host (PPO)};
 
     % --- Download feedback: a single low-key arc over the top, clear of the
     % training branch below, back into the environment ---

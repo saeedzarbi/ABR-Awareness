@@ -1,0 +1,11 @@
+% Co-design: certified arm only (5G test, improved shield at eval).
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X cccc@{}}
+\toprule
+\textbf{Policy} & \textbf{VMAF} & \textbf{Reb. (s)} & \textbf{Bitrate} & \textbf{Cover.} \\
+\midrule
+Eval-only shield & \CPScoRegVM & \CPScoRegReb & \CPScoRegBr & \CPScoRegCov \\
+Co-trained (CPS) & \CPScoCpsVM & \CPScoCpsReb & \CPScoCpsBr & \CPScoCpsCov \\
+\midrule
+$\Delta$ (co $-$ eval) & $+\CPScoDVM$ & $+\CPScoDReb$ & --- & --- \\
+\bottomrule
+\end{tabularx}

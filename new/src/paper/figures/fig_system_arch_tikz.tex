@@ -34,10 +34,10 @@
         {\textbf{State} \(s_k\)\\[3pt]{\footnotesize throughput, buffer,}\\[0pt]{\footnotesize VMAF, lookahead}};
 
     \node[actorbox] (actor) at (6.9, 0)
-        {\textbf{Actor} \(\pi_\theta\)\\[3pt]{\footnotesize proposes \(a^{\mathrm{raw}}_k\)}};
+        {\textbf{Base policy}\\[3pt]{\footnotesize heuristic or \(\pi_\theta\)}\\[0pt]{\footnotesize proposes \(a^{\mathrm{raw}}_k\)}};
 
     \node[shieldbox] (shield) at (10.3, 0)
-        {\textbf{Runtime Shield}\\[3pt]{\footnotesize \(\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\)}};
+        {\textbf{CPS}\\[3pt]{\footnotesize banking + conformal}\\[0pt]{\footnotesize \(\mathcal{S}(s_k,a^{\mathrm{raw}}_k)\)}};
 
     \node[clientbox] (client) at (13.5, 0)
         {\textbf{Client}\\[2pt]{\footnotesize player}};
@@ -53,26 +53,19 @@
     % --- Training-only branch (Critic), clearly set apart below the Actor ---
     \node[criticbox] (critic) at (6.9, -2.9)
         {\textbf{Critic} \(V_\phi(s)\)\\[2pt]{\footnotesize training only}\\[2pt]{\footnotesize reward \(r_k\), \(\lambda\)-update}};
-    % Short drop keeps the horizontal run above the Critic box instead of
-    % cutting across its text.
     \draw[train] (state.south) -- ++(0,-0.45) -| (critic.north);
 
     \begin{pgfonlayer}{background}
         \node[ppogroup, fit=(actor)(critic)] (ppogrp) {};
     \end{pgfonlayer}
 
-    % Group caption sits in the free band above the Shield box; centered above
-    % the group it would run into the State box on the left.
     \node[anchor=south west, font=\normalsize\bfseries, text=archPolicy]
-        at (ppogrp.north east) {Lagrangian PPO agent};
+        at (ppogrp.north east) {Optional RL host (PPO)};
 
-    % --- Download feedback: a single low-key arc over the top, clear of the
-    % training branch below, back into the environment ---
     \draw[feedback]
         (client.north) -- ++(0,1.75) -| (env.north)
         node[edgelabel, font=\footnotesize, pos=0.5, above] {buffer update after chunk download};
 
-    % --- Legend (compact, single line, below the PPO group box) ---
     \node[font=\footnotesize, anchor=north] at (6.9, -4.55) {
         \tikz[baseline=-0.5ex]\draw[infer] (0,0) -- (0.6,0);~Inference \hspace{1.2em}
         \tikz[baseline=-0.5ex]\draw[train] (0,0) -- (0.6,0);~Training only \hspace{1.2em}

@@ -1,0 +1,18 @@
+% Full paired arms on 5G test (macros from make_cps_paper_assets.py).
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X c ccccc@{}}
+\toprule
+\textbf{Host} & \textbf{Arm} & \textbf{Reb.} & \textbf{VMAF} & \textbf{Bitrate} & \textbf{Cover.} & \textbf{Interv.} \\
+\midrule
+Greedy & \textsc{Raw} & \CPSGreedyRawReb{}\,s & \CPSGreedyRawVM{} & \CPSGreedyRawBr{} & --- & 0.0\\
+ & \textsc{Safety} & \CPSGreedySafReb{}\,s & \CPSGreedySafVM{} & \CPSGreedySafBr{} & \CPSGreedySafCov{} & \CPSGreedySafInt{}\%\\
+ & \textsc{Certified} & \CPSGreedyCertReb{}\,s & \CPSGreedyCertVM{} & \CPSGreedyCertBr{} & \CPSGreedyCertCov{} & \CPSGreedyCertInt{}\%\\
+\midrule
+BBA & \textsc{Raw} & \CPSBbaRawReb{}\,s & \CPSBbaRawVM{} & \CPSBbaRawBr{} & --- & 0.0\\
+ & \textsc{Safety} & \CPSBbaSafReb{}\,s & \CPSBbaSafVM{} & \CPSBbaSafBr{} & \CPSBbaSafCov{} & \CPSBbaSafInt{}\%\\
+ & \textsc{Certified} & \CPSBbaCertReb{}\,s & \CPSBbaCertVM{} & \CPSBbaCertBr{} & \CPSBbaCertCov{} & \CPSBbaCertInt{}\%\\
+\midrule
+Pensieve & \textsc{Raw} & \CPSPenRawReb{}\,s & \CPSPenRawVM{} & \CPSPenRawBr{} & --- & 0.0\\
+ & \textsc{Safety} & \CPSPenSafReb{}\,s & \CPSPenSafVM{} & \CPSPenSafBr{} & \CPSPenSafCov{} & \CPSPenSafInt{}\%\\
+ & \textsc{Certified} & \CPSPenCertReb{}\,s & \CPSPenCertVM{} & \CPSPenCertBr{} & \CPSPenCertCov{} & \CPSPenCertInt{}\%\\
+\bottomrule
+\end{tabularx}

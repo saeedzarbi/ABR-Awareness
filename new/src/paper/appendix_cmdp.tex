@@ -1,0 +1,32 @@
+% Appendix: Lagrangian CMDP training (optional RL hosts only).
+\section{Lagrangian CMDP training for RL hosts}
+\label{app:cmdp}
+
+An unconstrained MDP maximizes \(\mathbb{E}[\sum_k \gamma^k r_k]\) alone.
+When the base policy is learned, we optionally model streaming as a constrained MDP (CMDP) that maximizes expected fidelity subject to budgets on trajectory-level auxiliary costs~\cite{altman1999constrained}.
+Let \(c^{\mathrm{stall}}_k \equiv \tau^{\mathrm{stall}}_k\) and \(c^{\mathrm{sm}}_k \equiv \text{smooth}_k\).
+The undiscounted episodic rebuffering ratio and mean smoothness cost are
+\begin{equation}
+    \mathrm{RB}(e)=\frac{1}{T^{\mathrm{play}}_{e}}\sum_{k\in\mathcal{K}_{e}} c^{\mathrm{stall}}_k,
+    \qquad
+    \mathrm{SM}(e)=\frac{1}{K_{e}}\sum_{k\in\mathcal{K}_{e}} c^{\mathrm{sm}}_k,
+\end{equation}
+with targets \(\delta_{\mathrm{rf}}{=}0.05\) and \(\delta_{\mathrm{sm}}{=}3.5\)~\cite{yin2015control}.
+Per-step normalized costs \(\widetilde{\mathrm{RB}}_k\) and \(\widetilde{\mathrm{SM}}_k\) yield the Lagrangian-relaxed PPO reward
+\begin{equation}
+\label{eq:rtrain-app}
+    r^{\mathrm{train}}_k
+    = \frac{1}{100}\Big(
+        q_k
+        - \lambda_r \,\widetilde{\mathrm{RB}}_k
+        - \lambda_s \,\widetilde{\mathrm{SM}}_k
+        - w_b\,\phi(B_k)
+        - w_\ell\,\psi^{\mathrm{Lya}}_k
+    \Big),
+\end{equation}
+with dual variables \((\lambda_r,\lambda_s)\) updated by projected ascent on empirical constraint gaps~\cite{paternain2019dual}.
+Training optionally subtracts buffer-deviation and Lyapunov drift penalties~\cite{neely2010stochastic}; these stabilize optimization but are not formal certificates.
+Finite-sample PPO does not certify per-chunk feasibility~\cite{schulman2017proximal,achiam2017constrained}; CPS supplies that layer at deployment time.
+
+Implementation uses Stable-Baselines~3 PPO~\cite{raffin2021sb3,schulman2017proximal}: two Tanh MLPs (width 256), GAE \((\gamma{=}0.99,\lambda_{\mathrm{GAE}}{=}0.95)\), dual step sizes \(\eta_r{=}0.012\), \(\eta_s{=}0.003\), and projected ranges \(\lambda_r\in[4.3,40]\), \(\lambda_s\in[0.3,2.5]\) after a 60-episode warm-up.
+Co-design wraps the training environment with CPS; shield-at-eval-only policies train without the wrapper.
