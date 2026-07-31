@@ -72,6 +72,141 @@ class BBAPolicy:
         return int(round(frac * (self.n - 1))), None
 
 
+class BOLAPolicy:
+    """BOLA-BASIC (Spiteri et al., ``BOLA'' / ``From Theory to Practice''), the
+    canonical buffer-based Lyapunov ABR used in the dash.js reference player.
+
+    Pure buffer control (no throughput prediction). For each rung m it maximizes
+        score_m = (Vp * (u_m + gp) - Q) / S_m,
+    with normalized utility u_m = ln(bitrate_m / bitrate_0) + 1 (dash.js), buffer
+    Q in seconds, and segment size S_m in bits. The parameters are the standard
+    closed form anchoring the lowest rung at Q=B_min and the highest at Q=B_max:
+        gp = (u_M - 1) / (B_max/B_min - 1),   Vp = B_min / gp.
+    """
+
+    def __init__(self, env, buffer_min=None):
+        self.env = env
+        self.n = len(env.BITRATE_LEVELS)
+        br = np.asarray(env.BITRATE_LEVELS, dtype=float)
+        v = np.log(br / br[0])            # v_0 = 0
+        self.u = v + 1.0                  # dash.js normalized utilities
+        p = float(env.CHUNK_DURATION)
+        b_max = float(env.BUFFER_MAX)
+        b_min = float(buffer_min) if buffer_min is not None else p  # one segment
+        b_min = min(b_min, b_max - p)     # keep B_min < B_max
+        self.gp = v[-1] / (b_max / b_min - 1.0)
+        self.vp = b_min / self.gp
+
+    def predict(self, obs, deterministic=True):
+        env = self.env
+        q = float(env.buffer_level)
+        sizes = np.array(
+            [env.get_chunk_size_bits(br, env.chunk_idx) for br in env.BITRATE_LEVELS],
+            dtype=float,
+        )
+        score = (self.vp * (self.u + self.gp) - q) / np.maximum(sizes, 1.0)
+        return int(np.argmax(score)), None
+
+
+class RobustMPCPolicy:
+    """Robust MPC (Yin et al., SIGCOMM 2015): plan over a finite horizon against a
+    throughput prediction discounted by the recent worst-case prediction error.
+
+    Prediction: harmonic mean of the last ``past`` observed per-chunk throughputs,
+    divided by (1 + max recent relative error) for robustness. Only *past* observed
+    throughputs are used (read from ``env.last_raw_throughput``), so there is no
+    look-ahead into the trace. The planner enumerates rung sequences over the
+    horizon and maximizes the environment's QoE (VMAF minus rebuffering and
+    smoothness penalties), then plays the first action.
+    """
+
+    def __init__(self, env, horizon=5, past=5):
+        self.env = env
+        self.n = len(env.BITRATE_LEVELS)
+        self.horizon = int(horizon)
+        self.past = int(past)
+        self.reb_pen = float(getattr(env, "REBUF_PENALTY_BASE", 100.0))
+        self.smooth_w = float(getattr(env, "SMOOTH_PENALTY_WEIGHT", 1.0))
+        self.vmaf = np.array(
+            [env.current_vmaf_scores.get(br, 35.0) for br in env.BITRATE_LEVELS],
+            dtype=float,
+        )
+        self._seq_cache = {}
+        self._reset()
+
+    def _reset(self):
+        self._tp_hist = []
+        self._err_hist = []
+        self._last_pred = None
+        self._last_video = getattr(self.env, "current_video_name", None)
+
+    def _seqs(self, h):
+        if h not in self._seq_cache:
+            import itertools
+            self._seq_cache[h] = np.array(
+                list(itertools.product(range(self.n), repeat=h)), dtype=int)
+        return self._seq_cache[h]
+
+    def _observe(self):
+        env = self.env
+        vid = getattr(env, "current_video_name", None)
+        if env.chunk_idx == 0 or vid != self._last_video:
+            self._reset()
+            self._last_video = vid
+            return
+        actual = float(env.last_raw_throughput)
+        self._tp_hist.append(actual)
+        if self._last_pred is not None and actual > 1e-6:
+            self._err_hist.append(abs(self._last_pred - actual) / actual)
+
+    def _predict_tp(self):
+        env = self.env
+        h = self._tp_hist[-self.past:]
+        if not h:
+            base = float(env.last_raw_throughput)
+        else:
+            base = len(h) / float(np.sum(1.0 / np.maximum(h, 1e-6)))  # harmonic
+        err = max(self._err_hist[-self.past:], default=0.0)
+        robust = base / (1.0 + err)
+        self._last_pred = robust
+        return max(robust, float(env.MIN_NETWORK_THROUGHPUT))
+
+    def predict(self, obs, deterministic=True):
+        env = self.env
+        # refresh cached VMAF ladder in case the video changed
+        if getattr(env, "current_video_name", None) != self._last_video:
+            self.vmaf = np.array(
+                [env.current_vmaf_scores.get(br, 35.0) for br in env.BITRATE_LEVELS],
+                dtype=float,
+            )
+        self._observe()
+        pred = self._predict_tp()  # kbps
+        k = env.chunk_idx
+        h = min(self.horizon, env.max_chunks - k)
+        if h <= 0:
+            return self.n - 1, None
+        sizes = np.array(
+            [[env.get_chunk_size_bits(br, min(k + j, env.max_chunks - 1))
+              for br in env.BITRATE_LEVELS] for j in range(h)],
+            dtype=float,
+        )  # (h, n)
+        seqs = self._seqs(h)                              # (N, h)
+        dl = sizes[np.arange(h)[None, :], seqs] / (pred * 1000.0)  # (N, h)
+        vm = self.vmaf[seqs]                              # (N, h)
+        buf = np.full(seqs.shape[0], float(env.buffer_level))
+        prev = np.full(seqs.shape[0], float(getattr(env, "last_vmaf", self.vmaf[0])))
+        total = np.zeros(seqs.shape[0])
+        p = float(env.CHUNK_DURATION)
+        b_max = float(env.BUFFER_MAX)
+        for j in range(h):
+            reb = np.maximum(0.0, dl[:, j] - buf)
+            buf = np.minimum(np.maximum(0.0, buf - dl[:, j]) + p, b_max)
+            sm = np.abs(vm[:, j] - prev) if (k + j) > 0 else np.zeros_like(prev)
+            total += vm[:, j] - self.reb_pen * reb - self.smooth_w * sm
+            prev = vm[:, j]
+        return int(seqs[int(np.argmax(total)), 0]), None
+
+
 def _resolve_ppo_ckpt(ckpt: str | Path) -> str:
     """Normalize SB3 checkpoint path (strip .zip; SB3 appends it on load)."""
     p = Path(ckpt)
@@ -118,6 +253,10 @@ def make_policy(kind, env, ckpt, blind):
         return GreedyPolicy(len(env.BITRATE_LEVELS))
     if kind == "bba":
         return BBAPolicy(env)
+    if kind == "bola":
+        return BOLAPolicy(env)
+    if kind == "mpc":
+        return RobustMPCPolicy(env)
     if kind == "ppo":
         if not ckpt:
             raise ValueError("--ckpt is required for --policy ppo")
@@ -355,7 +494,7 @@ def _pair_report(all_rows, treat, ref, epsilon):
 
 def main():
     ap = argparse.ArgumentParser(description="Model-agnostic Certified Perceptual Shield evaluation (v18).")
-    ap.add_argument("--policy", choices=["ppo", "greedy", "bba"], required=True)
+    ap.add_argument("--policy", choices=["ppo", "greedy", "bba", "bola", "mpc"], required=True)
     ap.add_argument("--ckpt", type=str, default=None)
     ap.add_argument("--blind", action="store_true", help="mask content features (Pensieve).")
     ap.add_argument("--trace-dir", type=str, default=str(P["test_traces"]))

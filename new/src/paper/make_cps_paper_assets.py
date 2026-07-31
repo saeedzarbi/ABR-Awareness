@@ -141,6 +141,7 @@ def gen_macros():
 
     hosts = [
         ("Greedy", "greedy_5g"), ("Bba", "bba_5g"), ("Pen", "pensieve_5g"),
+        ("Bola", "bola_5g"), ("Mpc", "mpc_5g"),
     ]
     for prefix, tag in hosts:
         s = load(tag)
@@ -156,7 +157,10 @@ def gen_macros():
                 macro(f"CPS{prefix}{suf}Cov", num(cov, 3))
             macro(f"CPS{prefix}{suf}Int", num(arm(s, a, "interv_rate") * 100, 1))
 
-    for tag, s in [("greedy", load("greedy_5g")), ("bba", load("bba_5g"))]:
+    for tag, s in [("greedy", load("greedy_5g")), ("bba", load("bba_5g")),
+                   ("bola", load("bola_5g")), ("mpc", load("mpc_5g"))]:
+        if s is None:
+            continue
         cs = cmp_(s, "certified_vs_safety")
         cr = cmp_(s, "certified_vs_raw")
         T = tag.capitalize()
@@ -226,6 +230,8 @@ def gen_table_full():
     for host, raw, saf, cert in [
         ("Greedy", "CPSGreedyRaw", "CPSGreedySaf", "CPSGreedyCert"),
         ("BBA", "CPSBbaRaw", "CPSBbaSaf", "CPSBbaCert"),
+        ("BOLA", "CPSBolaRaw", "CPSBolaSaf", "CPSBolaCert"),
+        ("RobustMPC", "CPSMpcRaw", "CPSMpcSaf", "CPSMpcCert"),
         ("Pensieve", "CPSPenRaw", "CPSPenSaf", "CPSPenCert"),
     ]:
         rows.append(
@@ -569,9 +575,9 @@ def gen_coverage_figure():
                         pass
         return vals
 
-    hosts = [("Greedy", "greedy_5g"), ("BBA", "bba_5g"),
-             ("Pensieve", "pensieve_5g"), ("Proposed", "proposed_5g_improved"),
-             ("Co-trained", "proposed_cps_5g")]
+    hosts = [("Greedy", "greedy_5g"), ("BBA", "bba_5g"), ("BOLA", "bola_5g"),
+             ("MPC", "mpc_5g"), ("Pensieve", "pensieve_5g"),
+             ("Proposed", "proposed_5g_improved"), ("Co-trained", "proposed_cps_5g")]
     data, labels = [], []
     for label, tag in hosts:
         v = per_episode_cov(tag)
@@ -580,7 +586,7 @@ def gen_coverage_figure():
             labels.append(label)
 
     target = 0.90
-    fig, ax = plt.subplots(figsize=(6.8, 3.4), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(7.4, 3.4), constrained_layout=True)
     parts = ax.violinplot(data, showmeans=False, showextrema=False, widths=0.8)
     for pc in parts["bodies"]:
         pc.set_facecolor("#0072B2")
@@ -592,7 +598,7 @@ def gen_coverage_figure():
     ax.axhline(target, color="#D55E00", ls="--", lw=1.5,
                label=rf"Target $1-\alpha={target:.2f}$")
     ax.set_xticks(np.arange(1, len(labels) + 1))
-    ax.set_xticklabels(labels)
+    ax.set_xticklabels(labels, rotation=15, ha="right", fontsize=8.5)
     ax.set_ylabel("Per-episode coverage")
     ax.set_ylim(min(0.86, target - 0.02), 1.005)
     ax.grid(axis="y", alpha=0.3)
