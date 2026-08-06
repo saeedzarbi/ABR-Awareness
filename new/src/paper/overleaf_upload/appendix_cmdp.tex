@@ -2,10 +2,10 @@
 \section{Lagrangian CMDP training for RL hosts}
 \label{app:cmdp}
 
-An unconstrained MDP maximizes \(\mathbb{E}[\sum_k \gamma^k r_k]\) alone.
-When the base policy is learned, we optionally model streaming as a constrained MDP (CMDP) that maximizes expected fidelity subject to budgets on trajectory-level auxiliary costs~\cite{altman1999constrained}.
-Let \(c^{\mathrm{stall}}_k \equiv \tau^{\mathrm{stall}}_k\) and \(c^{\mathrm{sm}}_k \equiv \text{smooth}_k\).
-The undiscounted episodic rebuffering ratio and mean smoothness cost are
+An unconstrained MDP chases \(\mathbb{E}[\sum_k \gamma^k r_k]\) and nothing else---no explicit budget on stalls or smoothness.
+So when the base policy is learned, we may recast streaming as a constrained MDP (CMDP) that maximizes expected fidelity under budgets on trajectory-level auxiliary costs~\cite{altman1999constrained}.
+Set \(c^{\mathrm{stall}}_k \equiv \tau^{\mathrm{stall}}_k\) and \(c^{\mathrm{sm}}_k \equiv \text{smooth}_k\).
+The undiscounted episodic rebuffering ratio and mean smoothness cost read
 \begin{equation}
     \mathrm{RB}(e)=\frac{1}{T^{\mathrm{play}}_{e}}\sum_{k\in\mathcal{K}_{e}} c^{\mathrm{stall}}_k,
     \qquad
@@ -24,9 +24,9 @@ Per-step normalized costs \(\widetilde{\mathrm{RB}}_k\) and \(\widetilde{\mathrm
         - w_\ell\,\psi^{\mathrm{Lya}}_k
     \Big),
 \end{equation}
-with dual variables \((\lambda_r,\lambda_s)\) updated by projected ascent on empirical constraint gaps~\cite{paternain2019dual}.
-Training optionally subtracts buffer-deviation and Lyapunov drift penalties~\cite{neely2010stochastic}; these stabilize optimization but are not formal certificates.
-Finite-sample PPO does not certify per-chunk feasibility~\cite{schulman2017proximal,achiam2017constrained}; CPS supplies that layer at deployment time.
+where projected ascent on the empirical constraint gaps updates the dual variables \((\lambda_r,\lambda_s)\)~\cite{paternain2019dual}.
+Training may also subtract buffer-deviation and Lyapunov drift penalties~\cite{neely2010stochastic}; these steady the optimization but certify nothing.
+The gap is real: finite-sample PPO does not certify per-chunk feasibility~\cite{schulman2017proximal,achiam2017constrained}, and CPS hands over that layer at deployment time.
 
-Implementation uses Stable-Baselines~3 PPO~\cite{raffin2021sb3,schulman2017proximal}: two Tanh MLPs (width 256), GAE \((\gamma{=}0.99,\lambda_{\mathrm{GAE}}{=}0.95)\), dual step sizes \(\eta_r{=}0.012\), \(\eta_s{=}0.003\), and projected ranges \(\lambda_r\in[4.3,40]\), \(\lambda_s\in[0.3,2.5]\) after a 60-episode warm-up.
-Co-design wraps the training environment with CPS; shield-at-eval-only policies train without the wrapper.
+The implementation rides Stable-Baselines~3 PPO~\cite{raffin2021sb3,schulman2017proximal}: two Tanh MLPs (width 256), GAE \((\gamma{=}0.99,\lambda_{\mathrm{GAE}}{=}0.95)\), dual step sizes \(\eta_r{=}0.012\) and \(\eta_s{=}0.003\), and projected ranges \(\lambda_r\in[4.3,40]\), \(\lambda_s\in[0.3,2.5]\) after a 60-episode warm-up.
+As in the main text, co-design wraps the training environment in CPS; shield-at-eval-only policies train without it.
