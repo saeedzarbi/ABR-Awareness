@@ -16,7 +16,7 @@
 #     (verify libvmaf:  ffmpeg -hide_banner -filters | grep libvmaf )
 #     If the distro ffmpeg lacks libvmaf, use a static build from
 #     https://johnvansickle.com/ffmpeg/  (the *-gpl builds include libvmaf).
-#   Place source videos at:  raw_videos/{bigbuckbunny,crowd_run,tearsofsteel_short,sintel}.mp4
+#   Place source videos at:  data/raw_videos/{slug}.mp4  (see configs/videos.py)
 #   (override the directory with RAW_DIR=...)
 #
 # Env vars: PYTHON, RAW_DIR, SEEDS, NUM_ENVS, TS_SCALE, EPISODES, EVAL_SEED, FULL
@@ -33,7 +33,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"   # -> new/
 cd "${ROOT_DIR}"
 
 PY="${PYTHON:-python}"
-RAW_DIR="${RAW_DIR:-raw_videos}"
+RAW_DIR="${RAW_DIR:-data/raw_videos}"
 SEEDS="${SEEDS:-0}"
 NUM_ENVS="${NUM_ENVS:-8}"
 TS_SCALE="${TS_SCALE:-1.0}"
@@ -71,8 +71,9 @@ echo "  ffmpeg + libvmaf OK"
 
 echo ""
 echo "[1] Build the non-monotone per-chunk multi-resolution VMAF ladder"
+VIDEOS="$("${PY}" -c "from configs.videos import EVAL_VIDEOS_CSV; print(EVAL_VIDEOS_CSV)")"
 "${PY}" data/build_multires_vmaf.py --raw-dir "${RAW_DIR}" \
-    --videos bigbuckbunny,crowd_run,tearsofsteel_short,sintel
+    --videos "${VIDEOS}"
 
 if [ ! -f "${PERCHUNK_CSV}" ]; then
     echo "[FATAL] ${PERCHUNK_CSV} was not produced; cannot continue."; exit 1

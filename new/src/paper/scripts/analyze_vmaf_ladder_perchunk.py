@@ -15,6 +15,7 @@ Outputs
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import matplotlib as mpl
@@ -44,19 +45,17 @@ mpl.rcParams.update(
 
 REPO = Path(__file__).resolve().parents[4]
 NEW = REPO / "new"
+sys.path.insert(0, str(NEW))
+from configs.videos import ALL_VIDEOS, DISPLAY_NAMES  # noqa: E402
+
 VMAF_DIR = NEW / "data" / "vmaf_scores"
 SITI_DIR = NEW / "data" / "content_features"
 TABLES = NEW / "src" / "paper" / "tables"
 FIGURES = NEW / "src" / "paper" / "figures"
 RESULTS = NEW / "results"
 
-VIDEOS = ["bigbuckbunny", "crowd_run", "sintel", "tearsofsteel_short"]
-VIDEO_LABEL = {
-    "bigbuckbunny": "BigBuckBunny",
-    "crowd_run": "CrowdRun",
-    "sintel": "Sintel",
-    "tearsofsteel_short": "TearsOfSteel",
-}
+VIDEOS = list(ALL_VIDEOS)
+VIDEO_LABEL = {slug: DISPLAY_NAMES.get(slug, slug) for slug in VIDEOS}
 BITRATES = [300, 750, 1200, 1850, 2850, 6000]
 CHUNK_DURATION = 4.0
 # Adjacent rungs are treated as perceptually indistinguishable below this gap;

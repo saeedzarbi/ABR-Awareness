@@ -38,6 +38,9 @@ import numpy as np
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from configs.paths import get_paths
+from configs.videos import (
+    CPS_EPISODES, EVAL_VIDEOS, HELD_OUT_VIDEOS, MAX_CHUNKS, TRAIN_VIDEOS,
+)
 from src.environment.abr_multi_env_v18 import ABREnv
 from src.training.certified_perceptual_shield import (
     CertifiedPerceptualShieldWrapper, CPShieldConfig, ConformalConfig)
@@ -239,11 +242,11 @@ def build_base_env(trace_dir, buffer_max, blind):
         Env.BUFFER_TARGET = float(buffer_max) / 2.0
         Env.B_REF = max(2.0, float(buffer_max) / 3.0)
     env = Env(
-        video_names=["sintel", "bigbuckbunny", "crowd_run", "tearsofsteel_short"],
+        video_names=list(EVAL_VIDEOS),
         trace_dir=str(trace_dir),
         vmaf_dir=str(P["vmaf_scores"]),
         siti_dir=str(P["content_features"]),
-        max_chunks=48, random_seed=0, use_lyapunov=True, use_future=True,
+        max_chunks=MAX_CHUNKS, random_seed=0, use_lyapunov=True, use_future=True,
     )
     return env
 
@@ -499,7 +502,7 @@ def main():
     ap.add_argument("--blind", action="store_true", help="mask content features (Pensieve).")
     ap.add_argument("--trace-dir", type=str, default=str(P["test_traces"]))
     ap.add_argument("--buffer", type=float, default=None, help="override BUFFER_MAX (default v18=12s).")
-    ap.add_argument("--episodes", type=int, default=200)
+    ap.add_argument("--episodes", type=int, default=CPS_EPISODES)
     ap.add_argument("--epsilon", type=float, default=1.0)
     ap.add_argument("--alpha", type=float, default=0.10)
     ap.add_argument("--arms", type=str, default="raw,safety,certified")

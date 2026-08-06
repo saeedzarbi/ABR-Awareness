@@ -34,12 +34,13 @@ _NEW_ROOT = Path(__file__).resolve().parents[3]
 sys.path.append(str(_NEW_ROOT))
 
 from configs.paths import get_paths  # noqa: E402
+from configs.videos import EVAL_VIDEOS, MAX_CHUNKS  # noqa: E402
 from src.environment.abr_multi_env_v12 import ABREnv  # noqa: E402
 from src.training.safety_shield_v12 import ShieldConfig, safe_adjust_action  # noqa: E402
 
 PATHS = get_paths()
-VIDEOS = ["bigbuckbunny", "crowd_run", "tearsofsteel_short", "sintel"]
-N_SEEDS = 20  # matches the n=80 (4 videos x 20 seeds) evaluation suite
+VIDEOS = list(EVAL_VIDEOS)
+N_SEEDS = 17  # 12 videos x 17 seeds ≈ 204 CPS episodes
 PRIMARY_CFG = ShieldConfig(level="light", vmaf_aware=True, soft_tolerance=0.8, vmaf_loss_budget=8.0)
 
 
@@ -49,7 +50,7 @@ def _make_env(video: str) -> ABREnv:
         trace_dir=str(PATHS["test_traces"]),
         vmaf_dir=str(PATHS["vmaf_scores"]),
         siti_dir=str(PATHS["content_features"]),
-        max_chunks=48,
+        max_chunks=MAX_CHUNKS,
         random_seed=12345,
         use_future=True,
         use_lyapunov=True,

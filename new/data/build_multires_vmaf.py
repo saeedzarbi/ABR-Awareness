@@ -47,6 +47,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from configs.videos import EVAL_VIDEOS_CSV  # noqa: E402
+
 CHUNK_SECONDS = 4.0
 BITRATES = [300, 750, 1200, 1850, 2850, 6000]
 
@@ -217,8 +220,8 @@ def inversion_report(df: pd.DataFrame) -> pd.DataFrame:
 
 def main():
     ap = argparse.ArgumentParser(description="Build non-monotone per-chunk VMAF ladder (multi-resolution).")
-    ap.add_argument("--raw-dir", type=str, default="raw_videos")
-    ap.add_argument("--videos", type=str, default="bigbuckbunny,crowd_run,tearsofsteel_short,sintel")
+    ap.add_argument("--raw-dir", type=str, default="data/raw_videos")
+    ap.add_argument("--videos", type=str, default=EVAL_VIDEOS_CSV)
     ap.add_argument("--out-dir", type=str, default=str(Path("data") / "vmaf_scores"))
     ap.add_argument("--enc-dir", type=str, default=str(Path("data") / "encoded_multires"))
     ap.add_argument("--threads", type=int, default=8)

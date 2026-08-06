@@ -150,12 +150,26 @@ METHOD_CLASS: dict[str, str] = {
 }
 
 # Short axis labels for dense plots (heatmap rows, forest y-axis).
-VIDEO_SHORT_LABEL: dict[str, str] = {
-    "bigbuckbunny": "BigBuckBunny",
-    "crowd_run": "CrowdRun",
-    "sintel": "Sintel",
-    "tearsofsteel_short": "TearsOfSteel",
-}
+try:
+    import sys as _sys
+    _NEW = Path(__file__).resolve().parents[3]
+    _sys.path.insert(0, str(_NEW))
+    from configs.videos import ALL_VIDEOS, DISPLAY_NAMES, LEGACY_ALIASES
+
+    VIDEO_SHORT_LABEL: dict[str, str] = {
+        slug: DISPLAY_NAMES.get(slug, slug).replace(" ", "").replace("&", "")
+        for slug in ALL_VIDEOS
+    }
+    for old, new in LEGACY_ALIASES.items():
+        VIDEO_SHORT_LABEL.setdefault(old, VIDEO_SHORT_LABEL.get(new, old))
+except Exception:
+    VIDEO_SHORT_LABEL = {
+        "bigbuckbunny": "BigBuckBunny",
+        "crowd_run": "CrowdRun",
+        "sintel": "Sintel",
+        "tearsofsteel_short": "TearsOfSteel",
+        "tearsofsteel": "TearsOfSteel",
+    }
 
 HEATMAP_ROW_LABEL: dict[str, str] = {
     "Genie": "Genie",

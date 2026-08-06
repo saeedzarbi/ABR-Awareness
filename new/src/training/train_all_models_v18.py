@@ -39,6 +39,7 @@ import subprocess
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from configs.paths import get_paths
+from configs.videos import HELD_OUT_VIDEOS, MAX_CHUNKS, TRAIN_VIDEOS
 from src.environment.abr_multi_env_v18 import ABREnv
 from src.training.certified_perceptual_shield import (
     CertifiedPerceptualShieldWrapper,
@@ -86,9 +87,9 @@ def linear_schedule(initial_value: float, final_value: float = 1e-5):
 
 
 class Config:
-    TRAIN_VIDEOS = ["bigbuckbunny", "crowd_run", "tearsofsteel_short"]
-    TEST_VIDEOS = ["sintel"]
-    MAX_CHUNKS = 48
+    TRAIN_VIDEOS = list(TRAIN_VIDEOS)
+    TEST_VIDEOS = list(HELD_OUT_VIDEOS)
+    MAX_CHUNKS = MAX_CHUNKS
     NUM_ENVS = 8
 
     LEARNING_RATE = linear_schedule(3e-4, 1e-5)

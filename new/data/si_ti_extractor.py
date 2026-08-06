@@ -165,14 +165,23 @@ class SITIExtractor:
         
         return mean_si, mean_ti, stats
     
-    def extract_all_videos(self) -> pd.DataFrame:
+    def extract_all_videos(self, video_names: List[str] | None = None) -> pd.DataFrame:
         """
-        Extract SI/TI for all videos in directory.
+        Extract SI/TI for videos in directory (optionally filtered by slug list).
         
         Returns:
             DataFrame with SI/TI values
         """
-        video_files = list(self.video_dir.glob("*.mp4"))
+        if video_names:
+            video_files = []
+            for name in video_names:
+                p = self.video_dir / f"{name}.mp4"
+                if p.exists():
+                    video_files.append(p)
+                else:
+                    print(f"  [WARN] missing reference: {p}")
+        else:
+            video_files = list(self.video_dir.glob("*.mp4"))
         
         if not video_files:
             print("✗ No videos found")
@@ -227,8 +236,12 @@ class SITIExtractor:
         df = pd.DataFrame(results)
         
         if not df.empty:
-            # Save summary
+            # Save summary (merge when processing a subset)
             csv_path = self.output_dir / 'siti_summary.csv'
+            if csv_path.exists() and video_names:
+                existing = pd.read_csv(csv_path)
+                existing = existing[~existing['video'].isin(df['video'].unique())]
+                df = pd.concat([existing, df], ignore_index=True)
             df.to_csv(csv_path, index=False)
             print(f"\n✓ Summary saved to: {csv_path}")
         
@@ -277,15 +290,41 @@ class SITIExtractor:
 
 def main():
     """Main SI/TI extraction script."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Extract SI/TI content features for ABR videos.")
+    parser.add_argument(
+        "--videos",
+        type=str,
+        default=None,
+        help="Comma-separated video slugs (default: all *.mp4 in --video-dir)",
+    )
+    parser.add_argument(
+        "--video-dir",
+        type=str,
+        default="data/raw_videos",
+        help="Directory with reference MP4 files",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="data/content_features",
+        help="Directory for per-video JSON and siti_summary.csv",
+    )
+    args = parser.parse_args()
+
+    video_list = None
+    if args.videos:
+        video_list = [v.strip() for v in args.videos.split(",") if v.strip()]
+
     print("\n📊 SI/TI Extractor for ABR Research\n")
     
     extractor = SITIExtractor(
-        video_dir='raw_videos',
-        output_dir='content_features'
+        video_dir=args.video_dir,
+        output_dir=args.output_dir
     )
     
-    # Extract SI/TI for all videos
-    df = extractor.extract_all_videos()
+    df = extractor.extract_all_videos(video_names=video_list)
     
     if not df.empty:
         extractor.print_summary(df)

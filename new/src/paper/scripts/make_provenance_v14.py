@@ -28,11 +28,13 @@ import pandas as pd
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from configs.paths import get_paths
+from configs.videos import EVAL_VIDEOS, HELD_OUT_VIDEOS, TRAIN_VIDEOS
 
 PATHS = get_paths()
 
-TRAIN_VIDEOS = ["bigbuckbunny", "crowd_run", "tearsofsteel_short"]
-TEST_VIDEOS = ["bigbuckbunny", "crowd_run", "tearsofsteel_short", "sintel"]
+TRAIN_VIDEOS = list(TRAIN_VIDEOS)
+TEST_VIDEOS = list(EVAL_VIDEOS)
+HELD_OUT = list(HELD_OUT_VIDEOS)
 
 
 def _trace_names(d: Path) -> set[str]:
@@ -64,11 +66,10 @@ def main():
         "videos": {
             "train_videos": TRAIN_VIDEOS,
             "eval_videos": TEST_VIDEOS,
-            "unseen_eval_videos": [v for v in TEST_VIDEOS if v not in TRAIN_VIDEOS],
+            "unseen_eval_videos": HELD_OUT,
             "eval_videos_also_in_training": [v for v in TEST_VIDEOS if v in TRAIN_VIDEOS],
-            "note": ("3 of 4 evaluation videos are also training videos; sintel is "
-                     "held out. The V14 summary reports seen/unseen/pooled separately "
-                     "so in-distribution and generalisation results are not conflated."),
+            "note": (f"{len(TRAIN_VIDEOS)} training videos; {len(HELD_OUT)} held-out "
+                     f"({', '.join(HELD_OUT)}). Eval reports seen/unseen/pooled separately."),
         },
         "traces": {
             "train_dir": str(train_dir),

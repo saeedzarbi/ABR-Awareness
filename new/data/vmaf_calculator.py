@@ -225,7 +225,8 @@ class VMAFCalculator:
         bitrate_levels: List[int] = [300, 750, 1200, 1850, 2850, 6000],
         parallel: bool = False,
         timeout: int = 900,  # 15 minutes per bitrate
-        fast_mode: bool = False  # Use fast mode (720p, subsampling) for speed
+        fast_mode: bool = False,  # Use fast mode (720p, subsampling) for speed
+        video_names: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Calculate VMAF for all videos and bitrates.
@@ -239,6 +240,9 @@ class VMAFCalculator:
         """
         # Find all videos
         video_dirs = [d for d in self.encoded_dir.iterdir() if d.is_dir()]
+        if video_names:
+            allow = set(video_names)
+            video_dirs = [d for d in video_dirs if d.name in allow]
         
         if not video_dirs:
             print("✗ No encoded videos found")
@@ -300,8 +304,13 @@ class VMAFCalculator:
             # Sort by video and bitrate
             df = df.sort_values(['video', 'bitrate_kbps']).reset_index(drop=True)
             
-            # Save to CSV
+            # Save to CSV (merge with existing rows for videos not in this batch)
             csv_path = self.output_dir / 'vmaf_summary.csv'
+            if csv_path.exists() and video_names:
+                existing = pd.read_csv(csv_path)
+                existing = existing[~existing['video'].isin(df['video'].unique())]
+                df = pd.concat([existing, df], ignore_index=True)
+                df = df.sort_values(['video', 'bitrate_kbps']).reset_index(drop=True)
             df.to_csv(csv_path, index=False)
             print(f"\n✓ VMAF summary saved to: {csv_path}")
         
@@ -400,16 +409,26 @@ Examples:
         default=None,
         help='Calculate VMAF for a specific video only (e.g., "bigbuckbunny")'
     )
+    parser.add_argument(
+        '--videos',
+        type=str,
+        default=None,
+        help='Comma-separated video slugs (default: all encoded dirs, or v19 roster if empty encoded set)'
+    )
     
     args = parser.parse_args()
     
     print("\n📊 VMAF Calculator for ABR Research\n")
     
     calculator = VMAFCalculator(
-        reference_dir='raw_videos',
-        encoded_dir='encoded_videos',
-        output_dir='vmaf_scores'
+        reference_dir='data/raw_videos',
+        encoded_dir='data/encoded_videos',
+        output_dir='data/vmaf_scores'
     )
+    
+    video_list = None
+    if args.videos:
+        video_list = [v.strip() for v in args.videos.split(',') if v.strip()]
     
     # Calculate VMAF for specific video or all videos
     if args.video:
@@ -454,12 +473,15 @@ Examples:
         else:
             print("\n✗ No VMAF scores calculated")
     else:
-        # Calculate for all videos
-        print(f"⚙️  Settings: Parallel={args.parallel}, Fast={args.fast}, Timeout={args.timeout}s ({args.timeout//60} min)")
+        # Calculate for all videos (or an explicit subset)
+        print(f"⚙️  Settings: Parallel={args.parallel}, Fast={args.fast}, "
+              f"Timeout={args.timeout}s ({args.timeout//60} min), "
+              f"Videos={video_list or 'all encoded'}")
         df = calculator.calculate_all_videos(
             parallel=args.parallel,
             timeout=args.timeout,
-            fast_mode=args.fast
+            fast_mode=args.fast,
+            video_names=video_list,
         )
         
         if not df.empty:

@@ -41,6 +41,7 @@ except Exception:
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from configs.paths import get_paths
+from configs.videos import EVAL_VIDEOS, HELD_OUT_VIDEOS, TRAIN_VIDEOS
 from src.baselines.bba import BBA
 from src.environment.abr_multi_env_v14 import ABREnv
 from src.training.safety_shield_v14 import SafetyShieldWrapper, ShieldConfig
@@ -54,10 +55,10 @@ EVAL_SMOOTH_PENALTY = 1.0
 
 MODEL_TAG = "master_v14"
 
-# Videos seen during training (see train_all_models_v14.Config.TRAIN_VIDEOS).
-SEEN_VIDEOS = {"bigbuckbunny", "crowd_run", "tearsofsteel_short"}
-UNSEEN_VIDEOS = {"sintel"}
-TEST_VIDEOS = ["bigbuckbunny", "crowd_run", "tearsofsteel_short", "sintel"]
+# v19 roster (see configs/videos.py)
+SEEN_VIDEOS = set(TRAIN_VIDEOS)
+UNSEEN_VIDEOS = set(HELD_OUT_VIDEOS)
+TEST_VIDEOS = list(EVAL_VIDEOS)
 
 MODEL_DIRS = {
     "Proposed": "proposed_v14",
