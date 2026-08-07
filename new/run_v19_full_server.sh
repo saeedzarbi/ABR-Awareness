@@ -19,6 +19,8 @@
 #   MATTERMOST_WEBHOOK   webhook URL (default: project hook below)
 #   PYTHON               python binary (default: python3, fallback python)
 #   SKIP_DOWNLOAD=1      skip raw video download
+#   SKIP_ENCODE=1        skip encode step (raw + encoded already done)
+#   SKIP_VMAF=1          skip VMAF step (vmaf_summary.csv already done)
 #   FAST_VMAF=1          faster VMAF pass (720p subsampling on low rungs)
 #   PARALLEL_VMAF=1      parallel VMAF workers
 #   BUILD_MULTIRES=1     build per-chunk multires VMAF ladder (slow)
@@ -52,6 +54,8 @@ if [ -z "${PY}" ]; then
 fi
 RAW_DIR="${RAW_DIR:-data/raw_videos}"
 SKIP_DOWNLOAD="${SKIP_DOWNLOAD:-0}"
+SKIP_ENCODE="${SKIP_ENCODE:-0}"
+SKIP_VMAF="${SKIP_VMAF:-0}"
 FAST_VMAF="${FAST_VMAF:-0}"
 PARALLEL_VMAF="${PARALLEL_VMAF:-0}"
 BUILD_MULTIRES="${BUILD_MULTIRES:-0}"
@@ -118,6 +122,8 @@ count_steps() {
         [ "${FULL}" = "1" ] && TOTAL_STEPS=$((TOTAL_STEPS + 1))
     fi
     if [ "${SKIP_DOWNLOAD}" = "1" ]; then TOTAL_STEPS=$((TOTAL_STEPS - 1)); fi
+    if [ "${SKIP_ENCODE}" = "1" ]; then TOTAL_STEPS=$((TOTAL_STEPS - n_videos)); fi
+    if [ "${SKIP_VMAF}" = "1" ]; then TOTAL_STEPS=$((TOTAL_STEPS - 1)); fi
 }
 
 run_step() {
@@ -145,7 +151,7 @@ preflight() {
     if [ "${SKIP_DOWNLOAD}" != "1" ]; then
         command -v xz >/dev/null 2>&1 || { echo "[FATAL] xz not found (needed for elephants_dream)"; exit 2; }
     fi
-    "${PY}" -c "from configs.videos import ALL_VIDEOS, CPS_EPISODES; print(f'videos={len(ALL_VIDEOS)} episodes={CPS_EPISODES}')"
+    "${PY}" -c "import cv2; from configs.videos import ALL_VIDEOS, CPS_EPISODES; print(f'videos={len(ALL_VIDEOS)} episodes={CPS_EPISODES} opencv={cv2.__version__}')"
 }
 
 # --- Main ----------------------------------------------------------------------
@@ -166,15 +172,23 @@ main() {
     fi
 
     for v in $(echo "${VIDEOS}" | tr ',' ' '); do
+        if [ "${SKIP_ENCODE}" = "1" ]; then
+            echo "[INFO] SKIP_ENCODE=1 — skipping encode for ${v}" | tee -a "${LOG_FILE}"
+            continue
+        fi
         run_step "Encode 6-rung ladder: ${v}" \
             "${PY}" data/video_encoder.py --video "${v}" \
                 --input-dir "${RAW_DIR}" --output-dir data/encoded_videos
     done
 
-    VMAF_CMD=("${PY}" data/vmaf_calculator.py --videos "${VIDEOS}")
-    [ "${FAST_VMAF}" = "1" ]     && VMAF_CMD+=(--fast)
-    [ "${PARALLEL_VMAF}" = "1" ] && VMAF_CMD+=(--parallel)
-    run_step "Session-mean VMAF (12 videos x 6 rungs)" "${VMAF_CMD[@]}"
+    if [ "${SKIP_VMAF}" != "1" ]; then
+        VMAF_CMD=("${PY}" data/vmaf_calculator.py --videos "${VIDEOS}")
+        [ "${FAST_VMAF}" = "1" ]     && VMAF_CMD+=(--fast)
+        [ "${PARALLEL_VMAF}" = "1" ] && VMAF_CMD+=(--parallel)
+        run_step "Session-mean VMAF (12 videos x 6 rungs)" "${VMAF_CMD[@]}"
+    else
+        echo "[INFO] SKIP_VMAF=1 — skipping VMAF" | tee -a "${LOG_FILE}"
+    fi
 
     run_step "Extract SI/TI content features" \
         "${PY}" data/si_ti_extractor.py --videos "${VIDEOS}" --video-dir "${RAW_DIR}"
