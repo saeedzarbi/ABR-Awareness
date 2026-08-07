@@ -118,11 +118,12 @@ else echo "[elephants_dream] exists, skip"; fi
 y4m_ref "ducks" "${DERF_Y4M}/ducks_take_off_1080p50.y4m"
 
 # cosmos: Internet Archive 1080p (held-out Blender animation)
+# Trim to 120 s — full film (~10 min) causes VMAF timeout on high rungs.
 if [ ! -f "${RAW_DIR}/cosmos.mp4" ]; then
-    echo "[cosmos] archive.org 1080p"
+    echo "[cosmos] archive.org 1080p (trim 120s)"
     fetch "https://archive.org/download/CosmosLaundromatFirstCycle/Cosmos%20Laundromat%20-%20First%20Cycle%20%281080p%29.mp4" \
         "${TMP}/cosmos_src.mp4"
-    transcode_ref "${RAW_DIR}/cosmos.mp4" -i "${TMP}/cosmos_src.mp4"
+    transcode_ref "${RAW_DIR}/cosmos.mp4" -ss 0 -i "${TMP}/cosmos_src.mp4" -t 120
     echo "  -> ${RAW_DIR}/cosmos.mp4"
 else echo "[cosmos] exists, skip"; fi
 
