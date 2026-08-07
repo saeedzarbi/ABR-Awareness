@@ -104,6 +104,20 @@ class ABREnv(gym.Env):
 
     def _load_all_video_data(self):
         import pandas as pd
+
+        default_vmaf = {300: 35.0, 750: 58.0, 1200: 74.0,
+                        1850: 84.0, 2850: 91.0, 6000: 97.0}
+        ladder = [int(b) for b in self.BITRATE_LEVELS]
+
+        # Legacy CSV slugs that map to a v19 canonical name (e.g. tearsofsteel_short).
+        legacy_csv_names = {}
+        try:
+            from configs.videos import LEGACY_ALIASES
+            for old, new in LEGACY_ALIASES.items():
+                legacy_csv_names.setdefault(new, []).append(old)
+        except Exception:
+            pass
+
         vmaf_file = self.vmaf_dir / "vmaf_summary.csv"
         try:
             all_vmaf_data = pd.read_csv(vmaf_file)
@@ -112,12 +126,22 @@ class ABREnv(gym.Env):
 
         for vid in self.video_names:
             self.video_assets[vid] = {}
-            vmaf_scores = {300: 35, 750: 58, 1200: 74, 1850: 84, 2850: 91, 6000: 97}
+            vmaf_scores = dict(default_vmaf)
 
             if all_vmaf_data is not None and 'video' in all_vmaf_data.columns:
-                df = all_vmaf_data[all_vmaf_data['video'] == vid]
-                if not df.empty:
-                    vmaf_scores = dict(zip(df['bitrate_kbps'], df['vmaf']))
+                aliases = legacy_csv_names.get(vid, [])
+                names = [vid, *aliases]
+                df = all_vmaf_data[all_vmaf_data['video'].isin(names)]
+                for _, row in df.iterrows():
+                    try:
+                        br = int(row['bitrate_kbps'])
+                        vmaf_scores[br] = float(row['vmaf'])
+                    except (TypeError, ValueError):
+                        continue
+
+            # Guarantee every rung exists (avoids KeyError in obs construction).
+            for br in ladder:
+                vmaf_scores.setdefault(br, default_vmaf[br])
 
             self.video_assets[vid]['vmaf'] = vmaf_scores
             self.video_assets[vid]['vmaf_norm'] = {
