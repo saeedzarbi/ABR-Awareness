@@ -27,6 +27,10 @@ import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve()
 NEW_ROOT = HERE.parents[2]
+if str(NEW_ROOT) not in sys.path:
+    sys.path.insert(0, str(NEW_ROOT))
+from configs.videos import CPS_EPISODES
+
 EVAL = HERE.parent / "eval_certified_shield_v18.py"
 TRACE_DIR = "data/standardized/test_traces_5g_v18"
 OUT = NEW_ROOT / "results" / "ablation_eps_alpha"
@@ -34,7 +38,7 @@ PAPER = NEW_ROOT / "src" / "paper"
 TABLES = [PAPER / "overleaf_upload" / "tables", PAPER / "tables"]
 FIGURES = [PAPER / "overleaf_upload" / "figures", PAPER / "figures"]
 
-EPISODES = 200
+EPISODES = CPS_EPISODES
 EPS_LIST = [0.5, 1.0, 2.0, 4.0]
 ALPHA_LIST = [0.05, 0.10, 0.20]
 EPS_FIXED_ALPHA = 0.10

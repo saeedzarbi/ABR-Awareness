@@ -7,6 +7,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -42,8 +43,12 @@ def num(x, d=2):
 
 
 def pval(p):
+    if p is None or (isinstance(p, float) and math.isnan(p)):
+        return "---"
     if p <= 0:
         return "<10^{-300}"
+    if p >= 0.01:
+        return f"{p:.2f}"
     e = int(math.floor(math.log10(p)))
     m = p / (10 ** e)
     return f"{m:.1f}\\!\\times\\!10^{{{e}}}"
@@ -65,25 +70,74 @@ def wilcoxon_p(a, b):
         return float(max((perm >= obs - 1e-12).mean(), 1 / 20000))
 
 
-def codesign_stats():
-    def col(name, key, arm="certified"):
-        rows = {}
-        with open(RES / name / "episodes.csv", encoding="utf-8") as f:
-            for r in csv.DictReader(f):
-                if r["arm"] == arm:
-                    rows[int(r["episode"])] = float(r[key])
-        return rows
-    vA, rA = col("proposed_5g_regime", "vmaf_mean"), col("proposed_5g_regime", "rebuffer_total")
-    vB, rB = col("proposed_cps_5g", "vmaf_mean"), col("proposed_cps_5g", "rebuffer_total")
-    eps = sorted(set(vA) & set(vB))
-    va = np.array([vA[e] for e in eps])
-    vb = np.array([vB[e] for e in eps])
-    ra = np.array([rA[e] for e in eps])
-    rb = np.array([rB[e] for e in eps])
-    dV = float(vb.mean() - va.mean())
-    dR = float(rb.mean() - ra.mean())
-    wstar = dV / dR if dR else float("nan")
-    return dV, dR, wstar, wilcoxon_p(vb, va), wilcoxon_p(rb, ra)
+def certified_mean(summary: dict, key: str) -> float:
+    x = summary["arms"]["certified"][key]
+    return float(x["mean"] if isinstance(x, dict) else x)
+
+
+def codesign_delta_from_summary(reg: dict, cps: dict) -> tuple[float, float, float]:
+    """Table-6 Δ row: difference of certified-arm means in summary.json."""
+    v_a = certified_mean(reg, "vmaf_mean")
+    r_a = certified_mean(reg, "rebuffer_total")
+    v_b = certified_mean(cps, "vmaf_mean")
+    r_b = certified_mean(cps, "rebuffer_total")
+    d_v = v_b - v_a
+    d_r = r_b - r_a
+    wstar = d_v / d_r if abs(d_r) > 1e-9 else float("nan")
+    return d_v, d_r, wstar
+
+
+def _episodes_certified_col(name: str, key: str) -> dict[int, float]:
+    rows: dict[int, float] = {}
+    path = RES / name / "episodes.csv"
+    with open(path, encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            if r["arm"] == "certified":
+                rows[int(r["episode"])] = float(r[key])
+    return rows
+
+
+def verify_codesign_episodes(reg: dict, cps: dict, tol_vmaf: float = 0.05, tol_reb: float = 0.08):
+    """Ensure episodes.csv matches summary.json and both runs share episode count."""
+    issues: list[str] = []
+    for tag, summary in [("proposed_5g_regime", reg), ("proposed_cps_5g", cps)]:
+        path = RES / tag / "episodes.csv"
+        if not path.exists():
+            issues.append(f"{tag}: missing episodes.csv")
+            continue
+        v_col = _episodes_certified_col(tag, "vmaf_mean")
+        r_col = _episodes_certified_col(tag, "rebuffer_total")
+        if not v_col:
+            issues.append(f"{tag}: episodes.csv has no certified rows")
+            continue
+        csv_v = float(np.mean(list(v_col.values())))
+        csv_r = float(np.mean(list(r_col.values())))
+        sum_v = certified_mean(summary, "vmaf_mean")
+        sum_r = certified_mean(summary, "rebuffer_total")
+        if abs(csv_v - sum_v) > tol_vmaf or abs(csv_r - sum_r) > tol_reb:
+            issues.append(
+                f"{tag}: episodes.csv stale vs summary.json "
+                f"(csv VMAF {csv_v:.2f} vs {sum_v:.2f}; reb {csv_r:.2f} vs {sum_r:.2f}; n={len(v_col)})"
+            )
+    n_reg = len(_episodes_certified_col("proposed_5g_regime", "vmaf_mean"))
+    n_cps = len(_episodes_certified_col("proposed_cps_5g", "vmaf_mean"))
+    if n_reg and n_cps and n_reg != n_cps:
+        issues.append(f"co-design episode-count mismatch: regime n={n_reg} vs cps n={n_cps}")
+    return issues
+
+
+def codesign_stats_paired():
+    """Wilcoxon p-values on paired certified episodes (requires synced CSVs)."""
+    v_a = _episodes_certified_col("proposed_5g_regime", "vmaf_mean")
+    r_a = _episodes_certified_col("proposed_5g_regime", "rebuffer_total")
+    v_b = _episodes_certified_col("proposed_cps_5g", "vmaf_mean")
+    r_b = _episodes_certified_col("proposed_cps_5g", "rebuffer_total")
+    eps = sorted(set(v_a) & set(v_b))
+    va = np.array([v_a[e] for e in eps])
+    vb = np.array([v_b[e] for e in eps])
+    ra = np.array([r_a[e] for e in eps])
+    rb = np.array([r_b[e] for e in eps])
+    return wilcoxon_p(vb, va), wilcoxon_p(rb, ra)
 
 
 def codesign_bootstrap(n_boot=20000, seed=0):
@@ -206,22 +260,50 @@ def gen_macros():
     macro("CPScoCpsReb", num(arm(cps, "certified", "rebuffer_total")))
     macro("CPScoCpsBr", f"{arm(cps, 'certified', 'bitrate_mean_kbps'):.0f}")
     macro("CPScoCpsCov", num(arm(cps, "certified", "conformal_coverage"), 3))
-    dV, dR, wstar, p_vm, p_reb = codesign_stats()
-    macro("CPScoDVM", num(dV))
-    macro("CPScoDReb", num(dR))
+    d_v, d_r, wstar = codesign_delta_from_summary(reg, cps)
+    macro("CPScoDVM", num(d_v))
+    macro("CPScoDReb", num(d_r))
     macro("CPScoWstar", num(wstar))
+    co_issues = verify_codesign_episodes(reg, cps)
+    if co_issues:
+        for msg in co_issues:
+            print(f"[ERROR] co-design: {msg}")
+        print("[ERROR] Re-run BOTH proposed_5g_regime and proposed_cps_5g at CPS_EPISODES,")
+        print("        then pull episodes.csv + summary.json before regenerating paper assets.")
+        if os.environ.get("CODESIGN_STRICT", "1") != "0":
+            raise SystemExit(1)
+        p_vm, p_reb = float("nan"), float("nan")
+        bs = None
+    else:
+        p_vm, p_reb = codesign_stats_paired()
+        bs = codesign_bootstrap()
+        csv_dv = bs["dv_ci"][0]
+        if abs(csv_dv - d_v) > 0.25:
+            print(f"[WARN] paired-episode ΔVMAF ({csv_dv:.2f}) differs from summary Δ ({d_v:.2f})")
     macro("CPScoPVM", pval(p_vm))
     macro("CPScoPReb", pval(p_reb))
-    bs = codesign_bootstrap()
-    macro("CPScoDVMlo", num(bs["dv_ci"][0]))
-    macro("CPScoDVMhi", num(bs["dv_ci"][1]))
-    macro("CPScoDRebLo", num(bs["dr_ci"][0]))
-    macro("CPScoDRebHi", num(bs["dr_ci"][1]))
-    macro("CPScoWstarLo", num(bs["w_ci"][0]))
-    macro("CPScoWstarHi", num(bs["w_ci"][1]))
-    macro("CPScoWstarMed", num(bs["w_med"]))
-    macro("CPScoDVMposPct", f"{100 * bs['p_dv_pos']:.1f}")
-    macro("CPScoBootN", str(bs["n"]))
+
+    def _bs(name, key, sub=None):
+        if bs is None:
+            macro(name, "---")
+        elif sub is None:
+            macro(name, num(bs[key]))
+        else:
+            macro(name, num(bs[key][sub]))
+
+    _bs("CPScoDVMlo", "dv_ci", 0)
+    _bs("CPScoDVMhi", "dv_ci", 1)
+    _bs("CPScoDRebLo", "dr_ci", 0)
+    _bs("CPScoDRebHi", "dr_ci", 1)
+    _bs("CPScoWstarLo", "w_ci", 0)
+    _bs("CPScoWstarHi", "w_ci", 1)
+    _bs("CPScoWstarMed", "w_med")
+    if bs is None:
+        macro("CPScoDVMposPct", "---")
+        macro("CPScoBootN", str(int(n_ep)))
+    else:
+        macro("CPScoDVMposPct", f"{100 * bs['p_dv_pos']:.1f}")
+        macro("CPScoBootN", str(bs["n"]))
 
     header = ("% Auto-generated by make_cps_paper_assets.py -- DO NOT EDIT BY HAND.\n"
               "% Certified Perceptual Shield (V18) numbers.\n")

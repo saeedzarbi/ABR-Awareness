@@ -202,20 +202,20 @@
 \providecommand{\CPScoCpsReb}{4.59}
 \providecommand{\CPScoCpsBr}{1711}
 \providecommand{\CPScoCpsCov}{0.919}
-\providecommand{\CPScoDVM}{6.82}
-\providecommand{\CPScoDReb}{3.83}
-\providecommand{\CPScoWstar}{1.78}
-\providecommand{\CPScoPVM}{0.19}
-\providecommand{\CPScoPReb}{2.5\!\times\!10^{-22}}
-\providecommand{\CPScoDVMlo}{2.31}
-\providecommand{\CPScoDVMhi}{11.33}
-\providecommand{\CPScoDRebLo}{3.16}
-\providecommand{\CPScoDRebHi}{4.53}
-\providecommand{\CPScoWstarLo}{0.62}
-\providecommand{\CPScoWstarHi}{3.04}
-\providecommand{\CPScoWstarMed}{1.78}
-\providecommand{\CPScoDVMposPct}{99.9}
-\providecommand{\CPScoBootN}{200}
+\providecommand{\CPScoDVM}{7.06}
+\providecommand{\CPScoDReb}{3.87}
+\providecommand{\CPScoWstar}{1.82}
+\providecommand{\CPScoPVM}{---}
+\providecommand{\CPScoPReb}{---}
+\providecommand{\CPScoDVMlo}{---}
+\providecommand{\CPScoDVMhi}{---}
+\providecommand{\CPScoDRebLo}{---}
+\providecommand{\CPScoDRebHi}{---}
+\providecommand{\CPScoWstarLo}{---}
+\providecommand{\CPScoWstarHi}{---}
+\providecommand{\CPScoWstarMed}{---}
+\providecommand{\CPScoDVMposPct}{---}
+\providecommand{\CPScoBootN}{204}
 
 % -------------------------------------------------------------------------
 % Fallback macros (compile-safety)
@@ -355,9 +355,9 @@ We answer both faults with a \emph{Certified Perceptual Shield} (CPS), a model-a
 First comes \emph{VMAF-knee bandwidth banking}. Even a feasible proposal gets lowered to the smallest rung whose VMAF sits within a perceptual budget \(\varepsilon\); saturation then becomes banked buffer, and quality barely moves.
 Second is an online \emph{conformal} lower bound on throughput. Under exchangeability, it yields distribution-free coverage \(1{-}\alpha\), calibrated with a finite-sample \((n{+}1)\) rank correction.
 Third, \emph{certified feasibility}. CPS refuses any download whose time under that bound would outrun the buffer margin. What emerges is a per-chunk \emph{probabilistic} stall certificate: coverage \(1{-}\alpha\) under residual exchangeability (Proposition~\ref{prop:feas}). Call it a strong distribution-free guarantee, not a deterministic promise of zero stalls.
-Our tests span \(\CPSepisodes\) paired synthetic \mbox{5G} episodes over twelve reference titles chosen for \emph{ladder} diversity---from saturation-rich animation to steep natural motion. Against a conformal safety-only baseline, banking significantly trims delivered bitrate and rebuffering on every deterministic host we test (greedy/BBA/BOLA/RobustMPC: \(\approx\!\CPSGreedyBWcs\%\)/\(\CPSGreedyRebCs\%\) to \(\CPSBolaBWcs\%\)/\(\CPSBolaRebCs\%\)), with mean VMAF differences inside \(\pm\CPSepsilon\) (TOST) and empirical coverage at \(\CPSGreedyCov\) against a \(\CPScovTarget\) target. Effect sizes track top-rung saturation, so the diversified roster yields conservative but credible savings.
+Our tests span \(\CPSepisodes\) paired synthetic \mbox{5G} episodes over twelve reference titles chosen for \emph{ladder} diversity---from saturation-rich animation to steep natural motion. Against a conformal safety-only baseline, banking significantly trims delivered bitrate and rebuffering on every deterministic host we test (greedy through RobustMPC: \(\CPSGreedyBWcs\%\)/\(\CPSGreedyRebCs\%\) to \(\CPSMpcBWcs\%\)/\(\CPSMpcRebCs\%\)), with mean VMAF differences inside \(\pm\CPSepsilon\) (TOST) and empirical coverage at \(\CPSGreedyCov\) against a \(\CPScovTarget\) target. Effect sizes track top-rung saturation, so the diversified roster yields conservative but credible savings.
 A risk-aware, predictive variant deepens banking ahead of forecast dips (greedy: \(\CPSGreedyImpBWcs\%\) bitrate, \(\CPSGreedyImpRebCs\%\) rebuffering).
-As a supporting result, co-training a PPO policy with the shield in the loop shifts the certified operating point toward higher fidelity (\(+\CPScoDVM\) mean VMAF; bootstrap 95\% CI \([\CPScoDVMlo,\CPScoDVMhi]\), positive in \(\CPScoDVMposPct\%\) of resamples) at \(+\CPScoDReb\)\,s of added rebuffering (\(p{=}\CPScoPReb\)), with a QoE crossover at \(w^{\star}{=}\CPScoWstar\) VMAF points per second.
+As a supporting result, co-training a PPO policy with the shield in the loop shifts the certified operating point toward higher fidelity (\(+\CPScoDVM\) mean VMAF at \(+\CPScoDReb\)\,s added rebuffering vs.\ shield-at-eval-only), with QoE crossover \(w^{\star}{=}\CPScoWstar\) VMAF points per second.
 \end{abstract}
 
 \begin{keyword}
@@ -396,7 +396,7 @@ We put these claims to the test on \(\CPSepisodes\) paired synthetic \mbox{5G} e
 Empirical conformal coverage lands at \(\CPSGreedyCov\) against a \(\CPScovTarget\) target.
 A risk-aware, predictive extension pushes the savings further, widening \(\varepsilon\) once the buffer---or a short look-ahead under a throughput floor---slips into a danger zone (greedy: \(\CPSGreedyImpBWcs\%\) bitrate, \(\CPSGreedyImpRebCs\%\) rebuffering).
 Real networks tell a different story. On source-disjoint \emph{real-measured} broadband traces (FCC and Norway/Nornet), banking headroom collapses (\(\CPSbbBWcs\%\) bitrate), yet safety keeps slashing stalls (\(\CPSbbRebSr\%\) vs.\ raw greedy). The split pins down exactly when perceptual banking earns its keep.
-Co-training PPO with CPS in the loop (supporting) shifts the certified point toward higher fidelity (\(+\CPScoDVM\) mean VMAF; bootstrap CI \([\CPScoDVMlo,\CPScoDVMhi]\)) at \(+\CPScoDReb\)\,s added rebuffering, with QoE crossover \(w^{\star}{=}\CPScoWstar\) VMAF points per second of stall.
+Co-training PPO with CPS in the loop (supporting) shifts the certified point toward higher fidelity (\(+\CPScoDVM\) mean VMAF at \(+\CPScoDReb\)\,s added rebuffering; Table~\ref{tab:cps:codesign}), with crossover \(w^{\star}{=}\CPScoWstar\) VMAF points per second of stall when the paired episode exports match the table means.
 
 The main contributions are:
 \begin{itemize}
@@ -881,9 +881,10 @@ Two PPO settings warrant separate reporting. The \emph{primary} host is a conten
 On the primary broadband-trained policy, certified banking vs.\ safety returns \(\CPSPropBWcs\%\) bitrate and \(\CPSPropRebCs\%\) rebuffering (\(p{=}\CPSPropPRebCs\)), at VMAF \(\Delta{=}\CPSPropVMcs\); the improved shield stretches to \(\CPSPropImpBWcs\%\) / \(\CPSPropImpRebCs\%\).
 Smaller than greedy or BBA, and no surprise there: the learned policy already shuns the top rung much of the time, and CPS steps in only when a proposal leaves banking headroom.
 
-\emph{Co-design.} Both policies train on matched \mbox{5G} traces (source-disjoint test). Under the improved shield at eval, the co-trained policy's certified arm hits VMAF \(\CPScoCpsVM\) and bitrate \(\CPScoCpsBr\)\,kb/s, against \(\CPScoRegVM\) / \(\CPScoRegBr\) for shield-at-eval-only operation (\(\Delta\)VMAF \(+\CPScoDVM\); \(\Delta\)reb \(+\CPScoDReb\)\,s, \(p{=}\CPScoPReb\)).
-Weigh the fidelity gain against its stall cost through \(\mathrm{QoE}(w)=\overline{\mathrm{VMAF}}-w\cdot\mathrm{rebuffer(s)}\). The mean-QoE crossover sits at \(w^{\star}{=}\CPScoWstar\) VMAF points per second: co-design favors fidelity-oriented weights \(w<w^{\star}\); shield-at-eval-only prevails only where stall aversion is stronger.
-A paired-episode bootstrap (\(\CPScoBootN\) episodes, \(20{,}000\) resamples) puts the VMAF gain at \([\CPScoDVMlo,\CPScoDVMhi]\), positive in \(\CPScoDVMposPct\%\) of resamples, the stall cost at \([\CPScoDRebLo,\CPScoDRebHi]\)\,s, and the crossover at \(w^{\star}\in[\CPScoWstarLo,\CPScoWstarHi]\) (median \(\CPScoWstarMed\)). The bootstrap supports a positive VMAF shift, though the paired Wilcoxon test does not reach conventional significance (\(p{=}\CPScoPVM\)); the added rebuffering is significant (\(p{=}\CPScoPReb\)), which pins down a finite crossover rather than a free fidelity lunch.
+\emph{Co-design.} Both policies train on matched \mbox{5G} traces (source-disjoint test). Under the improved shield at eval, the co-trained policy's certified arm hits VMAF \(\CPScoCpsVM\) and bitrate \(\CPScoCpsBr\)\,kb/s, against \(\CPScoRegVM\) / \(\CPScoRegBr\) for shield-at-eval-only operation.
+The \(\Delta\) row in Table~\ref{tab:cps:codesign} is the difference of those certified-arm means (\(+\CPScoDVM\) VMAF, \(+\CPScoDReb\)\,s rebuffering); it must agree with the raw rows above (\(\CPScoCpsVM-\CPScoRegVM\), \(\CPScoCpsReb-\CPScoRegReb\)).
+Weigh the fidelity gain against its stall cost through \(\mathrm{QoE}(w)=\overline{\mathrm{VMAF}}-w\cdot\mathrm{rebuffer(s)}\). The mean-QoE crossover is \(w^{\star}{=}\CPScoWstar\) VMAF points per second (ratio of the \(\Delta\) row entries): co-design favors fidelity-oriented weights \(w<w^{\star}\); shield-at-eval-only prevails where stall aversion is stronger.
+Paired Wilcoxon tests and episode-bootstrap intervals (when \texttt{episodes.csv} is synchronized with \texttt{summary.json} at \(\CPSepisodes\) pairs) are reported as \(\CPScoPVM\) (VMAF) and \(\CPScoPReb\) (rebuffering), with bootstrap CI \([\CPScoDVMlo,\CPScoDVMhi]\), stall cost \([\CPScoDRebLo,\CPScoDRebHi]\)\,s, and crossover \([\CPScoWstarLo,\CPScoWstarHi]\) (median \(\CPScoWstarMed\); positive VMAF in \(\CPScoDVMposPct\%\) of resamples). Co-design remains a supporting result under a single training seed (Limitation~\ref{sec:limits}).
 
 \begin{figure}[!htbp]
     \centering
@@ -897,7 +898,7 @@ A paired-episode bootstrap (\(\CPScoBootN\) episodes, \(20{,}000\) resamples) pu
     \label{tab:cps:codesign}
     \centering
     \evaltable{\input{tables/table_cps_codesign.tex}}
-    \tablenote{Paired Wilcoxon: rebuffering \(p{=}\CPScoPReb\); VMAF \(p{=}\CPScoPVM\) (bootstrap 95\% CI for \(\Delta\)VMAF: \([\CPScoDVMlo,\CPScoDVMhi]\)).}
+    \tablenote{The \(\Delta\) row equals the certified-arm difference in the rows above. Paired Wilcoxon: VMAF \(p{=}\CPScoPVM\), rebuffering \(p{=}\CPScoPReb\); bootstrap \(\Delta\)VMAF CI \([\CPScoDVMlo,\CPScoDVMhi]\) over \(\CPScoBootN\) episodes (requires synced \texttt{episodes.csv}).}
 \end{table}
 
 \subsection{Per-chunk (non-monotone) ladder ablation (RQ5)}
@@ -929,7 +930,7 @@ Put the three together and the pooled-ladder headline numbers look, if anything,
 \subsection{Sensitivity to \(\varepsilon\) and \(\alpha\) (RQ6)}
 \label{sec:eval:sensitivity}
 
-The headline runs fix the pair at \(\varepsilon{=}\CPSepsilon\) and \(\alpha{=}\CPSalpha\). Tables~\ref{tab:abl:eps}--\ref{tab:abl:alpha} and Figure~\ref{fig:cps:ablation} show the greedy host is no slave to that choice.
+The headline runs fix the pair at \(\varepsilon{=}\CPSepsilon\) and \(\alpha{=}\CPSalpha\). Tables~\ref{tab:abl:eps}--\ref{tab:abl:alpha} and Figure~\ref{fig:cps:ablation} replay the same greedy host on the synthetic \mbox{5G} test pool at \(\CPSepisodes\) paired episodes (twelve-title roster); regenerate via \texttt{ablation\_eps\_alpha.py} when the roster or episode count changes.
 Take the perceptual budget first. Sweeping \(\varepsilon\in\{\AblEpsLo,\dots,\AblEpsHi\}\) (at \(\alpha{=}\CPSalpha\)) trades banking for fidelity, and it does so cleanly: bitrate saved versus safety climbs from \(\AblBwLo\%\) to \(\AblBwHi\%\), while the mean VMAF change stays trifling (at most \(\AblVmMaxAbs\) points in magnitude) and never leaves the matching \(\pm\varepsilon\) envelope.
 Empirical conformal coverage, tellingly, does not budge with \(\varepsilon\)---it answers to the throughput trace and calibrator alone, not the banking budget, which shows banking and the feasibility certificate run on separate tracks by design.
 Now the miscoverage. Sweeping \(\alpha\in\{0.05,0.10,0.20\}\) (at \(\varepsilon{=}\CPSepsilon\)) drags empirical coverage in lock-step with the finite-sample target \(1{-}\alpha\) (coverage \(\AblCovMax\), \(0.919\), \(\AblCovMin\) for targets \(0.95, 0.90, 0.80\)): tighten \(\alpha\) and both coverage and intervention rate rise; loosen it and both ease off, just as the \((n{+}1)\) construction foretells. So the default operating point rides a smooth, well-mannered frontier, not a tuned sweet spot.
@@ -982,7 +983,7 @@ Local inversions, then, can only widen the banking opportunity, and the algorith
   \item Twelve publicly available titles and finite trace pools still cap catalogue diversity~\cite{kvalbein2014}; three are held out from PPO training but recur in CPS evaluation.
   \item QoE here is a VMAF-based surrogate. Subjective rankings of stall against fidelity may part from it~\cite{seufert2015survey}.
   \item Conformal coverage presumes exchangeable residuals. Sharp nonstationarity can erode the guarantee, though the online window adapts locally and the coverage loss stays bounded by the residual distribution shift~\cite{barber2023beyond}.
-  \item Every arm---greedy, BBA, the PPO hosts---runs locally under the same finite-sample \((n{+}1)\) conformal correction. Co-design magnitudes hinge on the checkpoint, so we report the best-validation model of each policy. One point deserves weight: the co-design contrast uses a \emph{single} training seed per policy, so the \(95\%\) intervals come from a paired-episode bootstrap over the \(\CPScoBootN\) test episodes and speak to evaluation variance, not training-seed variance. Nailing down training-seed variance for \(w^{\star}\) would mean retraining many seeds; that we leave for later. Hence co-design stands as a supporting result, not a headline claim.
+  \item Every arm---greedy, BBA, the PPO hosts---runs locally under the same finite-sample \((n{+}1)\) conformal correction. Co-design magnitudes hinge on the checkpoint, so we report the best-validation model of each policy. Table~\ref{tab:cps:codesign} \(\Delta\) rows are computed from certified-arm means in \texttt{summary.json}; paired Wilcoxon and bootstrap intervals additionally require \texttt{episodes.csv} exports synchronized to the same \(\CPSepisodes\) pairs (both co-design policies re-evaluated together). One point deserves weight: the co-design contrast uses a \emph{single} training seed per policy, so the \(95\%\) intervals speak to evaluation variance, not training-seed variance. Nailing down training-seed variance for \(w^{\star}\) would mean retraining many seeds; that we leave for later. Hence co-design stands as a supporting result, not a headline claim.
   \item Banking savings \emph{scale with ladder saturation} (Table~\ref{tab:ladder:spacing}); the twelve-title mix deliberately includes steep and non-saturated ladders, so greedy/BBA effect sizes are conservative relative to a saturation-rich subset alone.
   \item The Pensieve-style no-op reveals that host aggressiveness sets the banking opportunity. Do not carry the results over to arbitrary policies without the paired-arm protocol.
   \item The TOST margin equals the configured banking budget \(\varepsilon\)---a design parameter, not a preregistered clinical equivalence margin~\cite{lakens2017equivalence}.
@@ -999,7 +1000,7 @@ Real-player deployment is the direction we care about most. Every result here co
 We built the Certified Perceptual Shield (CPS) for client-side ABR from three parts: VMAF-knee bandwidth banking, an online conformal throughput lower bound with finite-sample coverage, and certified buffer feasibility.
 The evidence lines up. On \(\CPSepisodes\) paired synthetic \mbox{5G} episodes over twelve ladder-diverse titles, banking against conformal safety-only significantly reduces bitrate and rebuffering on every deterministic host (\(\approx\!\CPSGreedyBWcs\%\)/\(\CPSGreedyRebCs\%\) for greedy through \(\CPSMpcBWcs\%\)/\(\CPSMpcRebCs\%\) for RobustMPC), with VMAF inside \(\pm\CPSepsilon\) and empirical coverage at \(\CPSGreedyCov\) against a \(\CPScovTarget\) target.
 Predictive banking deepens the margin (\(\CPSGreedyImpBWcs\%\) greedy bitrate); broadband stress exposes the flip side, where safety carries the load once the ladder knee slips out of reach.
-Where co-design is worth the effort, training PPO with CPS in the loop tilts the certified point toward fidelity (\(+\CPScoDVM\) mean VMAF; bootstrap 95\% CI \([\CPScoDVMlo,\CPScoDVMhi]\)) at a finite QoE crossover \(w^{\star}{=}\CPScoWstar\) VMAF points per second of stall.
+Where co-design is worth the effort, training PPO with CPS in the loop tilts the certified point toward higher fidelity (\(+\CPScoDVM\) VMAF at \(+\CPScoDReb\)\,s rebuffering; Table~\ref{tab:cps:codesign}), with crossover \(w^{\star}{=}\CPScoWstar\) VMAF points per second of stall.
 CPS drops onto existing ABR controllers as a light wrapper---no retraining required---and it folds in cleanly with learned policies when co-design is worth the trouble.
 
 \appendix
