@@ -3,24 +3,46 @@
   "videos": {
     "train_videos": [
       "bigbuckbunny",
-      "crowd_run",
-      "tearsofsteel_short"
+      "tearsofsteel",
+      "elephants_dream",
+      "ducks",
+      "parkjoy",
+      "old_town_cross",
+      "rush_hour",
+      "into_tree",
+      "sunflower"
     ],
     "eval_videos": [
       "bigbuckbunny",
-      "crowd_run",
-      "tearsofsteel_short",
-      "sintel"
+      "tearsofsteel",
+      "sintel",
+      "elephants_dream",
+      "ducks",
+      "cosmos",
+      "parkjoy",
+      "old_town_cross",
+      "rush_hour",
+      "into_tree",
+      "sunflower",
+      "kristen_and_sara"
     ],
     "unseen_eval_videos": [
-      "sintel"
+      "sintel",
+      "cosmos",
+      "kristen_and_sara"
     ],
     "eval_videos_also_in_training": [
       "bigbuckbunny",
-      "crowd_run",
-      "tearsofsteel_short"
+      "tearsofsteel",
+      "elephants_dream",
+      "ducks",
+      "parkjoy",
+      "old_town_cross",
+      "rush_hour",
+      "into_tree",
+      "sunflower"
     ],
-    "note": "3 of 4 evaluation videos are also training videos; sintel is held out. The V14 summary reports seen/unseen/pooled separately so in-distribution and generalisation results are not conflated."
+    "note": "9 training videos; 3 held-out (sintel, cosmos, kristen_and_sara). Eval reports seen/unseen/pooled separately."
   },
   "traces": {
     "train_dir": "/root/ABR-Awareness/new/data/standardized/train_traces",
@@ -52,6 +74,17 @@
       ],
       "monotone_nondecreasing": true
     },
+    "cosmos": {
+      "vmaf_by_rung": [
+        62.76,
+        80.7,
+        78.37,
+        88.81,
+        92.16,
+        97.39
+      ],
+      "monotone_nondecreasing": false
+    },
     "crowd_run": {
       "vmaf_by_rung": [
         4.03,
@@ -63,6 +96,83 @@
       ],
       "monotone_nondecreasing": true
     },
+    "ducks": {
+      "vmaf_by_rung": [
+        8.57,
+        22.89,
+        20.04,
+        24.14,
+        33.59,
+        45.18
+      ],
+      "monotone_nondecreasing": false
+    },
+    "elephants_dream": {
+      "vmaf_by_rung": [
+        64.95,
+        82.47,
+        74.96,
+        84.2,
+        88.26,
+        96.13
+      ],
+      "monotone_nondecreasing": false
+    },
+    "into_tree": {
+      "vmaf_by_rung": [
+        46.75,
+        69.28,
+        55.39,
+        65.67,
+        73.71,
+        82.83
+      ],
+      "monotone_nondecreasing": false
+    },
+    "kristen_and_sara": {
+      "vmaf_by_rung": [
+        57.88,
+        79.27,
+        82.46,
+        91.93,
+        93.91,
+        95.44
+      ],
+      "monotone_nondecreasing": true
+    },
+    "old_town_cross": {
+      "vmaf_by_rung": [
+        42.14,
+        67.18,
+        67.24,
+        80.64,
+        84.78,
+        91.63
+      ],
+      "monotone_nondecreasing": true
+    },
+    "parkjoy": {
+      "vmaf_by_rung": [
+        16.86,
+        35.03,
+        30.87,
+        38.95,
+        49.1,
+        63.41
+      ],
+      "monotone_nondecreasing": false
+    },
+    "rush_hour": {
+      "vmaf_by_rung": [
+        64.92,
+        83.57,
+        80.31,
+        85.8,
+        90.76,
+        94.76
+      ],
+      "monotone_nondecreasing": false
+    },
     "sintel": {
       "vmaf_by_rung": [
         74.82,
@@ -73,6 +183,28 @@
         97.71
       ],
       "monotone_nondecreasing": true
+    },
+    "sunflower": {
+      "vmaf_by_rung": [
+        73.91,
+        91.2,
+        90.23,
+        95.35,
+        97.36,
+        98.78
+      ],
+      "monotone_nondecreasing": false
+    },
+    "tearsofsteel": {
+      "vmaf_by_rung": [
+        70.59,
+        87.87,
+        82.23,
+        89.19,
+        92.62,
+        96.71
+      ],
+      "monotone_nondecreasing": false
     },
     "tearsofsteel_short": {
       "vmaf_by_rung": [
@@ -86,5 +218,5 @@
       "monotone_nondecreasing": true
     }
   },
-  "vmaf_ladder_all_monotone": true
+  "vmaf_ladder_all_monotone": false
 }
