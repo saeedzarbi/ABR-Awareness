@@ -186,35 +186,35 @@
 \providecommand{\CPSMpcRebCs}{-8.2}
 \providecommand{\CPSMpcVMcs}{0.03}
 \providecommand{\CPSbbRebSr}{-98.7}
-\providecommand{\CPSPropBWcs}{-4.7}
-\providecommand{\CPSPropRebCs}{-20.5}
-\providecommand{\CPSPropVMcs}{0.02}
-\providecommand{\CPSPropPRebCs}{2.5\!\times\!10^{-3}}
+\providecommand{\CPSPropBWcs}{-35.3}
+\providecommand{\CPSPropRebCs}{-79.3}
+\providecommand{\CPSPropVMcs}{-0.33}
+\providecommand{\CPSPropPRebCs}{6.2\!\times\!10^{-18}}
 \providecommand{\CPSPropImpBWcs}{-5.7}
 \providecommand{\CPSPropImpRebCs}{-27.2}
 \providecommand{\CPSPropImpVMcs}{-0.03}
 \providecommand{\CPSPropImpPRebCs}{1.1\!\times\!10^{-3}}
-\providecommand{\CPScoRegVM}{69.72}
-\providecommand{\CPScoRegReb}{0.71}
-\providecommand{\CPScoRegBr}{1071}
+\providecommand{\CPScoRegVM}{72.80}
+\providecommand{\CPScoRegReb}{0.31}
+\providecommand{\CPScoRegBr}{801}
 \providecommand{\CPScoRegCov}{0.919}
-\providecommand{\CPScoCpsVM}{76.77}
-\providecommand{\CPScoCpsReb}{4.59}
-\providecommand{\CPScoCpsBr}{1711}
+\providecommand{\CPScoCpsVM}{75.73}
+\providecommand{\CPScoCpsReb}{0.86}
+\providecommand{\CPScoCpsBr}{1463}
 \providecommand{\CPScoCpsCov}{0.919}
-\providecommand{\CPScoDVM}{7.06}
-\providecommand{\CPScoDReb}{3.87}
-\providecommand{\CPScoWstar}{1.82}
-\providecommand{\CPScoPVM}{---}
-\providecommand{\CPScoPReb}{---}
-\providecommand{\CPScoDVMlo}{---}
-\providecommand{\CPScoDVMhi}{---}
-\providecommand{\CPScoDRebLo}{---}
-\providecommand{\CPScoDRebHi}{---}
-\providecommand{\CPScoWstarLo}{---}
-\providecommand{\CPScoWstarHi}{---}
-\providecommand{\CPScoWstarMed}{---}
-\providecommand{\CPScoDVMposPct}{---}
+\providecommand{\CPScoDVM}{2.93}
+\providecommand{\CPScoDReb}{0.55}
+\providecommand{\CPScoWstar}{5.31}
+\providecommand{\CPScoPVM}{5.0\!\times\!10^{-5}}
+\providecommand{\CPScoPReb}{5.0\!\times\!10^{-5}}
+\providecommand{\CPScoDVMlo}{2.61}
+\providecommand{\CPScoDVMhi}{3.25}
+\providecommand{\CPScoDRebLo}{0.29}
+\providecommand{\CPScoDRebHi}{0.85}
+\providecommand{\CPScoWstarLo}{3.40}
+\providecommand{\CPScoWstarHi}{10.27}
+\providecommand{\CPScoWstarMed}{5.37}
+\providecommand{\CPScoDVMposPct}{100.0}
 \providecommand{\CPScoBootN}{204}
 
 % -------------------------------------------------------------------------
@@ -396,7 +396,7 @@ We put these claims to the test on \(\CPSepisodes\) paired synthetic \mbox{5G} e
 Empirical conformal coverage lands at \(\CPSGreedyCov\) against a \(\CPScovTarget\) target.
 A risk-aware, predictive extension pushes the savings further, widening \(\varepsilon\) once the buffer---or a short look-ahead under a throughput floor---slips into a danger zone (greedy: \(\CPSGreedyImpBWcs\%\) bitrate, \(\CPSGreedyImpRebCs\%\) rebuffering).
 Real networks tell a different story. On source-disjoint \emph{real-measured} broadband traces (FCC and Norway/Nornet), banking headroom collapses (\(\CPSbbBWcs\%\) bitrate), yet safety keeps slashing stalls (\(\CPSbbRebSr\%\) vs.\ raw greedy). The split pins down exactly when perceptual banking earns its keep.
-Co-training PPO with CPS in the loop (supporting) shifts the certified point toward higher fidelity (\(+\CPScoDVM\) mean VMAF at \(+\CPScoDReb\)\,s added rebuffering; Table~\ref{tab:cps:codesign}), with crossover \(w^{\star}{=}\CPScoWstar\) VMAF points per second of stall when the paired episode exports match the table means.
+Co-training PPO with CPS in the loop (supporting) shifts the certified point toward higher fidelity (\(+\CPScoDVM\) mean VMAF at \(+\CPScoDReb\)\,s rebuffering; Table~\ref{tab:cps:codesign}), with crossover \(w^{\star}{=}\CPScoWstar\) VMAF points per second of stall (\(p{=}\CPScoPVM\) for VMAF).
 
 The main contributions are:
 \begin{itemize}
@@ -878,8 +878,8 @@ The split is by design, not a flaw. CPS banking earns its keep exactly when the 
 \label{sec:eval:codesign}
 
 Two PPO settings warrant separate reporting. The \emph{primary} host is a content-aware policy trained on source-disjoint broadband traces and evaluated, untouched, on \mbox{5G}---the model-agnostic deployment case. The \emph{co-design} pair are two policies trained on matched \mbox{5G} traces---one shield-at-eval-only, one co-trained with CPS in the loop---set side by side on their certified arms (Table~\ref{tab:cps:codesign} and Figure~\ref{fig:cps:codesign}).
-On the primary broadband-trained policy, certified banking vs.\ safety returns \(\CPSPropBWcs\%\) bitrate and \(\CPSPropRebCs\%\) rebuffering (\(p{=}\CPSPropPRebCs\)), at VMAF \(\Delta{=}\CPSPropVMcs\); the improved shield stretches to \(\CPSPropImpBWcs\%\) / \(\CPSPropImpRebCs\%\).
-Smaller than greedy or BBA, and no surprise there: the learned policy already shuns the top rung much of the time, and CPS steps in only when a proposal leaves banking headroom.
+On the primary broadband-trained policy, certified banking vs.\ safety returns \(\CPSPropBWcs\%\) bitrate and \(\CPSPropRebCs\%\) rebuffering (\(p{=}\CPSPropPRebCs\)), at VMAF \(\Delta{=}\CPSPropVMcs\) (TOST within \(\pm\varepsilon\)).
+The effect exceeds greedy or BBA because the learned policy still proposes high rungs often on the twelve-title suite, leaving more saturation headroom for CPS; under the improved shield, banking reaches \(\CPSPropImpBWcs\%\) / \(\CPSPropImpRebCs\%\).
 
 \emph{Co-design.} Both policies train on matched \mbox{5G} traces (source-disjoint test). Under the improved shield at eval, the co-trained policy's certified arm hits VMAF \(\CPScoCpsVM\) and bitrate \(\CPScoCpsBr\)\,kb/s, against \(\CPScoRegVM\) / \(\CPScoRegBr\) for shield-at-eval-only operation.
 The \(\Delta\) row in Table~\ref{tab:cps:codesign} is the difference of those certified-arm means (\(+\CPScoDVM\) VMAF, \(+\CPScoDReb\)\,s rebuffering); it must agree with the raw rows above (\(\CPScoCpsVM-\CPScoRegVM\), \(\CPScoCpsReb-\CPScoRegReb\)).

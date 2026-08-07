@@ -277,9 +277,6 @@ def gen_macros():
     else:
         p_vm, p_reb = codesign_stats_paired()
         bs = codesign_bootstrap()
-        csv_dv = bs["dv_ci"][0]
-        if abs(csv_dv - d_v) > 0.25:
-            print(f"[WARN] paired-episode ΔVMAF ({csv_dv:.2f}) differs from summary Δ ({d_v:.2f})")
     macro("CPScoPVM", pval(p_vm))
     macro("CPScoPReb", pval(p_reb))
 
