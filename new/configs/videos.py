@@ -58,7 +58,7 @@ VIDEO_SPECS: List[VideoSpec] = [
      "ladder_role": "mixed", "held_out": True},
     {"slug": "elephants_dream", "display_name": "Elephants Dream", "source": "blender",
      "ladder_role": "saturation", "held_out": False},
-    {"slug": "ducks", "display_name": "Ducks Take Off", "source": "blender",
+    {"slug": "ducks", "display_name": "Ducks Take Off", "source": "derf",
      "ladder_role": "steep", "held_out": False},
     {"slug": "cosmos", "display_name": "Cosmos Laundromat", "source": "blender",
      "ladder_role": "mixed", "held_out": True},

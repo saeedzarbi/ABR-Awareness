@@ -114,13 +114,8 @@ if [ ! -f "${RAW_DIR}/elephants_dream.mp4" ]; then
     echo "  -> ${RAW_DIR}/elephants_dream.mp4"
 else echo "[elephants_dream] exists, skip"; fi
 
-# ducks: Blender 1080p (~10 s); simulator pads to 48 chunks via synthetic VBR
-if [ ! -f "${RAW_DIR}/ducks.mp4" ]; then
-    echo "[ducks] blender mp4"
-    fetch "https://download.blender.org/demo/test/ducks_take_off_1080p.mp4" "${TMP}/ducks_src.mp4"
-    transcode_ref "${RAW_DIR}/ducks.mp4" -i "${TMP}/ducks_src.mp4"
-    echo "  -> ${RAW_DIR}/ducks.mp4"
-else echo "[ducks] exists, skip"; fi
+# ducks: Xiph DERF 1080p50 (~10 s, 500 frames); same SVT "Ducks Take Off" clip
+y4m_ref "ducks" "${DERF_Y4M}/ducks_take_off_1080p50.y4m"
 
 # cosmos: Internet Archive 1080p (held-out Blender animation)
 if [ ! -f "${RAW_DIR}/cosmos.mp4" ]; then
