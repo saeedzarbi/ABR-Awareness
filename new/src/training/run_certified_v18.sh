@@ -106,6 +106,19 @@ echo "[4b] Eval GREEDY + BBA on 5G traces with the IMPROVED shield (predictive+f
     --out "${OUT}/bba_5g_improved"
 
 echo ""
+echo "[4c] Eval BOLA + RobustMPC on 5G traces (model-agnostic contrast)"
+"${PY}" src/evaluation/eval_certified_shield_v18.py \
+    --policy bola --episodes "${EPISODES}" \
+    --epsilon "${EPSILON}" --alpha "${ALPHA}" \
+    --trace-dir "${TRACE_5G}" --buffer 12 \
+    --out "${OUT}/bola_5g"
+"${PY}" src/evaluation/eval_certified_shield_v18.py \
+    --policy mpc --episodes "${EPISODES}" \
+    --epsilon "${EPSILON}" --alpha "${ALPHA}" \
+    --trace-dir "${TRACE_5G}" --buffer 12 \
+    --out "${OUT}/mpc_5g"
+
+echo ""
 echo "=============================================================="
 echo "QUICK SIGNAL READY. Inspect:"
 echo "  ${OUT}/greedy_5g/summary.json"

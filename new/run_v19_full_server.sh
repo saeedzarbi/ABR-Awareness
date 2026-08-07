@@ -263,6 +263,20 @@ main() {
             --predictive --forecast \
             --out "${OUT}/bba_5g_improved"
 
+    run_step "CPS eval: BOLA on 5G test traces (${EPISODES} episodes)" \
+        "${PY}" src/evaluation/eval_certified_shield_v18.py \
+            --policy bola --episodes "${EPISODES}" \
+            --epsilon "${EPSILON}" --alpha "${ALPHA}" \
+            --trace-dir "${TRACE_5G}" --buffer 12 \
+            --out "${OUT}/bola_5g"
+
+    run_step "CPS eval: RobustMPC on 5G test traces (${EPISODES} episodes)" \
+        "${PY}" src/evaluation/eval_certified_shield_v18.py \
+            --policy mpc --episodes "${EPISODES}" \
+            --epsilon "${EPSILON}" --alpha "${ALPHA}" \
+            --trace-dir "${TRACE_5G}" --buffer 12 \
+            --out "${OUT}/mpc_5g"
+
     if [ "${FULL}" = "1" ]; then
         run_step "FULL: PPO training + CPS eval (proposed, pensieve, co-design)" \
             env FULL=1 SEEDS="${SEEDS:-0}" NUM_ENVS="${NUM_ENVS:-8}" \

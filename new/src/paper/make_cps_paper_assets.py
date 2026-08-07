@@ -7,6 +7,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -134,7 +135,12 @@ def gen_macros():
         M.append(f"\\newcommand{{\\{name}}}{{{val}}}")
 
     g5 = load("greedy_5g")
-    macro("CPSepisodes", "200")
+    n_ep = 204
+    ep_path = RES / "greedy_5g" / "episodes.csv"
+    if ep_path.exists():
+        with open(ep_path, encoding="utf-8") as f:
+            n_ep = sum(1 for _ in csv.DictReader(f)) // 3  # three arms per episode
+    macro("CPSepisodes", str(n_ep))
     macro("CPSepsilon", num(g5["epsilon"], 1))
     macro("CPSalpha", num(g5["alpha"], 2))
     macro("CPScovTarget", num(g5.get("coverage_target", 1 - g5["alpha"]), 2))
@@ -607,10 +613,88 @@ def gen_coverage_figure():
     _save(fig, "fig_cps_coverage.pdf", plt)
 
 
+def gen_ladder_table():
+    """Session-mean ladder summary for all twelve v19 titles."""
+    import pandas as pd
+    sys.path.insert(0, str(ROOT))
+    from configs.videos import VIDEO_SPECS
+
+    vmaf = pd.read_csv(ROOT / "data/vmaf_scores/vmaf_summary.csv")
+    siti_path = ROOT / "data/content_features/siti_summary.csv"
+    siti = pd.read_csv(siti_path).set_index("video") if siti_path.exists() else None
+
+    rows = []
+    for spec in VIDEO_SPECS:
+        slug = spec["slug"]
+        g = vmaf[vmaf["video"] == slug].sort_values("bitrate_kbps")
+        if len(g) < 6:
+            continue
+        v = {int(r.bitrate_kbps): float(r.vmaf) for r in g.itertuples()}
+        top_gain = v[6000] - v[2850]
+        span = v[6000] - v[300]
+        vals = [v[b] for b in sorted(v)]
+        mono = all(vals[i] <= vals[i + 1] for i in range(len(vals) - 1))
+        si = float(siti.loc[slug, "mean_si"]) if siti is not None and slug in siti.index else float("nan")
+        ti = float(siti.loc[slug, "mean_ti"]) if siti is not None and slug in siti.index else float("nan")
+        ho = r"\checkmark" if spec["held_out"] else "---"
+        name = spec["display_name"].replace("&", r"\&")
+        rows.append(
+            f"{name} & {ho} & {si:.1f} & {ti:.1f} & {top_gain:+.2f} & {span:.1f} & "
+            f"{'Yes' if mono else 'No'} \\\\"
+        )
+
+    body = "\n".join(rows)
+    tex = f"""% Session-mean ladder summary (v19, twelve titles) — make_cps_paper_assets.py
+\\begin{{tabularx}}{{\\linewidth}}{{@{{}}>{{\\raggedright\\arraybackslash}}X c c c c c c@{{}}}}
+\\toprule
+\\textbf{{Video}} & \\textbf{{Held-out}} & \\textbf{{SI}} & \\textbf{{TI}} &
+\\textbf{{Top gain}} & \\textbf{{Span}} & \\textbf{{Mono.}} \\\\
+\\midrule
+{body}
+\\bottomrule
+\\end{{tabularx}}
+"""
+    for d in OUT_DIRS:
+        write_all(d / "table_ladder_spacing.tex", tex)
+    print("wrote table_ladder_spacing.tex (12 titles, session-mean)")
+
+
+def gen_ladder_macros():
+    """Headline ladder macros from session-mean VMAF CSV."""
+    import pandas as pd
+    sys.path.insert(0, str(ROOT))
+    from configs.videos import ALL_VIDEOS
+
+    vmaf = pd.read_csv(ROOT / "data/vmaf_scores/vmaf_summary.csv")
+    n_nonmono = 0
+    top_gains = []
+    for slug in ALL_VIDEOS:
+        g = vmaf[vmaf["video"] == slug].sort_values("bitrate_kbps")
+        if len(g) < 6:
+            continue
+        v = g["vmaf"].tolist()
+        if not all(v[i] <= v[i + 1] for i in range(len(v) - 1)):
+            n_nonmono += 1
+        top_gains.append(float(g.iloc[-1]["vmaf"] - g.iloc[-2]["vmaf"]))
+
+    M = [
+        r"\providecommand{\LadNVideos}{12}",
+        rf"\providecommand{{\LadPctNonMonotone}}{{{100 * n_nonmono / max(len(top_gains), 1):.0f}}}",
+        rf"\providecommand{{\LadTopGainMean}}{{{np.mean(top_gains):.2f}}}",
+    ]
+    header = "% Session-mean ladder macros (v19) — make_cps_paper_assets.py\n"
+    text = header + "\n".join(M) + "\n"
+    for d in OUT_DIRS:
+        write_all(d / "macros_ladder_v19.tex", text)
+    print("wrote macros_ladder_v19.tex")
+
+
 if __name__ == "__main__":
     gen_macros()
     gen_table_full()
     gen_table_codesign()
+    gen_ladder_table()
+    gen_ladder_macros()
     gen_overview_figure()
     gen_tradeoff_figure()
     gen_cdf_figure()
