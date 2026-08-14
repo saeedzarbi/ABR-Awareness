@@ -1,0 +1,32 @@
+---
+description: Section-by-section prose polish workflow for CPS paper
+alwaysApply: false
+globs: new/src/paper/overleaf_upload/main.tex
+---
+
+# Prose editing workflow (section-by-section)
+
+## Order of sections (do not skip ahead without user approval)
+1. Abstract + Keywords
+2. Introduction (§1)
+3. Related work (§2)
+4. System model (§3)
+5. Method / CPS (§4)
+6. Evaluation (§5)
+7. Limitations + Conclusion
+8. Abstract pass (final consistency check)
+
+## Two-step model split
+1. **prose-strategist** (Opus): read section → edit plan only
+2. **prose-editor-fast** (Composer): apply plan to `main.tex`
+
+## User prompt template (Persian)
+```
+مرحله ۱: prose-strategist — plan for [Section name]
+مرحله ۲: prose-editor-fast — apply the plan to main.tex
+```
+
+## Constraints
+- Numbers, macros, citations, labels: immutable
+- One section per round; user reviews before next section
+- After each section: user compiles Overleaf or runs latexmk locally

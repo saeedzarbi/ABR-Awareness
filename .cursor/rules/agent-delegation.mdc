@@ -1,0 +1,27 @@
+---
+description: Route deep paper analysis to Opus subagent; mechanical tasks to fast worker
+alwaysApply: true
+---
+
+# Agent delegation (CPS paper project)
+
+## Use `paper-reviewer-opus` subagent when the user asks to:
+- Review, analyze, critique, or validate the paper or results
+- Check claim–evidence alignment, reviewer objections, submission readiness
+- Audit RQ1–RQ6, statistics, limitations, or co-design numbers
+
+Keep the parent conversation on Opus if no subagent is used; do not burn Opus tokens on full codebase search.
+
+## Use `cps-mechanical-worker` subagent when the user asks to:
+- Run `make_cps_paper_assets.py`, eval scripts, or shell checks
+- Verify episode counts (204), co-design sync, git status, zip overleaf_upload
+- Pull/sync/regenerate assets without interpretive analysis
+
+## Use built-in subagents automatically:
+- **Explore** — codebase/file search (fast model)
+- **Bash** — terminal commands with verbose output
+
+## Token discipline
+- Paper numbers: read `new/src/paper/overleaf_upload/tables/macros_cps.tex` and `new/results/v18_certified/*/summary.json` only.
+- Ignore paths in `.cursorignore` (models, raw_videos, encoded_multires, traces).
+- Do not re-read entire `episodes.csv` unless paired Wilcoxon/bootstrap is needed.

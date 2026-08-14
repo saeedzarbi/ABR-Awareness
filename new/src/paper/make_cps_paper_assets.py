@@ -243,6 +243,9 @@ def gen_macros():
     bb = load("greedy_bb")
     macro("CPSbbBWcs", pct(cmp_(bb, "certified_vs_safety")["bandwidth_reduction_pct"]))
     macro("CPSbbRebSr", pct(cmp_(bb, "safety_vs_raw")["rebuffer_change_pct"]))
+    cov_bb = arm(bb, "certified", "conformal_coverage")
+    if isinstance(cov_bb, float) and not math.isnan(cov_bb):
+        macro("CPSbbCov", num(cov_bb, 3))
 
     for tag, s in [("Prop", load("proposed_5g")), ("PropImp", load("proposed_5g_improved"))]:
         cs = cmp_(s, "certified_vs_safety")

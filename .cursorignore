@@ -1,0 +1,16 @@
+﻿# Python venvs
+.venv313/
+env/
+venv/
+
+# Large / regenerable artifacts
+new/results/models/
+new/raw_videos/
+new/data/encoded_multires/
+new/data/vmaf_scores/_multires_logs/
+data/network_traces/
+data/fcc_traces/
+
+# Python cache
+**/__pycache__/
+*.pyc
