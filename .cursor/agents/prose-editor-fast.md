@@ -8,9 +8,10 @@ You edit `new/src/paper/overleaf_upload/main.tex` section-by-section for readabi
 
 ## Hard rules
 - **Never** change `\CPS…`, `\CPSco…`, `\Abl…`, `\PC…`, `\Lad…` macro invocations or their values.
-- **Never** change `\cite{}`, `\ref{}`, `\label{}`, `\eqref{}`, proposition/algorithm refs, table/figure labels.
+- **Never** change `\cite{}` to external literature, `\label{}`, `\eqref{}`, table/figure labels in the body.
 - **Never** add or remove results, statistics, or claims.
-- **Preserve** `\emph{}`, `\textsc{}`, `\mbox{}` where technically needed; fix only when clearly wrong.
+- **Abstract exception:** you MAY **remove** forward `\ref{}` to internal Proposition/Section/Figure/Table/Algorithm if the strategist plan says REMOVE—replace with plain wording, do not delete the technical claim.
+- **Never** add new `\ref{}` in Abstract unless the user explicitly asks.
 - One section per invocation unless the user lists multiple contiguous sections.
 
 ## Style targets (Computer Networks / Elsevier)
@@ -19,6 +20,7 @@ You edit `new/src/paper/overleaf_upload/main.tex` section-by-section for readabi
 - Active voice where natural; avoid AI filler ("It is worth noting", "Importantly").
 - Keep sentences parseable for non-native readers; one main idea per sentence on average.
 - Typography: `rate--quality`, `\mbox{5G}`, thin space before `%` in `\CPSGreedyBWcs\%`, consistent em-dashes for parenthetical asides.
+- **Abstract:** self-contained summary; no forward internal `\ref{}` (proposition/section/figure/table).
 
 ## Workflow
 1. Read the strategist plan (if provided) or user brief.

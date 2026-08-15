@@ -351,14 +351,14 @@
 \address[uta]{Department of Computer Engineering, Faculty of Electrical and Computer Engineering, University of Tabriz, Tabriz, Iran}
 
 \begin{abstract}
-Client-side adaptive bitrate (ABR) controllers---whether heuristic, model-based, or learned---share a common blind spot that shows up chunk by chunk: a request can become unsafe when throughput swings, or wasteful once the rate--quality ladder has already saturated in Video Multimethod Assessment Fusion (VMAF).
+Client-side adaptive bitrate (ABR) controllers---whether heuristic, model-based, or learned---share a blind spot that surfaces chunk by chunk: a request can become unsafe when throughput fluctuates, or wasteful once the rate--quality ladder has already saturated in Video Multimethod Assessment Fusion (VMAF).
 We address both failure modes with a \emph{Certified Perceptual Shield} (CPS), a model-agnostic runtime projection built from three components.
-\emph{VMAF-knee bandwidth banking} lowers even feasible proposals to the smallest rung whose VMAF lies within a perceptual budget \(\varepsilon\), turning saturation into banked buffer with negligible quality loss.
+\emph{VMAF-knee bandwidth banking} lowers even feasible proposals to the smallest rung whose VMAF lies within a perceptual budget \(\varepsilon\), converting saturation into banked buffer with negligible quality loss.
 An online \emph{conformal} lower bound on throughput, calibrated with a finite-sample \((n{+}1)\) rank correction, yields distribution-free coverage \(1{-}\alpha\) under exchangeability.
-\emph{Certified feasibility} then rejects any download whose time under that bound would exceed the buffer margin, yielding a per-chunk \emph{probabilistic} stall certificate (Proposition~\ref{prop:feas})---a distribution-free guarantee under the conformal assumption, not a promise of zero stalls.
+\emph{Certified feasibility} then rejects any download whose time under that bound would exceed the buffer margin, yielding a per-chunk \emph{probabilistic} stall certificate under the conformal assumption---a distribution-free guarantee, not a promise of zero stalls.
 We evaluate CPS on \(\CPSepisodes\) paired synthetic \mbox{5G} episodes over twelve reference titles chosen for \emph{ladder} diversity, from saturation-rich animation to steep natural motion.
 Against a conformal safety-only baseline, banking significantly reduces delivered bitrate and rebuffering on every deterministic host we test (greedy through RobustMPC: \(\CPSGreedyBWcs\%\)/\(\CPSGreedyRebCs\%\) to \(\CPSMpcBWcs\%\)/\(\CPSMpcRebCs\%\)), with mean VMAF differences within \(\pm\CPSepsilon\) (TOST) and empirical coverage at \(\CPSGreedyCov\) against a \(\CPScovTarget\) target; effect sizes follow top-rung saturation, so the diversified roster yields conservative but credible savings.
-A risk-aware, predictive variant deepens banking ahead of forecast dips (greedy: \(\CPSGreedyImpBWcs\%\) bitrate, \(\CPSGreedyImpRebCs\%\) rebuffering).
+A risk-aware, predictive variant deepens banking ahead of forecast throughput dips (greedy: \(\CPSGreedyImpBWcs\%\) bitrate, \(\CPSGreedyImpRebCs\%\) rebuffering).
 As a supporting result, co-training a PPO policy with the shield in the loop shifts the certified operating point toward higher fidelity (\(+\CPScoDVM\) mean VMAF at \(+\CPScoDReb\)\,s added rebuffering vs.\ shield-at-eval-only), with QoE crossover \(w^{\star}{=}\CPScoWstar\) VMAF points per second.
 \end{abstract}
 

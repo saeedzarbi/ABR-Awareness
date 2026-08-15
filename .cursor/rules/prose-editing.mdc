@@ -27,6 +27,25 @@ globs: new/src/paper/overleaf_upload/main.tex
 ```
 
 ## Constraints
-- Numbers, macros, citations, labels: immutable
+- Numbers, macros, citations to **literature**, labels: immutable
 - One section per round; user reviews before next section
 - After each section: user compiles Overleaf or runs latexmk locally
+
+## Structural edits (prose pass — not punctuation)
+- **Abstract:** no forward `\ref{prop:…}`, `\ref{sec:…}`, `\ref{fig:…}`, `\ref{tab:…}`; self-contained wording
+- **Intro / Method:** keep Proposition and section refs where they anchor formal claims
+- prose-strategist must list every Abstract `\ref{}` as KEEP or REMOVE
+
+## Related workflow
+After prose is stable for a section, run **punctuation-editing.mdc** (`punctuation-strategist` → `punctuation-editor-fast`) for dashes/spacing only.
+
+## Combined prompt (prose + punctuation + structural)
+```
+Section: [Abstract / §1 …]
+
+Phase A: prose-strategist — flow + structural audit (Abstract refs, self-contained)
+Phase B: prose-editor-fast — apply Phase A
+Phase C: punctuation-strategist — FIX/OK checklist
+Phase D: punctuation-editor-fast — apply Phase C
+Persian summary at end.
+```
