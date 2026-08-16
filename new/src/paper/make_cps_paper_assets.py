@@ -632,7 +632,7 @@ def gen_overview_figure():
         ax.bar_label(b, fmt="%.1f", padding=2, fontsize=7.5)
     ax.set_xticks(x)
     ax.set_xticklabels([g["label"] for g in groups])
-    ax.set_ylabel("Certified vs. safety (%)")
+    ax.set_ylabel("Change vs. safety (%)")
     ax.set_ylim(0, max(g["reb"] for g in groups) * 1.18)
     ax.grid(axis="y", alpha=0.3)
     fig.legend(loc="outside lower center", ncol=3, fontsize=8.5, frameon=False)

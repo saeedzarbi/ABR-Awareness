@@ -1,0 +1,49 @@
+---
+description: Cross-section structure and content-placement workflow for CPS paper
+alwaysApply: false
+globs: new/src/paper/overleaf_upload/main.tex
+---
+
+# Structure / content-placement workflow
+
+Use when the user asks: move material between sections, add/remove blocks, reorganize formulas/figures/tables, or "آیا این بخش جای درستی دارد؟"
+
+**Not for:** line-level wording (`prose-editing.mdc`), punctuation, or claim–number audit (`paper-reviewer-opus`).
+
+## Two-step agent split
+
+| Step | Agent | Model | Output |
+|------|--------|-------|--------|
+| 1 | **structure-strategist** | Opus | English register: MOVE/ADD/CUT/REORDER + line anchors (sections A–F) |
+| 2 | **structure-synthesizer** | Composer | Persian prioritized report: MUST / SHOULD / COULD + execution order |
+
+**No auto-apply.** User approves IDs; apply moves manually or via a future `structure-editor` pass.
+
+## User prompt template (Persian)
+
+```
+Phase 1: structure-strategist — full manuscript structural audit (MOVE/ADD/CUT/REORDER).
+Phase 2: structure-synthesizer — Persian prioritized report from Phase 1.
+Do not edit main.tex.
+```
+
+## Scope boundaries
+
+| Agent | Scope |
+|-------|--------|
+| structure-strategist | Cross-section placement, redundancy, float order, appendix demotion |
+| structure-synthesizer | Prioritize + Persian summary only |
+| paper-reviewer-opus | Claims, macros, RQ evidence, reviewer attacks |
+| prose-strategist | Wording within one section |
+
+## When to run
+
+- After prose/punctuation passes, **before** final submit—or when user feels "something is in the wrong section."
+- Once per major draft; re-run after large moves only.
+
+## Applying approved moves (manual)
+
+1. Note all `\label{}` and `\ref{}` affected by MOVE.
+2. Move block; fix forward/back refs.
+3. Recompile; check float order and proposition numbering.
+4. Optional: `paper-reviewer-opus` delta if claims moved across Eval/Limits.

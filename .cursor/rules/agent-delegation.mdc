@@ -12,6 +12,12 @@ alwaysApply: true
 
 Keep the parent conversation on Opus if no subagent is used; do not burn Opus tokens on full codebase search.
 
+## Use `structure-strategist` then `structure-synthesizer` when the user asks to:
+- Audit content **placement** across sections (MOVE/ADD/CUT/REORDER)
+- Whether a formula, figure, table, or paragraph belongs elsewhere
+- Structural redundancy, section order, appendix vs body
+- See `.cursor/rules/structure-editing.mdc` — plan only; user approves before any edit
+
 ## Use `cps-mechanical-worker` subagent when the user asks to:
 - Run `make_cps_paper_assets.py`, eval scripts, or shell checks
 - Verify episode counts (204), co-design sync, git status, zip overleaf_upload
