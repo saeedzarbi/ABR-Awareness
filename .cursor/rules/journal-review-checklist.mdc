@@ -1,0 +1,55 @@
+---
+description: Journal-reviewer audit dimensions for CPS paper (professor PDF + section axes)
+alwaysApply: false
+globs: new/src/paper/overleaf_upload/main.tex
+---
+
+# Journal reviewer checklist (CPS paper)
+
+Use with **`cps-journal-reviewer`** only. Reviewer **never edits** files.
+
+## Primary sources
+
+| Source | Path |
+|--------|------|
+| Manuscript | `new/src/paper/overleaf_upload/main.tex` |
+| Twin | `new/src/paper/main.ltx` (parity check) |
+| Professor PDF notes | `pdf4_comments.md` |
+| Done / pending fixes | `pdf4_changes_summary.md`, `corrections_requested.md` |
+| Numbers | `tables/macros_cps.tex`, `tables/macros_ablation.tex`, `tables/macros_perchunk.tex` |
+
+## Review axes (every full audit)
+
+1. **Claims vs evidence** — RQ1–RQ6, macros, overclaim (co-design headline, zero-stall, best ABR).
+2. **Statistics** — paired design, Wilcoxon, TOST at ε, raw vs corrected p-values, n=204 vs 12 titles clustering.
+3. **Clarity** — pairing, Fig↔Table bridge, telegraphic §5, undefined terms (SI/TI, LOS, rung, conformal).
+4. **Notation & percentages** — signed Δ (−4.5%) vs prose ("reduced" + negative = double negative); abstract readability.
+5. **Structure** — professor MOVE items (→§2, →§5, →conclusion, after references); orphan blocks.
+6. **Related work** — gaps vs Conformal-ABR, SafeSABR, Kairos; positioning table completeness.
+7. **Tense** — author work past; method description present.
+8. **Formatting** — `\figref`/`\tabref`, `vs.\`, bitrate/rebuffering not `X%/Y%`.
+9. **Limitations honesty** — synthetic 5G, exchangeability, broadband 0.890, single-seed co-design.
+10. **Reproducibility** — macro sync, figure/table captions match data.
+
+## Professor PDF themes (verify open/closed)
+
+- Pairing unexplained (p.17) — fixed?
+- Fig 3 vs Table 5 link (p.17) — fixed?
+- Negative slash `X%/Y%` (p.18) — fixed?
+- Telegraphic eval prose (p.22) — open?
+- Section moves / deletions (p.9,14,15,16,28,29) — open?
+- Missing citations (p.17) — open?
+- Mark-only `???` — needs PDF map
+
+## Severity labels
+
+| Label | Meaning |
+|-------|---------|
+| **FATAL** | Wrong number, false claim, broken logic |
+| **MAJOR** | Reviewer would reject or demand revision |
+| **MINOR** | Clarity, style, polish |
+| **NIT** | Typography only |
+
+## Reviewer output contract
+
+Persian report; per finding: **ID**, **severity**, **section/line**, **issue**, **suggested fix**, **evidence path**. No file edits.

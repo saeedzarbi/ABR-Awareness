@@ -5,10 +5,25 @@ alwaysApply: true
 
 # Agent delegation (CPS paper project)
 
+## Review → apply pipeline (preferred for professor feedback)
+
+| Step | Agent | Model | Action |
+|------|--------|-------|--------|
+| 1 | **`cps-journal-reviewer`** | Opus (strong) | Journal + professor audit; Persian findings; **no edits** |
+| 2 | **`cps-revision-applier`** | Composer Fast (weaker) | Apply finding IDs only; edit `main.tex` + sync `main.ltx` |
+
+Checklist: `.cursor/rules/journal-review-checklist.mdc`  
+Applier scope: `.cursor/rules/revision-applier-scope.mdc`
+
+Example prompts:
+- `cps-journal-reviewer: full audit + pdf4_comments crosswalk`
+- `cps-revision-applier: apply R-001 R-005 R-010 from last review`
+
 ## Use `paper-reviewer-opus` subagent when the user asks to:
-- Review, analyze, critique, or validate the paper or results
-- Check claim–evidence alignment, reviewer objections, submission readiness
-- Audit RQ1–RQ6, statistics, limitations, or co-design numbers
+- Deep **numbers/RQ** audit vs raw JSON (narrower than journal-reviewer)
+- Claim–evidence alignment, statistics-only pass
+
+Use **`cps-journal-reviewer`** instead for section-by-section reviewer voice + professor PDF + clarity/structure/% notation.
 
 Keep the parent conversation on Opus if no subagent is used; do not burn Opus tokens on full codebase search.
 
@@ -17,6 +32,12 @@ Keep the parent conversation on Opus if no subagent is used; do not burn Opus to
 - Whether a formula, figure, table, or paragraph belongs elsewhere
 - Structural redundancy, section order, appendix vs body
 - See `.cursor/rules/structure-editing.mdc` — plan only; user approves before any edit
+
+## Use `format-editor-fast` when the user asks to:
+- Apply IEEE/Elsevier formatting rules (`font-ieee.mdc`) section by section
+- Fix `Figure`→`Fig.`, math variable mode, operators, Latin, emphasis
+- **Edit `main.tex` directly** — no Persian report (see `.cursor/rules/format-editing.mdc`)
+- Optional `format-strategist` only if user wants audit without edit first
 
 ## Use `cps-mechanical-worker` subagent when the user asks to:
 - Run `make_cps_paper_assets.py`, eval scripts, or shell checks

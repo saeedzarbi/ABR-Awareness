@@ -1,0 +1,38 @@
+{
+  "config": {
+    "trace_dir": "C:\\Users\\Saeed\\OneDrive\\Desktop\\ABR-Awareness-1\\new\\data\\standardized\\test_traces_5g",
+    "episodes": 204,
+    "alpha": 0.1,
+    "shock_start_chunk": 28,
+    "shock_len_chunks": 10,
+    "shock_scale": 0.3,
+    "warmup_chunks": 20,
+    "policy": "greedy",
+    "arm": "certified"
+  },
+  "target_coverage": 0.9,
+  "overall": {
+    "n": 5712,
+    "coverage": 0.9341736694677871
+  },
+  "by_phase": {
+    "warmup": {
+      "n": 3876,
+      "coverage": 0.6932404540763674
+    },
+    "pre": {
+      "n": 1632,
+      "coverage": 0.9283088235294118
+    },
+    "shock": {
+      "n": 2040,
+      "coverage": 0.9294117647058824
+    },
+    "post": {
+      "n": 2040,
+      "coverage": 0.9436274509803921
+    }
+  },
+  "n_chunks_valid": 5712,
+  "n_episodes": 204
+}

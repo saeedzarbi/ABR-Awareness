@@ -1,0 +1,50 @@
+---
+description: Scope for cps-revision-applier—apply reviewer checklist only
+alwaysApply: false
+globs: new/src/paper/overleaf_upload/main.tex
+---
+
+# Revision applier scope (CPS paper)
+
+Use with **`cps-revision-applier`** only. Applies fixes from an explicit reviewer report or numbered checklist—**does not re-audit**.
+
+## Editable files
+
+- `new/src/paper/overleaf_upload/main.tex` (primary)
+- `new/src/paper/main.ltx` (mirror same prose edits)
+
+## May change
+
+- Prose clarity, tense, transitions, bridge sentences (Fig↔Table, pairing).
+- Percent **presentation** in text: prefer "4.5\% reduction" over "reduced … −4.5\%" **without** editing `macros_cps.tex` values.
+  - May add once in preamble: `\newcommand{\pctmag}[1]{\strip@minus #1}` or rephrase with "by X\%" matching macro magnitude.
+- `\figref{}`, `\tabref{}`, `vs.\`, SI/TI/LOS expansions (wording only).
+- Section moves **only** when reviewer item explicitly says MOVE and user approved.
+- Citations **only** when reviewer gives exact `\cite{key}` and key exists in `references.bib`.
+
+## Must NOT change
+
+- `\CPS…`, `\Abl…`, `\PC…`, `\Lad…`, `\CPSco…` **numeric values** or macro definitions in `tables/*.tex`.
+- Equations, propositions, algorithm logic, labels (`\label{}`), `\ref{}` keys.
+- Statistical claims, episode counts, p-values, coverage numbers.
+- Invent fixes not in the reviewer report.
+
+## Workflow
+
+1. Read reviewer report (IDs or pasted checklist).
+2. Apply items in order; skip ambiguous items and list in "blocked".
+3. Sync `main.ltx` for every `main.tex` edit.
+4. Reply: items applied / skipped / blocked (English, brief).
+
+## Percent fix pattern (abstract example)
+
+```latex
+% BAD
+reduced ... (\CPSGreedyBWcs\% bitrate ...)
+
+% GOOD
+reduced delivered bitrate by 4.5--3.8\% and rebuffering by 9.3--9.2\%
+% OR use macro magnitude in prose without duplicate "reduced"+minus
+```
+
+Match magnitudes to `macros_cps.tex`; do not round differently.

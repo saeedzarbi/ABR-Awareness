@@ -1,0 +1,39 @@
+---
+description: Section-by-section IEEE/Elsevier formatting—direct edit via format-editor-fast
+alwaysApply: false
+globs: new/src/paper/overleaf_upload/main.tex
+---
+
+# Format workflow (font-ieee.mdc)
+
+Apply `.cursor/rules/font-ieee.mdc` **section by section** on **Elsevier elsarticle**
+`main.tex`. No Persian reports—**edit the file**.
+
+## Default: one agent
+
+| Agent | Action |
+|-------|--------|
+| **format-editor-fast** | Read section + rules → apply elsarticle-safe fixes in `main.tex` |
+
+Optional: **format-strategist** only if user wants audit-without-edit first.
+
+## Section order (one per round)
+
+1. Abstract + Keywords
+2. §1 Introduction → §7 Conclusion
+3. Optional full pass (`Figure` → `Fig.`)
+
+## User prompt
+
+```
+format-editor-fast: apply font-ieee.mdc to [Section name] in main.tex.
+Edit directly; brief English reply only.
+```
+
+## Do not overlap
+
+- **punctuation-editor-fast** — dashes, `\,`, `vs.\`
+- **prose-editor-fast** — wording
+- **format-editor-fast** — Fig./Table refs, math variables, Latin, emphasis
+
+Compile on Overleaf after each section.

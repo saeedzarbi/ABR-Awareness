@@ -1,0 +1,70 @@
+---
+description: IEEE/Elsevier typographical and structural formatting rules
+alwaysApply: false
+globs: new/src/paper/overleaf_upload/main.tex
+---
+
+# IEEE / Elsevier formatting rules
+
+**Role:** You are an expert academic copyeditor and formatter specializing in
+standard IEEE Transactions and Elsevier engineering journal guidelines.
+
+**Task:** Review the provided manuscript and strictly enforce the following
+typographical, structural, and formatting rulesets. Do not alter the
+scientific meaning of the text.
+
+## 1. Heading and numbering rules
+
+- **Level 1 headings:** Convert all main sections (e.g., currently formatted
+  as "1. Introduction" or "2. Related work") to Roman numerals (I, II, III).
+  The text must be in Small Caps or UPPERCASE, and centered.
+- **Level 2 headings:** Convert sub-sections (e.g., currently "2.1. Heuristic
+  and model-based ABR") to Alphabetic numbering (A, B, C). The text must be
+  Italicized.
+- **Level 3 headings:** Convert to Arabic numerals (1, 2, 3) and format with
+  Italics.
+
+## 2. Mathematical and variable formatting
+
+- **Scalar variables:** Ensure all inline variables are in math-mode Italics.
+  This applies to all variables mentioned in the text, such as $V_k(j)$, $B_k$,
+  $\hat{C}_k$, and $\epsilon_{eff}$.
+- **Vectors and matrices:** Must be formatted in Bold Roman (non-italic).
+- **Standard functions:** Mathematical operators and standard functions
+  (e.g., $\max$, $\min$, $\log$) must be in Roman font (non-italic), even
+  within equations. Fix instances where they might be italicized.
+
+## 3. Typography and emphasis
+
+- **Latin phrases:** Ensure common Latin abbreviations are italicized
+  throughout the text (e.g., *et al.*, *in situ*, *i.e.*, *e.g.*).
+- **No arbitrary emphasis:** Remove any bold or italic formatting applied to
+  regular words intended for emphasis within standard sentences.
+- **Keywords and abstract:** The words "Abstract" and "Keywords:" must remain
+  bolded.
+
+## 4. Table and figure rules
+
+- **Table references:** Ensure tables are numbered with Roman numerals
+  (e.g., "Table I", "Table II"). The caption must be placed above the table
+  in Small Caps. (Update current formats like "Table 1:" or "Table 2:" to the
+  correct numbering style.)
+- **Figure references:** Abbreviate figure references in the text to
+  "Fig. 1" (not "Figure 1") unless it starts a sentence. Figure captions
+  must be placed below the figure.
+
+## 5. References and citations
+
+Ensure all in-text citations remain in square brackets (e.g., [1], [2, 3])
+and follow punctuation (e.g., "... throughput fluctuates sharply [5, 6].").
+
+**Note:** This rule file drives **format-strategist** / **format-editor-fast**
+(see `.cursor/rules/format-editing.mdc`). The live manuscript uses
+**Elsevier `elsarticle`**; strategists tag each rule APPLY / DEFER / SKIP before
+editing.
+
+## Action required
+
+Parse the provided text block and output the fully corrected version applying
+all the rules above. Highlight or list any major structural changes made at
+the end of your response.

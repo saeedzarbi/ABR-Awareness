@@ -172,20 +172,15 @@ def write_macros(eps_rows, alpha_rows):
 
 
 def write_figure(eps_rows, alpha_rows):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.2, 2.9), constrained_layout=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.2, 3.2), layout="constrained")
 
     eps = [r["epsilon"] for r in eps_rows]
     bw = [-r["bw_cs"] for r in eps_rows]
-    vm = [r["vmaf_cs"] for r in eps_rows]
-    ax1.plot(eps, bw, "o-", color="#4C72B0", label="bitrate saved (%)")
+    ax1.plot(eps, bw, "o-", color="#4C72B0")
     ax1.set_xlabel(r"perceptual budget $\varepsilon$ (VMAF pts)")
-    ax1.set_ylabel("bitrate saved (%)", color="#4C72B0")
-    ax1.tick_params(axis="y", labelcolor="#4C72B0")
-    axr = ax1.twinx()
-    axr.plot(eps, vm, "s--", color="#DD8452", label=r"VMAF $\Delta$ (pts)")
-    axr.set_ylabel(r"VMAF $\Delta$ (pts)", color="#DD8452")
-    axr.tick_params(axis="y", labelcolor="#DD8452")
+    ax1.set_ylabel("bitrate saved (%)")
     ax1.set_title(r"Budget $\varepsilon$ sensitivity ($\alpha{=}0.10$)")
+    ax1.grid(axis="y", alpha=0.3)
 
     al = [r["alpha"] for r in alpha_rows]
     cov = [r["coverage"] for r in alpha_rows]
@@ -198,9 +193,10 @@ def write_figure(eps_rows, alpha_rows):
     ax2.set_xticklabels([f"{a:.2f}" for a in al])
     ax2.set_xlabel(r"miscoverage $\alpha$ ($\varepsilon{=}1.0$)")
     ax2.set_ylabel("conformal coverage")
-    ax2.set_ylim(0.7, 1.0)
-    ax2.legend(frameon=False, fontsize=8, loc="lower left")
+    ax2.set_ylim(0.70, 1.02)
+    ax2.legend(frameon=False, fontsize=8, loc="upper right")
     ax2.set_title("Coverage vs target")
+    ax2.grid(axis="y", alpha=0.3)
 
     for d in FIGURES:
         d.mkdir(parents=True, exist_ok=True)
