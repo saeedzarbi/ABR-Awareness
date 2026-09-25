@@ -1,0 +1,20 @@
+---
+description: Token scope for cps-related-work-reviewer — Related Work section only
+alwaysApply: false
+globs: new/src/paper/overleaf_upload/main.tex
+---
+
+# Related-work reviewer scope
+
+## Read (only)
+
+- `new/src/paper/overleaf_upload/main.tex` — `\section{Related work}` through end of `tab:rw_safety_vmaf` (do not read §3+)
+- `new/src/paper/overleaf_upload/references.bib` — grep/list keys; read full entries only for cites already in §2
+
+## Do not read
+
+- §3–§7, appendix, figures, eval JSON, macros_cps, episodes.csv, codebase
+
+## Output
+
+Persian report + optional English draft paragraph(s) for paste into §2. No file edits.

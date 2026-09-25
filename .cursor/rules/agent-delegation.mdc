@@ -25,6 +25,14 @@ Example prompts:
 
 Use **`cps-journal-reviewer`** instead for section-by-section reviewer voice + professor PDF + clarity/structure/% notation.
 
+## Use **`cps-related-work-reviewer`** when the user asks to:
+- Strengthen **§2 Related work** only (2024–26 gaps, Conformal-ABR / SafeSABR / Kairos positioning)
+- Draft positioning paragraph + table rows + bib stubs **without** full-paper audit
+
+**Token rule:** this agent reads §2 + cited bib only — **not** full `main.tex`. Prefer it over `cps-journal-reviewer` for related-work tasks.
+
+Example: `cps-related-work-reviewer: §2 only — gaps, table rows, draft paragraph, bib stubs. Persian report.`
+
 Keep the parent conversation on Opus if no subagent is used; do not burn Opus tokens on full codebase search.
 
 ## Use `structure-strategist` then `structure-synthesizer` when the user asks to:

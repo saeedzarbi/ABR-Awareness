@@ -138,7 +138,14 @@ def _summarize(rows: list[dict], alpha: float) -> dict:
     }
 
 
-def _plot(rows: list[dict], out_pdf: Path, alpha: float, shock_start: int, shock_len: int):
+def _plot(
+    rows: list[dict],
+    out_pdf: Path,
+    alpha: float,
+    shock_start: int,
+    shock_len: int,
+    warmup: int = 20,
+):
     import matplotlib.pyplot as plt
 
     # Mean rolling coverage vs chunk index (across episodes)
@@ -149,18 +156,50 @@ def _plot(rows: list[dict], out_pdf: Path, alpha: float, shock_start: int, shock
     xs = sorted(by_chunk)
     ys = [float(np.mean(by_chunk[x])) for x in xs]
 
-    fig, ax = plt.subplots(figsize=(4.6, 2.4))
-    ax.plot(xs, ys, color="#1f4e79", lw=1.2, label="Rolling coverage")
-    ax.axhline(1.0 - alpha, color="#888888", ls="--", lw=0.9, label=f"Target {1-alpha:.2f}")
-    ax.axvspan(shock_start, shock_start + shock_len, color="#f4cccc", alpha=0.7, label="Injected shock")
+    fig, ax = plt.subplots(figsize=(4.8, 2.5))
+    # Cold-start first so shock draws on top in the legend order we want.
+    ax.axvspan(0, warmup, color="#d9d9d9", alpha=0.85, label="Conformal warm-up")
+    ax.axvspan(shock_start, shock_start + shock_len, color="#f4cccc", alpha=0.75, label="Injected shock")
+    ax.plot(xs, ys, color="#1f4e79", lw=1.2, label=r"Rolling mean ($W{=}20$)")
+    ax.axhline(1.0 - alpha, color="#888888", ls="--", lw=0.9,
+               label=rf"Target $1-\alpha={1 - alpha:.2f}$")
     ax.set_xlabel("Chunk index")
     ax.set_ylabel("Conformal coverage")
     ax.set_ylim(0.0, 1.02)
-    ax.legend(loc="lower right", fontsize=7, framealpha=0.9)
+    ax.set_xlim(left=0)
+    ax.legend(loc="lower right", fontsize=6.5, framealpha=0.92)
     fig.tight_layout()
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_pdf, bbox_inches="tight")
     plt.close(fig)
+
+
+def replot_from_csv(out_dir: Path, alpha: float, shock_start: int, shock_len: int, warmup: int, rolling: int) -> Path:
+    """Regenerate the paper figure from an existing chunks.csv (no re-simulation)."""
+    import csv as _csv
+
+    csv_path = out_dir / "chunks.csv"
+    if not csv_path.exists():
+        raise FileNotFoundError(csv_path)
+    with open(csv_path, encoding="utf-8") as f:
+        rows = list(_csv.DictReader(f))
+    # coerce types used by _plot
+    for r in rows:
+        r["chunk"] = int(r["chunk"])
+        r["rolling_coverage"] = float(r["rolling_coverage"]) if r["rolling_coverage"] not in ("", "nan") else float("nan")
+    fig_path = out_dir / "fig_coverage_drift.pdf"
+    _plot(rows, fig_path, alpha, shock_start, shock_len, warmup=warmup)
+    # also copy into paper figure dirs if present
+    paper_figs = [
+        _ROOT / "src" / "paper" / "overleaf_upload" / "figures" / "fig_cps_coverage_drift.pdf",
+        _ROOT / "src" / "paper" / "figures" / "fig_cps_coverage_drift.pdf",
+    ]
+    import shutil
+    for dest in paper_figs:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(fig_path, dest)
+        print(f"[copy] {dest}")
+    return fig_path
 
 
 def main():
@@ -176,7 +215,19 @@ def main():
     ap.add_argument("--rolling", type=int, default=20, help="rolling window for plot (chunks)")
     ap.add_argument("--out", type=Path, default=P["project_root"] / "results/v18_certified/coverage_drift")
     ap.add_argument("--no-plot", action="store_true")
+    ap.add_argument(
+        "--replot-only",
+        action="store_true",
+        help="Rebuild fig from existing chunks.csv (SCI-04 Path C); do not re-run episodes.",
+    )
     args = ap.parse_args()
+
+    if args.replot_only:
+        fig = replot_from_csv(
+            args.out, args.alpha, args.shock_start, args.shock_len, args.warmup, args.rolling,
+        )
+        print(f"Replotted {fig}")
+        return
 
     base = build_base_env(args.trace_dir, buffer_max=None, blind=False)
     cfg = CPShieldConfig(
@@ -225,7 +276,7 @@ def main():
 
     fig_path = out_dir / "fig_coverage_drift.pdf"
     if not args.no_plot:
-        _plot(all_rows, fig_path, args.alpha, args.shock_start, args.shock_len)
+        _plot(all_rows, fig_path, args.alpha, args.shock_start, args.shock_len, warmup=args.warmup)
         summary["figure"] = str(fig_path)
 
     print(json.dumps(summary, indent=2))

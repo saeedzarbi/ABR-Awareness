@@ -11,10 +11,17 @@ and emits LaTeX tables, macros, and a two-panel figure showing that (i) banking
 magnitude and its (small) perceptual cost scale smoothly with epsilon, and
 (ii) empirical conformal coverage tracks the finite-sample target 1 - alpha,
 so the headline results are not overfit to a single (epsilon, alpha) choice.
+
+Path A (SCI-02): the default cell (eps=1.0, alpha=0.10) is taken from the
+headline evaluation ``results/v18_certified/greedy_5g`` so Table 5 and the
+sensitivity default row are the same run. Other sweep cells are evaluated
+separately under the same seeding protocol.
 """
 from __future__ import annotations
 
+import argparse
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -34,6 +41,7 @@ from configs.videos import CPS_EPISODES
 EVAL = HERE.parent / "eval_certified_shield_v18.py"
 TRACE_DIR = "data/standardized/test_traces_5g_v18"
 OUT = NEW_ROOT / "results" / "ablation_eps_alpha"
+HEADLINE = NEW_ROOT / "results" / "v18_certified" / "greedy_5g"
 PAPER = NEW_ROOT / "src" / "paper"
 TABLES = [PAPER / "overleaf_upload" / "tables", PAPER / "tables"]
 FIGURES = [PAPER / "overleaf_upload" / "figures", PAPER / "figures"]
@@ -63,6 +71,20 @@ def run_eval(eps: float, alpha: float, tag: str) -> Path:
     return out / "summary.json"
 
 
+def sync_headline_default() -> Path:
+    """Copy headline greedy_5g artifacts into ablation eps_1.0 (default cell)."""
+    if not (HEADLINE / "summary.json").exists():
+        raise FileNotFoundError(f"missing headline summary: {HEADLINE}")
+    dest = OUT / f"eps_{ALPHA_FIXED_EPS}"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in ("summary.json", "episodes.csv"):
+        src = HEADLINE / name
+        if src.exists():
+            shutil.copy2(src, dest / name)
+            print(f"[reuse] {src} -> {dest / name}")
+    return dest / "summary.json"
+
+
 def load(summary: Path) -> dict:
     d = json.loads(summary.read_text())
     cs = d["comparisons"]["certified_vs_safety"]
@@ -82,22 +104,43 @@ def load(summary: Path) -> dict:
     }
 
 
-def main():
+def collect_rows(*, run_missing: bool) -> tuple[list[dict], list[dict]]:
+    """Build eps/alpha rows; default cell always from headline greedy_5g."""
     OUT.mkdir(parents=True, exist_ok=True)
-    eps_rows, alpha_rows = [], []
+    default_summary = sync_headline_default()
 
+    eps_rows: list[dict] = []
     for eps in EPS_LIST:
-        s = run_eval(eps, EPS_FIXED_ALPHA, f"eps_{eps}")
-        r = load(s); r["epsilon"] = eps; eps_rows.append(r)
+        if abs(eps - ALPHA_FIXED_EPS) < 1e-9:
+            s = default_summary
+        else:
+            s = OUT / f"eps_{eps}" / "summary.json"
+            if not s.exists():
+                if not run_missing:
+                    raise FileNotFoundError(s)
+                s = run_eval(eps, EPS_FIXED_ALPHA, f"eps_{eps}")
+        r = load(s)
+        r["epsilon"] = eps
+        eps_rows.append(r)
 
+    alpha_rows: list[dict] = []
     for alpha in ALPHA_LIST:
         if abs(alpha - EPS_FIXED_ALPHA) < 1e-9:
-            # reuse eps=1.0, alpha=0.10 run
-            s = OUT / f"eps_{ALPHA_FIXED_EPS}" / "summary.json"
+            s = default_summary
         else:
-            s = run_eval(ALPHA_FIXED_EPS, alpha, f"alpha_{alpha}")
-        r = load(s); r["alpha"] = alpha; alpha_rows.append(r)
+            s = OUT / f"alpha_{alpha}" / "summary.json"
+            if not s.exists():
+                if not run_missing:
+                    raise FileNotFoundError(s)
+                s = run_eval(ALPHA_FIXED_EPS, alpha, f"alpha_{alpha}")
+        r = load(s)
+        r["alpha"] = alpha
+        alpha_rows.append(r)
 
+    return eps_rows, alpha_rows
+
+
+def emit(eps_rows: list[dict], alpha_rows: list[dict]) -> None:
     write_eps_table(eps_rows)
     write_alpha_table(alpha_rows)
     write_macros(eps_rows, alpha_rows)
@@ -108,6 +151,18 @@ def main():
     print("\n== alpha sweep ==")
     for r in alpha_rows:
         print(r)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--rebuild-only",
+        action="store_true",
+        help="Reuse existing non-default summaries + headline greedy_5g; do not run evals.",
+    )
+    args = ap.parse_args()
+    eps_rows, alpha_rows = collect_rows(run_missing=not args.rebuild_only)
+    emit(eps_rows, alpha_rows)
 
 
 def write_eps_table(rows):
