@@ -9,8 +9,9 @@ alwaysApply: true
 
 | Step | Agent | Model | Action |
 |------|--------|-------|--------|
-| 1 | **`cps-journal-reviewer`** | Opus (strong) | Journal + professor audit; Persian findings; **no edits** |
-| 2 | **`cps-revision-applier`** | Composer Fast (weaker) | Apply finding IDs only; edit `main.tex` + sync `main.ltx` |
+| 1 | **`cps-professor`** | Opus, **one section** | Professor taste only; ≤8 edits; **no file edits** |
+| 2 | **`cps-revision-applier`** | Composer Fast | Apply those before/after strings only |
+| 3 | **`cps-journal-reviewer`** | Opus | Full journal audit; use only when a full review is requested |
 
 Checklist: `.cursor/rules/journal-review-checklist.mdc`  
 Applier scope: `.cursor/rules/revision-applier-scope.mdc`

@@ -1,9 +1,9 @@
 # Cover letter — Computer Networks
 
 **To:** The Editors, *Computer Networks*  
-**From:** Pedram Salehpour (corresponding author), on behalf of Saeed Zarbi and Leili Farzinvash  
+**From:** Leili Farzinvash (corresponding author), on behalf of Saeed Zarbi and Pedram Salehpour  
 **Affiliation:** Department of Computer Engineering, Faculty of Electrical and Computer Engineering, University of Tabriz, Tabriz, Iran  
-**Email:** psalehpour@tabrizu.ac.ir  
+**Email:** l.farzinvash@tabrizu.ac.ir  
 **Manuscript title:** Certified Perceptual Shielding for Adaptive Bitrate Streaming  
 
 ---
@@ -27,9 +27,9 @@ Suggested highlights (also in `Highlights.txt`):
 Thank you for your consideration.
 
 Sincerely,  
-Pedram Salehpour  
+Leili Farzinvash  
 Corresponding author  
-psalehpour@tabrizu.ac.ir  
+l.farzinvash@tabrizu.ac.ir  
 
 ---
 
