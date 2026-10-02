@@ -182,7 +182,8 @@ def _vmaf(env, j: int) -> float:
 def certified_safe_action(env, action, cfg: CPShieldConfig, est: ConformalThroughputEstimator):
     """Return (safe_action, intervened, info)."""
     info = {"banked_bits": 0.0, "vmaf_given_up": 0.0, "tp_lb_kbps": 0.0,
-            "banked": 0, "safety_downgrade": 0}
+            "banked": 0, "safety_downgrade": 0, "emergency": 0,
+            "cold_start": 0, "buffer_before": 0.0}
     try:
         if not cfg.enabled:
             return int(action), 0, info
@@ -212,6 +213,9 @@ def certified_safe_action(env, action, cfg: CPShieldConfig, est: ConformalThroug
 
         if buf <= cfg.min_buffer:
             info["safety_downgrade"] = int(a != 0)
+            info["emergency"] = 1
+            info["cold_start"] = int(len(est._ratios) < cfg.conformal.min_calib) if cfg.enable_conformal else 0
+            info["buffer_before"] = buf
             return 0, int(a != 0), info
 
         va = _vmaf(env, a)
@@ -279,6 +283,9 @@ def certified_safe_action(env, action, cfg: CPShieldConfig, est: ConformalThroug
         info["banked"] = int(j_knee < a and safe == j_knee)
         info["safety_downgrade"] = int(target < j_knee)
         info["knee_idx"] = int(j_knee)
+        info["emergency"] = 0
+        info["cold_start"] = int(len(est._ratios) < cfg.conformal.min_calib) if cfg.enable_conformal else 0
+        info["buffer_before"] = buf
         return int(safe), intervened, info
     except Exception:
         return int(action), 0, info
@@ -343,6 +350,11 @@ class CertifiedPerceptualShieldWrapper(gym.Wrapper):
         info["vmaf_given_up"] = float(sinfo.get("vmaf_given_up", 0.0))
         info["tp_lb_kbps"] = tp_lb
         info["conformal_coverage"] = (self.cover_hits / self.cover_total) if self.cover_total else float("nan")
+        info["bound_held"] = int(tp_lb > 0.0 and realized >= tp_lb) if (tp_lb > 0.0 and realized > 0.0) else 0
+        info["emergency"] = int(sinfo.get("emergency", 0))
+        info["cold_start"] = int(sinfo.get("cold_start", 0))
+        info["buffer_before"] = float(sinfo.get("buffer_before", 0.0))
+        info["safety_downgrade"] = int(sinfo.get("safety_downgrade", 0))
         return obs, reward, terminated, truncated, info
 
 

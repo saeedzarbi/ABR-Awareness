@@ -1,0 +1,29 @@
+{
+  "policy": "greedy",
+  "arm": "certified",
+  "episodes": 204,
+  "epsilon": 1.0,
+  "alpha": 0.1,
+  "n_chunks": 9792,
+  "rebuffer_total_s": 7556.980995659128,
+  "rebuffer_mean_per_episode_s": 37.04402448852514,
+  "seconds": {
+    "emergency": 0.0,
+    "cold_start": 6898.784827034791,
+    "bound_miss": 658.1961686243367,
+    "bound_held": 0.0
+  },
+  "seconds_pct": {
+    "emergency": 0.0,
+    "cold_start": 91.2902233179835,
+    "bound_miss": 8.709776682016495,
+    "bound_held": 0.0
+  },
+  "stall_chunks": {
+    "emergency": 0,
+    "cold_start": 371,
+    "bound_miss": 165,
+    "bound_held": 0
+  },
+  "priority": "emergency > cold_start > bound_miss > bound_held"
+}

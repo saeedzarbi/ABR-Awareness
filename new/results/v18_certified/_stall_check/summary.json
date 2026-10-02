@@ -1,0 +1,54 @@
+{
+  "tag": "greedy",
+  "epsilon": 1.0,
+  "alpha": 0.1,
+  "coverage_target": 0.9,
+  "conformal_method": "split-conformal (n+1) finite-sample lower bound",
+  "arms": {
+    "certified": {
+      "rebuffer_total": {
+        "mean": 87.07473154961343,
+        "ci_lo": 77.76025444857265,
+        "ci_hi": 96.54159818832304
+      },
+      "rebuffer_p95_chunk": {
+        "mean": 11.176850752512948,
+        "ci_lo": 8.540159830155197,
+        "ci_hi": 13.946572149890462
+      },
+      "rebuffer_p99_chunk": {
+        "mean": 30.662094414585994,
+        "ci_lo": 27.136025632061617,
+        "ci_hi": 34.00679978287215
+      },
+      "stallfree": {
+        "mean": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 0.0
+      },
+      "vmaf_mean": {
+        "mean": 87.35499999999999,
+        "ci_lo": 78.9985625,
+        "ci_hi": 94.0559375
+      },
+      "bitrate_mean_kbps": {
+        "mean": 6000.0,
+        "ci_lo": 6000.0,
+        "ci_hi": 6000.0
+      },
+      "buffer_mean": {
+        "mean": 8.686389108136327,
+        "ci_lo": 8.50070692472332,
+        "ci_hi": 8.866838926734927
+      },
+      "interv_rate": {
+        "mean": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 0.0
+      },
+      "conformal_coverage": 0.9177083333333333,
+      "conformal_coverage_meets_target": true
+    }
+  },
+  "comparisons": {}
+}
