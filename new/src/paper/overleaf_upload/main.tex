@@ -383,7 +383,7 @@ titles with diverse rate--quality ladders. Compared with a safety-only
 shield, banking reduces delivered bitrate by 3.8--4.5\% and rebuffering by
 8.9--9.3\% for four deterministic controllers. Mean VMAF stays within one
 point (equivalence test). Empirical coverage is \(\CPSGreedyCov\) against a \(\CPScovTarget\) target, and the first \(20\) of \(48\) chunks in each episode use a fixed fallback scale.
-Under a wider risk budget, predictive banking reaches 14.6\% bitrate and 12.6\% rebuffering savings versus safety at the default budget. A larger static budget can cut rebuffering further (Section~\ref{sec:eval:improved}). On real fixed and mobile broadband traces,
+As a supporting mechanism study, risk-aware predictive banking (CPS-P) reaches 14.6\% bitrate and 12.6\% rebuffering savings versus safety at the default budget; a larger static \(\varepsilon{=}2\) cuts rebuffering further (Section~\ref{sec:eval:improved}). On real fixed and mobile broadband traces,
 banking gains fall to about 0.9\%. A feasibility projection removes about
 98.7\% of stall time versus unshielded greedy, which already stalls for most of those sessions. Banking therefore
 pays off where ladders saturate. The broadband stall cut is a feasibility effect, not evidence that the conformal bound transfers.
@@ -410,7 +410,7 @@ Requesting those rungs when the buffer is healthy consumes bandwidth that could 
 
 A runtime shield sits between the base policy and the player~\cite{alshiekh2018shielding,konighofer2025shields,gu2024safereview}. It checks each proposed representation before download and replaces an unsafe proposal.
 The standard repair decrements the representation index until a buffer-feasibility test passes.
-That repair is content-blind, because it ignores VMAF saturation. It also sets throughput pessimism with a hand-tuned factor that carries no coverage guarantee.
+That repair is content-blind, because it ignores VMAF saturation. Prior shields often apply a fixed throughput scale without a stated coverage guarantee. CPS uses the same kind of fallback scale only during a short warm-up (\(W_{\mathrm{calib}}{=}20\) chunks), then switches to an online split-conformal lower bound with finite-sample coverage.
 Deployed ladders carry exploitable structure---rate--quality saturation near the top.
 That structure supports perceptually negligible bitrate reductions while freeing additional buffer capacity.
 
@@ -429,9 +429,9 @@ The main contributions are:
 
   \item \textbf{Isolated banking evaluation.} Paired \textsc{Raw}, \textsc{Safety}, and \textsc{Certified} rollouts on greedy, BBA, BOLA, RobustMPC, and PPO hosts. We report Wilcoxon tests on bitrate and rebuffering, and two one-sided tests (TOST) of VMAF within \(\pm\varepsilon\)~\cite{lakens2017equivalence}.
 
-  \item \textbf{Risk-aware, predictive banking.} A perceptual budget conditioned on the buffer and a short look-ahead that pre-banks before forecast dips. At comfortable buffers it keeps the base budget \(\varepsilon\); under risk it widens up to a larger budget \(\varepsilon_{\mathrm{risk}}\).
+  \item \textbf{Optional predictive banking (supporting).} A buffer- and look-ahead-conditioned perceptual budget (CPS-P) that widens to \(\varepsilon_{\mathrm{risk}}\) under risk. Section~\ref{sec:eval:improved} compares it with static \(\varepsilon\) sweeps; a larger static budget can cut rebuffering further.
 
-  \item \textbf{Regime characterization.} Banking gains concentrate where top rungs are often feasible (primary \mbox{5G} suite with a moderate buffer). Real-trace broadband stress is dominated by safety projection.
+  \item \textbf{Regime characterization.} Banking gains concentrate where ladders saturate at the top and hosts request those rungs (primary \mbox{5G} suite). Real-trace broadband stress is dominated by safety projection.
 
   \item \textbf{Policy--shield co-design (supporting).} An optional single-seed PPO study with CPS in the training loop. We report the QoE weight \(w^{\star}\) at which this co-trained policy crosses shield-at-eval-only operation, but we do not treat the arm as a headline claim.
 \end{itemize}
@@ -441,7 +441,7 @@ The banking effect is the \textsc{Certified} minus \textsc{Safety} contrast. The
 We run \(\CPSepisodes\) paired \mbox{5G} episodes over twelve titles, with a perceptual budget \(\varepsilon{=}\CPSepsilon\) and a tolerated miss rate \(\alpha{=}\CPSalpha\). Certified banking reduces mean bitrate and rebuffering on greedy, BBA, BOLA, and RobustMPC (\tabref{tab:cps:full}).
 For greedy, banking reduces bitrate by 4.5\% and rebuffering by 9.3\%.
 Mean VMAF stays within \(\pm\varepsilon\) by TOST, and empirical coverage is \(\CPSGreedyCov\) against a \(\CPScovTarget\) target.
-On greedy, the risk-aware variant reduces bitrate by 14.6\% and rebuffering by 12.6\% relative to safety at the default budget \(\varepsilon{=}\CPSepsilon\) (Section~\ref{sec:eval:improved}).
+Optional CPS-P and static \(\varepsilon\) sweeps appear in Section~\ref{sec:eval:improved}.
 On real fixed and mobile broadband traces from the FCC Measuring Broadband America program and the Norway/Nornet logs~\cite{fcc2015mba,kvalbein2014}, banking gains narrow to about 0.9\% bitrate reduction (certified vs.\ safety).
 Conformal feasibility still reduces stalls by about 98.7\% vs.\ raw greedy on those traces. That host already stalls for most of the session, so the cut is a feasibility effect.
 These results indicate where perceptual banking is effective.
@@ -855,7 +855,7 @@ We organized the evaluation around four research questions:
 \begin{itemize}
   \item[\textbf{RQ1}] \emph{Banking vs.\ safety.} Does VMAF-knee banking reduce bitrate and rebuffering relative to conformal safety-only projection, with VMAF inside \(\pm\varepsilon\)?
   \item[\textbf{RQ2}] \emph{Coverage.} Does empirical conformal coverage meet the finite-sample target \(1{-}\alpha\)?
-  \item[\textbf{RQ3}] \emph{Predictive banking.} Relative to the default budget \(\varepsilon\), does a risk-aware look-ahead that may widen to \(\varepsilon_{\mathrm{risk}}\) change bitrate and rebuffering savings?
+  \item[\textbf{RQ3}] \emph{Budget extensions (supporting).} Relative to the default budget \(\varepsilon\), do CPS-P or a larger static \(\varepsilon\) change bitrate and rebuffering savings?
   \item[\textbf{RQ4}] \emph{Robustness.} Do the gains of RQ1--RQ3 persist on the non-monotone per-chunk ladder? Do they remain stable as \(\varepsilon\) and \(\alpha\) vary?
 \end{itemize}
 A supporting single-seed co-design study appears in Section~\ref{sec:eval:codesign}; no certified claim rests on it.
@@ -893,7 +893,7 @@ Banking behaved consistently across all four deterministic hosts on the twelve-t
 On steep, non-saturated ladders (\tabref{tab:ladder:spacing}) the absolute savings stay modest. This is what the mechanism predicts: banking pays off only where the ladder saturates. Every host nevertheless remains perceptually near-lossless.
 Partitioning the greedy certified--safety contrast by session-mean top-rung VMAF gain (\tabref{tab:ladder:spacing}) made that dependence explicit. On titles with top gain at most \(2\) VMAF points (Big Buck Bunny, Sintel, Sunflower, Kristen \& Sara; \(n{=}60\) episodes) banking saved \(4.6\%\) bitrate and \(9.9\%\) rebuffering. On steep titles with top gain at least \(9\) (Park Joy, Ducks Take Off, Into Tree; \(n{=}51\)) the same contrast shrank to \(2.1\%\) bitrate and \(3.7\%\) rebuffering. The pooled greedy headline (4.5\% bitrate saved and 9.3\% rebuffering reduced) therefore mixed both regimes rather than reflecting a saturation-only subset.
 Mean VMAF differences were perceptually negligible, at \(\CPSGreedyVMcs\), \(\CPSBbaVMcs\), \(\CPSBolaVMcs\), and \(\CPSMpcVMcs\) points across greedy, BBA, BOLA, and RobustMPC, with every value inside \(\pm\varepsilon\) by TOST.
-The two shield layers split the work. Against \textsc{Raw}, certified greedy reduced rebuffering by 55.5\% (BBA: 51.0\%). Conformal safety removed most of the stall time relative to \textsc{Raw}; banking added the rest of the headroom.
+The two shield layers split the work. On greedy, mean rebuffering per \(\sim\!192\,\mathrm{s}\) episode (\(48\) chunks) falls from \(\CPSGreedyRawReb\)\,s (\textsc{Raw}) to \(\CPSGreedySafReb\)\,s (\textsc{Safety}) and \(\CPSGreedyCertReb\)\,s (\textsc{Certified}). Against \textsc{Raw}, certified greedy reduced rebuffering by 55.5\% (BBA: 51.0\%). Conformal safety removed most of the stall time relative to \textsc{Raw}; banking added the certified--safety margin on top.
 \figref{fig:cps:tradeoff} and \figref{fig:cps:cdf} show per-episode operating points and rebuffering CDFs for greedy and BBA.
 Coverage followed a distinct pattern on the primary \mbox{5G} pool. Empirical coverage there was \(\CPSGreedyCov\) (greedy) and \(\CPSBbaCov\) (BBA) against a \(\CPScovTarget\) target, at or above the nominal level on this pool, consistent with the \((n{+}1)\) conformal calibration at these episode lengths (Section~\ref{sec:method:conformal}).
 Because coverage depends on the throughput trace and the conformal calibrator rather than the base policy, it was identical (\(\CPSGreedyCov\)) across every host and shield variant on the \mbox{5G} test set (\figref{fig:cps:coverage}).
@@ -1082,7 +1082,7 @@ At \(\alpha{=}0.05\) the mean was \(0.945\), marginally below the \(0.95\) targe
 \textbf{Scope.}
 CPS is an auditable, model-agnostic mechanism with two stages. First, it banks bandwidth on VMAF-saturated ladder knees inside a stated perceptual budget. Second, it enforces download feasibility under a conformal throughput lower bound with target coverage \(1{-}\alpha\), where \(\alpha\) is the tolerated miss rate.
 We state the limits of the claim plainly. CPS does not claim dominance over every ABR controller. Its feasibility guarantee is probabilistic rather than deterministic: coverage holds at the \(1{-}\alpha\) level when calibration residuals are exchangeable, and we claim no pathwise worst-case bound.
-The benefit also depends on the network regime. Banking gains accrue where high rungs are often feasible, as in the moderate-buffer primary \mbox{5G} suite. Under broadband stress, the safety projection dominates and banking headroom decreases.
+The benefit also depends on the network regime and ladder shape. On the primary \mbox{5G} suite, conformal safety already cuts mean greedy rebuffering from \(\CPSGreedyRawReb\)\,s to \(\CPSGreedySafReb\)\,s per \(\sim\!192\,\mathrm{s}\) episode; certified banking trims it further to \(\CPSGreedyCertReb\)\,s. Banking gains accrue where session-mean ladders saturate at the top and the host requests those rungs, not because high rungs are jointly feasible on every chunk. Under broadband stress, the safety projection dominates and banking headroom decreases.
 
 \textbf{Local ladder inversions.}
 \figref{fig:ladder} shows that, chunk by chunk, a sizable share of adjacent rungs in titles such as Sintel and Big Buck Bunny run near-flat or inverted. A higher bitrate then scores no better, and sometimes worse, in VMAF.
@@ -1116,7 +1116,7 @@ Showing that the finite-sample coverage guarantee withstands these real-world pe
 
 We present the Certified Perceptual Shield (CPS), a conformal shielding layer for client-side ABR. CPS combines three parts: bandwidth banking at the VMAF knee, an online conformal throughput lower bound with finite-sample coverage under residual exchangeability, and a certified buffer-feasibility test.
 We evaluate CPS on \(\CPSepisodes\) paired \mbox{5G} episodes from twelve titles with diverse ladders. Relative to the safety-only conformal projection, banking lowers delivered bitrate by 3.8--4.5\% and rebuffering by 8.9--9.3\%. This holds for every deterministic host, from greedy to RobustMPC. Mean VMAF stays inside the tolerance \(\pm\CPSepsilon\) VMAF points. Empirical coverage of the throughput lower bound is \(\CPSGreedyCov\), against a target of \(\CPScovTarget\), including warm-up chunks that use the fallback scale.
-Relative to safety at \(\varepsilon{=}\CPSepsilon\), predictive banking reaches 14.6\% bitrate and 12.6\% rebuffering savings on greedy; a larger static budget can cut rebuffering further. Two regimes therefore appear. Banking supplies the savings while the ladder knee lies inside the observable operating range. Under broadband stress the knee moves beyond that range, and a feasibility projection---not a transferred conformal bound---accounts for the stall cut against raw greedy.
+Optional CPS-P and static budget sweeps (Section~\ref{sec:eval:improved}) show that widening \(\varepsilon\) via look-ahead or a fixed larger value can deepen bitrate savings; static \(\varepsilon{=}2\) still cuts greedy rebuffering more than CPS-P at the default budget. Two regimes therefore appear. Banking supplies the savings while the ladder knee lies inside the observable operating range. Under broadband stress the knee moves beyond that range, and a feasibility projection---not a transferred conformal bound---accounts for the stall cut against raw greedy.
 A supporting single-seed experiment co-trains PPO with CPS in the loop (Section~\ref{sec:eval:codesign}). It gains \(+\CPScoDVM\) VMAF at \(+\CPScoDReb\)\,s of rebuffering, with a QoE crossover weight \(w^{\star}{=}\CPScoWstar\).
 CPS attaches to an existing ABR controller as a lightweight wrapper and needs no retraining, and it can also wrap a learned policy. Spare perceptual quality therefore becomes a budget that the client can measure and spend under a finite-sample guarantee.
 
