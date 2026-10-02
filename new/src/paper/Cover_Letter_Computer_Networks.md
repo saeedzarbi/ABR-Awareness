@@ -4,13 +4,13 @@
 **From:** Leili Farzinvash (corresponding author), on behalf of Saeed Zarbi and Pedram Salehpour  
 **Affiliation:** Department of Computer Engineering, Faculty of Electrical and Computer Engineering, University of Tabriz, Tabriz, Iran  
 **Email:** l.farzinvash@tabrizu.ac.ir  
-**Manuscript title:** Certified Perceptual Shielding for Adaptive Bitrate Streaming  
+**Manuscript title:** Conformal Perceptual Shielding for Adaptive Bitrate Streaming  
 
 ---
 
 Dear Editors,
 
-Please consider our manuscript, *Certified Perceptual Shielding for Adaptive Bitrate Streaming*, for publication in *Computer Networks*.
+Please consider our manuscript, *Conformal Perceptual Shielding for Adaptive Bitrate Streaming*, for publication in *Computer Networks*.
 
 Client-side ABR controllers still risk per-chunk stalls under volatile throughput and waste bandwidth when commercial rate ladders are perceptually saturated. We propose the Certified Perceptual Shield (CPS), a model-agnostic runtime projection that wraps any ABR policy. CPS combines VMAF-knee bandwidth banking, an online split-conformal throughput lower bound with a per-chunk stall coverage target, and a buffer-feasibility check. On synthetic 5G episodes, banking reduces bitrate and rebuffering versus a safety-only shield while keeping mean VMAF within one point; on real broadband traces, banking gains shrink and conformal safety drives stall reduction. These results align with the journal’s interest in measured networking systems, QoE, and principled online control under uncertainty.
 
