@@ -67,10 +67,13 @@
 \setcounter{topnumber}{3}
 \setcounter{bottomnumber}{2}
 \setcounter{totalnumber}{5}
-% Reduce extra space at top of float-only pages
+% Two-column pages are \flushbottom: a column of stacked figures stretches
+% \@fpsep (default plus 2fil) to match a full table column. Keep floats packed.
+\raggedbottom
 \makeatletter
 \setlength{\@fptop}{0pt}
-\setlength{\@fpbot}{0pt plus 1fil}
+\setlength{\@fpsep}{6pt}
+\setlength{\@fpbot}{0pt}
 \makeatother
 
 % Evaluation figures: scale by line width so on-page text matches Fig. 9/10.
@@ -895,21 +898,21 @@ The certified intervention rate falls as the host becomes more conservative: \(\
 \begin{figure}[!htbp]
     \centering
     \evalfig{figures/fig_cps_overview.pdf}
-    \caption{CPS banking overview (certified vs.\ safety, \(\CPSepisodes\) paired episodes, \(\varepsilon{=}\CPSepsilon\)). For two synthetic \mbox{5G} hosts and a broadband host, bars show percent bitrate saved, percent rebuffering reduced, and mean VMAF cost (mean VMAF difference in points, \textsc{Certified} minus \textsc{Safety}). Banking is significant and perceptually near-lossless on \mbox{5G} (magnitude scales with ladder saturation) but collapses on broadband, where top rungs are rarely jointly feasible and saturated.}
+    \caption{CPS banking overview (certified vs.\ safety, \(\CPSepisodes\) paired episodes, \(\varepsilon{=}\CPSepsilon\)). Bars show percent bitrate saved, percent rebuffering reduced, and mean VMAF difference in points (\textsc{Certified} minus \textsc{Safety}) for two synthetic \mbox{5G} hosts and one broadband host.}
     \label{fig:cps:overview}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \evalfig{figures/fig_cps_coverage.pdf}
-    \caption{Per-episode conformal coverage of the certified arm on the synthetic \mbox{5G} test pool (\(\alpha{=}\CPSalpha\), target \(\CPScovTarget\), dashed). Coverage depends only on the throughput trace and calibrator, so the distribution is host-invariant by construction on this pool (RQ2).}
+    \caption{Per-episode conformal coverage of the certified arm on the synthetic \mbox{5G} test pool (\(\alpha{=}\CPSalpha\), target \(\CPScovTarget\), dashed). The distribution is host-invariant on this pool (RQ2).}
     \label{fig:cps:coverage}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \evalfig{figures/fig_cps_tradeoff.pdf}
-    \caption{Per-episode operating points on synthetic \mbox{5G} (paired seeds). Diamonds mark arm means. Safety removes catastrophic stalls relative to \textsc{Raw}; certified banking further reduces rebuffering at nearly unchanged mean VMAF.}
+    \caption{Per-episode operating points on synthetic \mbox{5G} (paired seeds). Diamonds mark arm means (\textsc{Raw}, \textsc{Safety}, \textsc{Certified}).}
     \label{fig:cps:tradeoff}
 \end{figure}
 
@@ -950,7 +953,7 @@ The sliding residual window then keeps phase-mean coverage on target after calib
 \begin{figure}[!htbp]
     \centering
     \evalfig{figures/fig_cps_coverage_drift.pdf}
-    \caption{Episode-averaged rolling conformal coverage (\(W{=}20\) chunks) under an injected throughput shock (red band; \(0.3\times\) scale, chunks \(28\)--\(37\)) on the synthetic \mbox{5G} pool. Grey band: conformal warm-up (chunks \(0\)--\(19\)). Dashed line: target \(1{-}\alpha{=}\CPScovTarget\). Phase-mean coverage after warm-up is \(0.928\) / \(0.929\) / \(0.944\) (pre / shock / post); the rolling curve is below target during warm-up by construction.}
+    \caption{Episode-averaged rolling conformal coverage (\(W{=}20\) chunks) under an injected throughput shock (red band; \(0.3\times\) scale, chunks \(28\)--\(37\)) on the synthetic \mbox{5G} pool. Grey band: conformal warm-up (chunks \(0\)--\(19\)). Dashed line: target \(1{-}\alpha{=}\CPScovTarget\).}
     \label{fig:cps:coverage_drift}
 \end{figure}
 
@@ -1009,7 +1012,7 @@ Per-chunk operation was sound: it eliminated residual budget violations at the c
 \begin{figure}[t]
   \centering
   \evalfig{figures/fig_cps_perchunk.pdf}
-  \caption{Per-chunk vs.\ pooled ladder banking across the perceptual budget \(\varepsilon\). Left: banked bitrate is comparable (slightly larger per-chunk). Right: realized per-chunk perceptual cost stays under \(\varepsilon\) for the per-chunk shield; the pooled shield tracks it closely on average but violates the budget on a minority of chunks.}
+  \caption{Per-chunk vs.\ pooled ladder banking across the perceptual budget \(\varepsilon\). Left: banked bitrate for both shields. Right: realized per-chunk perceptual cost for both shields against \(\varepsilon\).}
   \label{fig:cps:perchunk}
 \end{figure}
 
