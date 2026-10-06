@@ -534,10 +534,11 @@ Unlike Comyco, where VMAF enters only the learned objective~\cite{huang2019comyc
 \label{sec:system}
 
 This section formalizes client-side ABR at the chunk timescale.
-We assume a single client, exogenous trace throughput \(C^{\mathrm{tr}}_k\), and deterministic buffer updates given \((s_k,a^{\mathrm{exec}}_k,C^{\mathrm{tr}}_k)\); cross-layer scheduling and transport adaptation are out of scope.
-A base policy proposes a ladder index; CPS applies a deterministic projection before download; the player then updates the buffer under realized throughput.
-The subsections below define the architecture, the state--action--reward tuple, the ladder saturation that banking exploits, and the download and buffer dynamics.
-CPS internals---the conformal bound, safety set, and knee rule---are deferred to Section~\ref{sec:method} so \(\underline{C}_k\) is defined before use.
+We assume a single client, exogenous trace throughput \(C^{\mathrm{tr}}_k\) at chunk index \(k\), and deterministic buffer updates given \((s_k,a^{\mathrm{exec}}_k,C^{\mathrm{tr}}_k)\), where \(s_k\) is the client state and \(a^{\mathrm{exec}}_k\) the executed ladder rung (\tabref{tab:notation}).
+Cross-layer scheduling and transport adaptation are out of scope.
+Shield projection is deterministic at each step; certification of the conformal throughput lower bound is probabilistic (Section~\ref{sec:method}).
+The subsections below define the architecture, the state--action--reward tuple, the ladder saturation that bandwidth banking exploits, and the download and buffer dynamics.
+Section~\ref{sec:method} defines the shield and \(\underline{C}_k\).
 \tabref{tab:notation} collects the symbols used throughout.
 
 \begin{cps@table}
@@ -555,7 +556,7 @@ CPS internals---the conformal bound, safety set, and knee rule---are deferred to
     \(B_k\), \(m\), \(B_{\mathrm{crit}}\) & buffer level, safety margin, critical buffer \\
     \(V_k(j)\), \(\sigma_k(j)\) & VMAF and size (bits) of rung \(j\) at chunk \(k\) \\
     \(\varepsilon\), \(\varepsilon_{\mathrm{eff}}\), \(\varepsilon_{\mathrm{risk}}\) & perceptual budget, effective/risk-mode budget \\
-    \(C^{\mathrm{tr}}_k\), \(\hat{C}_k\), \(C^{\mathrm{act}}_k\), \(\underline{C}_k\) & emulator trace rate; conformal predictor; realized; lower bound \\
+    \(C^{\mathrm{tr}}_k\), \(\hat{C}_k\), \(C^{\mathrm{act}}_k\), \(\underline{C}_k\) & simulator trace rate; conformal predictor; realized; lower bound \\
     \(W_{\mathrm{calib}}\), \(\rho_{\mathrm{fb}}\) & residual warm-up length, fallback scale before calibration \\
     \(\alpha\), \(1{-}\alpha\) & conformal miscoverage, target coverage \\
     \(r{=}C^{\mathrm{act}}/\hat{C}\), \(W\), \(\kappa\) & residual ratio, residual window, predictor horizon \\
@@ -570,49 +571,59 @@ CPS internals---the conformal bound, safety set, and knee rule---are deferred to
 \subsection{Streaming architecture and control loop}
 
 We work in the standard Hypertext Transfer Protocol (HTTP) adaptive-streaming abstraction~\cite{yin2015control,mao2017neural,sodagar2011mpeg}.
-A video origin or content delivery network (CDN) publishes \(L\) encoded representations.
-We index them by \(\mathcal{B}=\{0,\ldots,L{-}1\}\); the Dynamic Adaptive Streaming over HTTP (DASH) or HTTP Live Streaming (HLS) manifest carries the matching per-chunk sizes and perceptual metadata.
+A video origin or Content Delivery Network (CDN) publishes \(L\) encoded rungs.
+We index them by \(\mathcal{B}=\{0,\ldots,L{-}1\}\); the DASH/HLS manifest carries the matching per-chunk sizes and perceptual metadata.
 At decision step \(k\), the client fetches chunk \(k\) while holding a playout buffer \(B_k\).
-The effective trace throughput \(C^{\mathrm{tr}}_k\) is exogenous to the controller: the ABR client reacts to measured delivery rates, not to radio-scheduler internals.
-This matches mobile access traces where blockage and mobility shift capacity abruptly~\cite{narayanan2021variegated,cisco2023}.
+The effective trace throughput \(C^{\mathrm{tr}}_k\) is exogenous to the ABR client.
+The client observes measured delivery rates but not radio-scheduler internals.
+This matches abrupt capacity shifts on mobile access traces where blockage and mobility change throughput~\cite{narayanan2021variegated,cisco2023}.
 
-A base policy \(\pi\) (heuristic or learned) maps an augmented state \(s_k\)---buffer occupancy, throughput history, manifest lookahead, and the VMAF ladder (defined below)---to a proposed action \(a^{\mathrm{raw}}_k\in\mathcal{B}\).
+A base policy \(\pi\) (heuristic or learned) maps an augmented state \(s_k\), including buffer occupancy, throughput history, manifest lookahead, and the VMAF ladder (defined below), to a proposed action \(a^{\mathrm{raw}}_k\in\mathcal{B}\).
 Before chunk \(k\) is downloaded, the Certified Perceptual Shield \(\mathcal{S}\) applies the deterministic projection
 \begin{equation}
 \label{eq:shield-map}
     \big(a^{\mathrm{exec}}_k,\iota_k\big)=\mathcal{S}\!\left(s_k,a^{\mathrm{raw}}_k\right),\qquad a^{\mathrm{exec}}_k\in\mathcal{B},\ \ \iota_k\in\{0,1\},
 \end{equation}
-The projection returns the executed representation index \(a^{\mathrm{exec}}_k\) and an intervention bit \(\iota_k\), which indicates whether the projection altered the proposal.
-Only \(a^{\mathrm{exec}}_k\) feeds the chunk download and buffer dynamics~\eqref{eq:buffer}; \figref{fig:arch} traces the \(a^{\mathrm{raw}}_k\!\rightarrow\!\mathcal{S}\!\rightarrow\!a^{\mathrm{exec}}_k\) path.
+The projection returns the executed rung index \(a^{\mathrm{exec}}_k\) and an intervention bit \(\iota_k\), which indicates whether the projection altered the proposal.
+Only \(a^{\mathrm{exec}}_k\) feeds the chunk download and buffer dynamics~\eqref{eq:buffer}.
+\figref{fig:arch} traces the \(a^{\mathrm{raw}}_k\!\rightarrow\!\mathcal{S}\!\rightarrow\!a^{\mathrm{exec}}_k\) path.
 
 \begin{figure}[!htbp]
     \centering
     \adjustbox{width=\linewidth}{\input{figures/fig_system_arch_tikz.tex}}%
-    \caption{Control loop. The base policy proposes \(a^{\mathrm{raw}}_k\); CPS banks on the VMAF knee and projects the proposal to \(a^{\mathrm{exec}}_k\) using the conformal lower bound \(\underline{C}_k\) (Section~\ref{sec:method}). Training-only dashed paths (critic, dual variables) are optional for RL hosts.}
+    \caption{Control loop. The base policy proposes \(a^{\mathrm{raw}}_k\); CPS banks on the VMAF knee and projects the proposal to \(a^{\mathrm{exec}}_k\) using the conformal lower bound \(\underline{C}_k\) (Section~\ref{sec:method}). Dashed critic and dual paths are optional and used only during RL training; they are not required at inference.}
     \label{fig:arch}
 \end{figure}
 
-Decisions advance on the chunk clock, one step per playback duration \(T_{\mathrm{c}}\) (\(4\,\mathrm{s}\) in our emulator)~\cite{mao2017neural,yin2015control}.
+Decisions advance on the chunk clock, one step per playback duration \(T_{\mathrm{c}}\) (set to \(4\,\mathrm{s}\) in our simulator)~\cite{mao2017neural,yin2015control}.
 
-The two layers serve distinct roles. Optional learned-host training (Section~\ref{sec:system:cmdp}) handles stall and smoothness budgets in expectation over rollouts~\cite{paternain2019dual,achiam2017constrained}. However, it does not guarantee per-step stall avoidance from throughput uncertainty alone. CPS supplies a separate layer: given a conformal lower bound \(\underline{C}_k\) (Section~\ref{sec:method}), it deterministically projects \(a^{\mathrm{raw}}_k\) to a feasible rung; marginal coverage of \(C^{\mathrm{act}}_k\ge\underline{C}_k\) is probabilistic at rate \(1{-}\alpha\)~\cite{alshiekh2018shielding,vovk2005algorithmic}.
+Optional training-time CMDP learning (Section~\ref{sec:system:cmdp}) enforces budgets on stall time and smoothness in expectation over rollouts~\cite{paternain2019dual,achiam2017constrained}.
+It does not guarantee per-step stall avoidance from throughput uncertainty alone.
+At runtime, CPS deterministically projects \(a^{\mathrm{raw}}_k\) to a feasible rung using a conformal lower bound \(\underline{C}_k\) (Section~\ref{sec:method}); marginal coverage \(C^{\mathrm{act}}_k\ge\underline{C}_k\) holds at rate \(1{-}\alpha\)~\cite{alshiekh2018shielding,vovk2005algorithmic}.
 
 \subsection{State, action, reward, and nonlinear perceptual mapping}
 
-\emph{State \(s_k\).}
+\textbf{State \(s_k\).}
 The observation holds buffer occupancy, past throughput samples, and the previous decision.
-It also includes manifest lookahead: upcoming chunk sizes across the representation ladder, plus spatial complexity (SI) and temporal complexity (TI) indices~\cite{yin2015control,sodagar2011mpeg,mao2017neural} (higher SI/TI indicate richer spatial or temporal structure in the chunk).
-The VMAF ladder \(\{V_k(j)\}_{j\in\mathcal{B}}\) completes the observation, where \(V_k(j)\) is the perceptual score for chunk \(k\) at representation \(j\)~\cite{li2016vmaf}.
+It also includes manifest lookahead: upcoming chunk sizes across the rung ladder, plus the spatial complexity index (SI) and temporal complexity index (TI), which measure texture and motion richness~\cite{yin2015control,sodagar2011mpeg,mao2017neural}.
+Higher SI/TI indicate richer spatial or temporal structure in the chunk.
+The VMAF ladder \(\{V_k(j)\}_{j\in\mathcal{B}}\) completes the observation, where \(V_k(j)\) is the perceptual score for chunk \(k\) at rung \(j\)~\cite{li2016vmaf}.
 This last component is essential: without \(\{V_k(j)\}\), neither a learned host nor CPS can detect the content-dependent ladder saturation that bandwidth banking exploits.
 
-\emph{Nonlinear, content-dependent fidelity.}
-Saturation arises because quality does not scale linearly with rate: for each chunk \(k\), the map \(j\mapsto V_k(j)\) is not affine in the discrete index \(j\).
-This map also varies across chunks. Different group-of-pictures (GOP) and texture structures yield different marginal VMAF gains between adjacent rungs. Therefore, the bitrate-to-VMAF relationship is both nonlinear and content-dependent.
-Consequently, adjacent rungs may differ by a few VMAF points or by more than ten. Quality often saturates at the upper rungs of the ladder---precisely the structure that CPS banking exploits~\cite{li2016vmaf}. Perceptually aware, JND-based per-title encoding aims to remove this saturation at authoring time~\cite{menon2022perceptual}. In contrast, CPS exploits any saturation that remains in a deployed ladder at decision time.
+\textbf{Nonlinear, content-dependent fidelity.}
+Saturation arises because quality does not scale linearly with rate: for each chunk \(k\), the map \(j\mapsto V_k(j)\) is not affine in the discrete rung index \(j\).
+This map also varies across chunks.
+Different Group-of-Pictures (GOP) structures and texture content yield different marginal VMAF gains between adjacent rungs.
+Therefore, the bitrate-to-VMAF relationship is both nonlinear and content-dependent.
+Consequently, adjacent rungs may differ by a few VMAF points or by more than ten.
+Quality often saturates at the upper rungs of the ladder---precisely the structure that bandwidth banking exploits.
+CPS exploits any saturation that remains in a deployed ladder at decision time.
+In contrast, perceptually aware Just-Noticeable Difference (JND)-based per-title encoding aims to remove this saturation at authoring time~\cite{menon2022perceptual}.
 
-\emph{Action.}
-\(a^{\mathrm{raw}}_k\in\mathcal{B}\) is the policy's proposed representation index for chunk \(k\); the environment executes only \(a^{\mathrm{exec}}_k\).
+\textbf{Action.}
+\(a^{\mathrm{raw}}_k\in\mathcal{B}\) is the policy's proposed rung index for chunk \(k\); the environment executes only \(a^{\mathrm{exec}}_k\).
 
-\emph{QoE surrogate.}
+\textbf{QoE surrogate.}
 Keeping to RobustMPC/Pensieve reporting conventions~\cite{yin2015control,mao2017neural}, we log a scalar per-chunk surrogate with fidelity \(q_k \equiv V_k\!\left(a^{\mathrm{exec}}_k\right)\):
 \begin{equation}
 \label{eq:qoe-rep}
@@ -620,27 +631,33 @@ Keeping to RobustMPC/Pensieve reporting conventions~\cite{yin2015control,mao2017
 \end{equation}
 where \(\text{smooth}_k=\lvert q_k-q_{k-1}\rvert\) is the absolute VMAF change between adjacent chunks and \(\tau^{\mathrm{stall}}_k\) is the stall duration at step \(k\).
 The first chunk takes a zero smoothness term.
-Our shared emulator fixes \(\beta{=}4.3\) per stall second and \(\mu{=}1.0\) per absolute VMAF-point change. The symbol \(\alpha\) remains reserved for the conformal miscoverage throughout.
-The rebuffering weight is a Pensieve-style penalty, rescaled onto the VMAF fidelity axis.
+Our shared simulator fixes \(\mu\) and \(\beta\) in~\eqref{eq:qoe-rep} as reported in Section~\ref{sec:eval}; \(\beta\) is the rebuffering (stall) weight and \(\mu\) the smoothness weight.
+The symbol \(\alpha\) denotes conformal miscoverage elsewhere, not a QoE weight.
+The rebuffering penalty is rescaled onto the VMAF fidelity axis in Pensieve style.
 Session QoE sums over chunks: \(\sum_{k\in\mathcal{K}_e}\mathrm{QoE}^{\mathrm{(rep)}}_{k}\) (Section~\ref{sec:eval}).
 For a learned host, optional RL training substitutes a Lagrangian CMDP objective over rollouts (\ref{app:cmdp})~\cite{altman1999constrained,paternain2019dual}.
 
 \subsection{Ladder saturation}
 \label{sec:system:ladder}
 
-The evaluated system reports one VMAF value per representation and video (pooled per-frame scores), so shield decisions operate on a per-title session-mean ladder that does not vary with chunk index \(k\).
-\tabref{tab:ladder:spacing} summarizes session-mean ladders for \(\LadNVideos\) publicly available reference titles (five Blender animations and seven natural-motion Xiph DERF clips, including Ducks Take Off); \figref{fig:ladder} illustrates per-chunk spread on a four-title subset with frame-level VMAF logs (Big Buck Bunny, Tears of Steel, Sintel, and CrowdRun). CrowdRun is not among the twelve titles in \tabref{tab:ladder:spacing}.
-Across the twelve-title suite, \(\LadPctNonMonotone\%\) exhibits a non-monotone session-mean ladder. Mid-ladder inversions concentrate at the \(750{\to}1200\,\mathrm{kbps}\) step; the top three rungs (\(1850\), \(2850\), \(6000\,\mathrm{kbps}\)) remain nondecreasing on every title. The mean top-rung gain (6000 vs.\ 2850\,kbps) is only \(\LadTopGainMean\) VMAF points. This pattern reflects strong saturation on animation titles (e.g.\ Big Buck Bunny at \(+0.03\)) but steeper climbs on natural content (e.g.\ Park Joy at \(+14.3\)).
+The evaluated system reports one VMAF value per rung and video (pooled per-frame scores), so shield decisions operate on a per-title session-mean ladder that does not vary with chunk index \(k\).
+\tabref{tab:ladder:spacing} summarizes session-mean ladders for \(\LadNVideos\) publicly available reference titles (five Blender animations and seven natural-motion Xiph DERF clips, including Ducks Take Off).
+\figref{fig:ladder} illustrates per-chunk spread on three titles with frame-level VMAF logs (Big Buck Bunny, Tears of Steel, and Sintel).
+Across the twelve-title suite, \(\LadPctNonMonotone\%\) exhibits a non-monotone session-mean ladder. Mid-ladder inversions concentrate at the \(750{\to}1200\,\mathrm{kbps}\) step; the top three rungs (\(1850\), \(2850\), \(6000\,\mathrm{kbps}\)) remain nondecreasing on every title. The mean top-rung gain (6000 vs.\ 2850\,kbps) is only \(\LadTopGainMean\) VMAF points.
+The session-mean top-rung gain averages across titles; saturated animation titles can appear nearly flat in \figref{fig:ladder} despite this mean.
+This pattern reflects strong saturation on animation titles (e.g.\ Big Buck Bunny at \(+0.03\)) but steeper climbs on natural content (e.g.\ Park Joy at \(+14.3\)).
 Two properties make banking worthwhile. First, many adjacent pairs differ by at most one VMAF point on saturated titles, so a single-step downgrade costs almost nothing perceptually. Second, the top rungs saturate frequently, allowing the knee rule~\eqref{eq:knee} to bank bytes with no material quality loss.
 On the four titles with a nondecreasing session-mean ladder (\tabref{tab:ladder:spacing}), max-VMAF and max-index feasible choices coincide (Proposition~\ref{prop:collapse}).
 The same equivalence holds for the upper three rungs on every title; greedy banking operates mainly there.
 CPS instead picks the smallest rung within the perceptual budget, preserving near-lossless downshifts under saturation.
-Chunk-level inversions appear in \figref{fig:ladder} for the logged subset. However, banking does not depend on them. Section~\ref{sec:eval:perchunk} shows that the knee rule remains effective. It banks more when the shield observes the raw per-chunk ladder.
+Shield decisions use session-mean ladders, but per-chunk VMAF can invert locally.
+Chunk-level inversions appear in \figref{fig:ladder} for the logged subset.
+Banking does not depend on them; Section~\ref{sec:eval:perchunk} shows that the knee rule remains effective and banks more when the shield observes the raw per-chunk ladder.
 
 \begin{figure}[!htbp]
     \centering
     \evalfiglarge{figures/fig_ladder_perchunk.pdf}
-    \caption{Representation ladder from per-frame VMAF on four titles with frame logs (Big Buck Bunny, Tears of Steel, Sintel, CrowdRun; \(\LadNChunks\) chunks). CrowdRun is absent from the twelve-title session-mean table. The banking ablation in Section~\ref{sec:eval:perchunk} uses \(\PCnChunks\) chunks from a different per-chunk export of the same four-title family. (a)~Per-video pooled ladder (markers) against the per-chunk range (shaded). (b)~Adjacent-rung VMAF gaps; the dashed line marks a zero gap.}
+    \caption{Per-chunk VMAF ladders on three titles with frame logs (Big Buck Bunny, Tears of Steel, Sintel; \(\LadNChunks\) chunks). (a)~Session-mean pooled ladder (markers) and per-chunk min--max range (shaded). (b)~Adjacent-rung VMAF gaps; the dashed line marks zero gain. Section~\ref{sec:eval:perchunk} uses \(\PCnChunks\) chunks from a separate per-chunk export for the banking ablation.}
     \label{fig:ladder}
 \end{figure}
 
@@ -649,17 +666,19 @@ Chunk-level inversions appear in \figref{fig:ladder} for the logged subset. Howe
     \label{tab:ladder:spacing}
     \centering
     \evaltable{\input{tables/table_ladder_spacing.tex}}
-    \tablenote{Top gain is VMAF(6000)\( - \)VMAF(2850) in kbps; Span is VMAF(6000)\( - \)VMAF(300). Mono.\ marks a non-decreasing session-mean ladder. Held-out titles (\checkmark) are excluded from PPO training. SI/TI are spatial/temporal complexity indices.}
+    \tablenote{Held-out (\checkmark): excluded from PPO training. SI/TI: spatial/temporal complexity indices. Top gain: session-mean VMAF at 6000\,kbps minus session-mean VMAF at 2850\,kbps. Span: session-mean VMAF at 6000\,kbps minus session-mean VMAF at 300\,kbps. Mono.: non-decreasing session-mean ladder across rungs.}
 \end{cps@table}
 
 \subsection{Chunk-timescale dynamics}
 
 \subsubsection{Throughput and latency}
-Let \(C^{\mathrm{tr}}_k>0\) be the trace-derived effective throughput, in kb/s, for chunk \(k\).
-Section~\ref{sec:method} defines a separate predictor \(\hat{C}_k\) (harmonic mean of recent realizations) that enters \(\underline{C}_k\). \(C^{\mathrm{act}}_k\) is the realized throughput of the executed download.
-Every method sees the same throughput trace in paired evaluations.
-The choice of \(a^{\mathrm{exec}}_k\) sets the manifest payload size \(\sigma_{k}(a^{\mathrm{exec}}_k)\) in bits.
-Write \(\tilde{C}_k=\max\{C^{\mathrm{tr}}_k,\varepsilon_0\}\) for a small constant \(\varepsilon_0{>}0\) (the same numerical guard as in~\eqref{eq:dl}), and \(d_k(j)=\sigma_{k}(j)/(10^3\tilde{C}_k)\) for the nominal download duration of rung \(j\). The executed chunk uses \(d_k\equiv d_k(a^{\mathrm{exec}}_k)\)~\cite{yin2015control}. Feasibility timing under \(\underline{C}_k\) is defined in Section~\ref{sec:method}.
+Let \(C^{\mathrm{tr}}_k>0\) be the trace-derived effective throughput for chunk \(k\).
+Section~\ref{sec:method} defines predictor \(\hat{C}_k\) (harmonic mean of recent realizations); the conformal construction yields lower bound \(\underline{C}_k\) fed to the shield.
+The realized throughput of the executed download is \(C^{\mathrm{act}}_k\).
+In paired evaluations, every method observes the same trace \(C^{\mathrm{tr}}_k\) and, given \(a^{\mathrm{exec}}_k\), downloads the same manifest payload size \(\sigma_{k}(a^{\mathrm{exec}}_k)\) in bits.
+Let \(\tilde{C}_k=\max\{C^{\mathrm{tr}}_k,\varepsilon_0\}\) for a small constant \(\varepsilon_0{>}0\) (the same numerical guard as in~\eqref{eq:dl}), and \(d_k(j)=\sigma_{k}(j)/(10^3\tilde{C}_k)\) for the nominal download duration of rung \(j\).
+The executed chunk uses \(d_k\equiv d_k(a^{\mathrm{exec}}_k)\)~\cite{yin2015control}.
+Feasibility timing under \(\underline{C}_k\) is defined in Section~\ref{sec:method}.
 
 \subsubsection{Buffer and stall}
 Let \(B_k\ge 0\) be the buffered playback time when the download of chunk \(k\) begins~\cite{yin2015control,mao2017neural}.
@@ -686,7 +705,10 @@ Co-design wraps the training environment in CPS, so the actor--critic observes t
 \section{Method: Certified Perceptual Shield}
 \label{sec:method}
 
-CPS is a model-agnostic wrapper around any base policy that proposes \(a^{\mathrm{raw}}_k\in\mathcal{B}\). The projection is deterministic: for fixed inputs it always returns the same executed rung. What it certifies is probabilistic, because feasibility is tested against a conformal throughput lower bound that holds with probability at least \(1-\alpha\), where \(\alpha\) is the tolerated miss rate.
+A base policy proposes a ladder rung; CPS applies a deterministic projection before download; the player then updates the buffer under realized throughput.
+CPS is a model-agnostic wrapper around any base policy that proposes \(a^{\mathrm{raw}}_k\in\mathcal{B}\).
+The projection is deterministic: for fixed inputs it always returns the same executed rung.
+What it certifies is probabilistic, because feasibility is tested against a conformal throughput lower bound that holds with probability at least \(1-\alpha\), where \(\alpha\) is the tolerated miss rate.
 The rest of this section covers the conformal estimator, the banking and feasibility projection (Algorithm~\ref{alg:cps}), a predictive extension, optional PPO co-training, and the evaluation arms.
 
 \subsection{Conformal throughput lower bound}
@@ -995,7 +1017,7 @@ Co-design remained a supporting result under a single training seed (Section~\re
 \label{sec:eval:perchunk}
 
 The headline runs applied the knee rule to each title's pooled session-mean ladder (\tabref{tab:ladder:spacing}): four of twelve ladders are fully nondecreasing, while the other eight are non-monotone only at mid-ladder (\(750{\to}1200\,\mathrm{kbps}\)); the top three rungs remain nondecreasing on every title. We therefore tested whether banking remained effective on the true per-chunk ladders, which were often non-monotone (\(\PCinvPct\%\) of the \(\PCnChunks\) chunks held at least one inverted adjacent pair; \figref{fig:ladder}).
-The per-chunk ablation uses the four titles with frame-level VMAF logs (Big Buck Bunny, Tears of Steel, Sintel, CrowdRun), the same family as \figref{fig:ladder}. CrowdRun is not in the twelve-title session-mean roster of \tabref{tab:ladder:spacing}. The ablation reads \(\PCnChunks\) chunks from the aggregated per-chunk export; the figure aggregates \(\LadNChunks\) chunks from raw per-frame JSON, so the two counts differ.
+The per-chunk ablation uses frame-level VMAF logs on Big Buck Bunny, Tears of Steel, and Sintel---the same three titles as \figref{fig:ladder}---plus an auxiliary CrowdRun export that is not in the twelve-title session-mean roster of \tabref{tab:ladder:spacing}. The ablation reads \(\PCnChunks\) chunks from the aggregated per-chunk export; the figure aggregates \(\LadNChunks\) chunks from raw per-frame JSON, so the two counts differ.
 To test this, we replay the deterministic banking stage on the per-chunk logs. We compare a shield that sees only the pooled ladder with one that sees the per-chunk ladder (\tabref{tab:perchunk}, \figref{fig:cps:perchunk}). Banking alone depended on VMAF; the feasibility projection ignored it and stayed identical in both cases, which isolated the effect of the pooling simplification.
 Three findings held at the default \(\varepsilon{=}\PCeps\), spanning correctness, savings, and pooling error.
 First, the knee rule remained well defined on inverted ladders and banked more, not less: mean saved bitrate was \(\PCbwPerchunk\%\) per-chunk against \(\PCbwPooled\%\) pooled, because a lower rung that inverted above the proposal satisfied the budget immediately---inversions widened banking opportunity rather than breaking the rule.

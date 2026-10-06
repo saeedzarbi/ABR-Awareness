@@ -46,7 +46,7 @@ mpl.rcParams.update(
 REPO = Path(__file__).resolve().parents[4]
 NEW = REPO / "new"
 sys.path.insert(0, str(NEW))
-from configs.videos import ALL_VIDEOS, DISPLAY_NAMES  # noqa: E402
+from configs.videos import DISPLAY_NAMES, resolve_slug  # noqa: E402
 
 VMAF_DIR = NEW / "data" / "vmaf_scores"
 SITI_DIR = NEW / "data" / "content_features"
@@ -54,8 +54,12 @@ TABLES = NEW / "src" / "paper" / "tables"
 FIGURES = NEW / "src" / "paper" / "figures"
 RESULTS = NEW / "results"
 
-VIDEOS = list(ALL_VIDEOS)
-VIDEO_LABEL = {slug: DISPLAY_NAMES.get(slug, slug) for slug in VIDEOS}
+# Frame-level VMAF JSON on disk for §3 / fig:ladder only (excludes auxiliary crowd_run).
+LADDER_FRAMELOG_SLUGS = ["bigbuckbunny", "tearsofsteel_short", "sintel"]
+VIDEOS = list(LADDER_FRAMELOG_SLUGS)
+VIDEO_LABEL = {
+    slug: DISPLAY_NAMES.get(resolve_slug(slug), slug) for slug in VIDEOS
+}
 BITRATES = [300, 750, 1200, 1850, 2850, 6000]
 CHUNK_DURATION = 4.0
 # Adjacent rungs are treated as perceptually indistinguishable below this gap;
