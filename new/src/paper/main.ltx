@@ -404,17 +404,17 @@ That repair is content-blind: it ignores VMAF saturation near the top of the lad
 None of these lines combines all three ingredients that we need: a model-agnostic post-shield that overwrites an unsafe proposal, a stated conformal throughput lower bound, and VMAF-knee bandwidth banking that downshifts early on saturated upper rungs to reserve headroom.
 
 We introduce a \emph{Certified Perceptual Shield} (CPS) that targets exactly this gap.
-Until the calibration window fills---the first \(W_{\mathrm{calib}}{=}20\) chunks---CPS uses a fixed fallback throughput scale.
+Until a short warm-up of recent chunks fills the calibration window, CPS uses a fixed fallback throughput scale.
 It then switches to an online split-conformal lower bound with finite-sample coverage:
 \begin{enumerate}
-  \item \textbf{VMAF-knee bandwidth banking.} Even a feasible action is lowered to the smallest rung whose VMAF lies within a perceptual budget \(\varepsilon\) (in VMAF points) of the proposal. The downshift is perceptually bounded, and reclaimed bytes bank as buffer for later chunks.
-  \item \textbf{Conformal throughput lower bound.} Download-time tests use an online split-conformal lower bound on throughput. Under residual exchangeability, the bound covers the next chunk with probability at least \(1{-}\alpha\), where \(\alpha\) is the tolerated miss rate. Calibration uses recent residual ratios~\cite{vovk2005algorithmic,angelopoulos2023gentle}.
-  \item \textbf{Certified feasibility.} After banking, CPS prefers a rung whose predicted download time under the throughput lower bound still fits in the remaining buffer (minus a small safety margin). Two emergency cases force the lowest rung instead: (i)~no higher rung passes that test, or (ii)~the current buffer \(B_k\) is already at or below a critical floor \(B_{\mathrm{crit}}\), so the player must request the cheapest chunk. Only when the downloaded rung passes the test and \(B_k\ge 0.1\,\mathrm{s}\) does this yield a per-chunk probabilistic stall certificate at level \(1{-}\alpha\); it is not a promise of zero stalls.
+  \item \textbf{VMAF-knee bandwidth banking.} Even a feasible action is lowered to the smallest rung whose VMAF lies within a small perceptual budget (in VMAF points) of the proposal. The downshift is perceptually bounded, and reclaimed bytes bank as buffer for later chunks.
+  \item \textbf{Conformal throughput lower bound.} Download-time tests use an online split-conformal lower bound on throughput. Under residual exchangeability, the bound covers the next chunk with high probability at a chosen tolerated miss rate. Calibration uses recent residual ratios~\cite{vovk2005algorithmic,angelopoulos2023gentle}.
+  \item \textbf{Certified feasibility.} After banking, CPS prefers a rung whose predicted download time under the throughput lower bound still fits in the remaining buffer (minus a small safety margin). Two emergency cases force the lowest rung instead: (i)~no higher rung passes that test, or (ii)~the buffer is already at or below a critical floor, so the player must request the cheapest chunk. Only when the downloaded rung passes the test and the buffer retains a minimal playout margin does this yield a per-chunk probabilistic stall certificate; it is not a promise of zero stalls.
 \end{enumerate}
 A pure VMAF-ranking shield is not enough on a typical ladder.
 If quality never drops when the rung index rises, then among the feasible rungs the highest VMAF is always the highest index.
-Allowing a small perceptual loss \(\varepsilon\) does not force a downshift in that case, because the top feasible rung still wins the ranking.
-CPS therefore banks to the \emph{smallest} rung inside the \(\varepsilon\) budget, rather than maximizing VMAF among feasible rungs.
+Allowing a small perceptual loss does not force a downshift in that case, because the top feasible rung still wins the ranking.
+CPS therefore banks to the \emph{smallest} rung inside the perceptual budget, rather than maximizing VMAF among feasible rungs.
 The same CPS rule wraps bitrate-greedy, BBA, and PPO hosts without changing their internal logic.
 
 To separate banking from safety, we run three paired arms on identical episode seeds: \textsc{Raw} (unshielded), \textsc{Safety} (conformal feasibility only), and \textsc{Certified} (feasibility plus banking).
@@ -424,13 +424,13 @@ The main contributions are:
 \begin{itemize}
   \item \textbf{Certified Perceptual Shield.} A model-agnostic runtime projection that combines VMAF-knee bandwidth banking, a conformal throughput lower bound with finite-sample coverage under residual exchangeability, and certified buffer feasibility.
 
-  \item \textbf{Isolated banking evaluation.} Paired \textsc{Raw}, \textsc{Safety}, and \textsc{Certified} rollouts on greedy, BBA, BOLA, RobustMPC, and PPO hosts. We report Wilcoxon tests on bitrate and rebuffering, and Two One-Sided Tests (TOST) of VMAF within \(\pm\varepsilon\)~\cite{lakens2017equivalence}.
+  \item \textbf{Isolated banking evaluation.} Paired \textsc{Raw}, \textsc{Safety}, and \textsc{Certified} rollouts on greedy, BBA, BOLA, RobustMPC, and PPO hosts. We report Wilcoxon tests on bitrate and rebuffering, and Two One-Sided Tests (TOST) of VMAF within a small perceptual tolerance~\cite{lakens2017equivalence}.
 
-  \item \textbf{Optional predictive banking (supporting).} CPS-P uses the same perceptual budget \(\varepsilon\) while the buffer is comfortable, and widens it to \(\varepsilon_{\mathrm{risk}}\) (a wider risk budget) only when a throughput dip is forecast. Section~\ref{sec:eval:improved} therefore compares CPS-P with a shield that keeps one fixed \(\varepsilon\) for the whole session.
+  \item \textbf{Optional predictive banking (supporting).} CPS-P keeps the same perceptual budget while the buffer is comfortable, and widens that budget only when a throughput dip is forecast. Section~\ref{sec:eval:improved} therefore compares CPS-P with a shield that keeps one fixed budget for the whole session.
 
   \item \textbf{Regime characterization.} Banking gains concentrate where ladders saturate at the top and hosts request those rungs (primary \mbox{5G} suite). Real-trace broadband stress is dominated by safety projection.
 
-  \item \textbf{Policy--shield co-design (supporting).} An optional single-seed PPO study with CPS in the training loop. We report the QoE weight \(w^{\star}\) at which this co-trained policy crosses a shield-at-eval-only baseline---trained without CPS, then shielded only at test time. We do not treat that arm as a headline claim.
+  \item \textbf{Policy--shield co-design (supporting).} An optional single-seed PPO study with CPS in the training loop. We report the QoE stall weight at which this co-trained policy crosses a shield-at-eval-only baseline---trained without CPS, then shielded only at test time. We do not treat that arm as a headline claim.
 \end{itemize}
 
 Quantitative results appear in Section~\ref{sec:eval}. That section reports the paired \mbox{5G} and broadband campaigns, optional CPS-P, and the supporting co-design study.
