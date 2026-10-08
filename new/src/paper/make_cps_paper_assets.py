@@ -446,7 +446,6 @@ def gen_hero_figure():
     ax.set_ylim(0, max(d["reb"] for d in data) * 1.15)
     ax.grid(axis="y", alpha=0.3)
     fig.legend(loc="outside lower center", ncol=3, fontsize=8.5, frameon=False)
-    fig.suptitle(r"CPS banking on synthetic 5G ($\varepsilon=1.0$, coverage $\geq 0.90$)")
     _save(fig, "fig_cps_hero.pdf", plt)
 
 
@@ -468,14 +467,12 @@ def gen_tradeoff_figure():
                        label=ARM_LABEL[arm], edgecolors="none")
             ax.scatter([np.mean(xs)], [np.mean(ys)], s=90, c=COLORS[arm],
                        marker="D", edgecolors="k", linewidths=0.6, zorder=5)
-        ax.set_title(title)
         ax.set_xlabel("Rebuffering (s)")
         ax.grid(alpha=0.25)
         if handles is None:
             handles, labels = ax.get_legend_handles_labels()
     axes[0].set_ylabel("Mean VMAF")
     fig.legend(handles, labels, loc="outside lower center", ncol=3, fontsize=9)
-    fig.suptitle(r"Paired 5G episodes: Raw / Safety / Certified ($\varepsilon=1.0$)")
     _save(fig, "fig_cps_tradeoff.pdf", plt)
 
 
@@ -494,7 +491,6 @@ def gen_cdf_figure():
             vals = np.sort([r["reb"] for r in rows[arm]])
             y = np.arange(1, len(vals) + 1) / len(vals)
             ax.plot(vals, y, color=COLORS[arm], lw=1.8, label=ARM_LABEL[arm])
-        ax.set_title(title)
         ax.set_xlabel("Rebuffering (s)")
         ax.set_xlim(left=0)
         ax.grid(alpha=0.25)
@@ -502,7 +498,6 @@ def gen_cdf_figure():
             handles, labels = ax.get_legend_handles_labels()
     axes[0].set_ylabel("CDF")
     fig.legend(handles, labels, loc="outside lower center", ncol=3, fontsize=9)
-    fig.suptitle("Rebuffering CDFs on synthetic 5G (paired seeds)")
     _save(fig, "fig_cps_cdf_reb.pdf", plt)
 
 
@@ -540,7 +535,6 @@ def gen_regime_figure():
     ax.axhline(0, color="k", lw=0.6)
     ax.grid(axis="y", alpha=0.3)
     ax.legend(loc="upper right", fontsize=8.5, framealpha=0.92)
-    fig.suptitle("Banking headroom: synthetic 5G vs broadband")
     _save(fig, "fig_cps_regime.pdf", plt)
 
 
@@ -575,7 +569,6 @@ def gen_codesign_figure():
     ax.scatter([rb.mean()], [vb.mean()], s=100, c=COLORS["codesign"], marker="D", edgecolors="k", zorder=5)
     ax.set_xlabel("Rebuffering (s)")
     ax.set_ylabel("Mean VMAF")
-    ax.set_title("Certified arm (improved shield)")
     ax.legend(fontsize=8.5, loc="center right", framealpha=0.92)
     ax.grid(alpha=0.25)
 
@@ -592,7 +585,6 @@ def gen_codesign_figure():
                label=rf"$w^\star={wstar:.2f}$")
     ax.set_xlabel(r"Stall weight $w$ (VMAF pts / s)")
     ax.set_ylabel(r"$\Delta$QoE")
-    ax.set_title("Fidelity--stall crossover")
     ax.legend(fontsize=8.5, loc="upper right", framealpha=0.92)
     ax.grid(alpha=0.25)
 
@@ -636,7 +628,6 @@ def gen_overview_figure():
     ax.set_ylim(0, max(g["reb"] for g in groups) * 1.18)
     ax.grid(axis="y", alpha=0.3)
     fig.legend(loc="outside lower center", ncol=3, fontsize=8.5, frameon=False)
-    fig.suptitle(r"CPS banking: magnitude, perceptual cost, and regime ($\varepsilon=1.0$)")
     _save(fig, "fig_cps_overview.pdf", plt)
 
 
@@ -691,7 +682,6 @@ def gen_coverage_figure():
     ax.set_ylim(min(0.86, target - 0.02), 1.005)
     ax.grid(axis="y", alpha=0.3)
     ax.legend(loc="lower right", fontsize=9, framealpha=0.92)
-    fig.suptitle(r"Conformal coverage per episode (certified arm, $\alpha=0.10$)")
     _save(fig, "fig_cps_coverage.pdf", plt)
 
 

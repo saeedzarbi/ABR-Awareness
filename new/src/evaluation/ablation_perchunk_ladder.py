@@ -219,7 +219,6 @@ def write_figure(df: pd.DataFrame):
     ax1.set_xticklabels([f"{e:.1f}" for e in df.epsilon])
     ax1.set_xlabel(r"perceptual budget $\varepsilon$ (VMAF pts)")
     ax1.set_ylabel("bitrate saved (%)")
-    ax1.set_title("Banked bytes")
     ax1.legend(frameon=False, fontsize=8)
 
     ax2.plot(df.epsilon, df.vmaf_cost_perchunk_shield, "o-",
@@ -229,7 +228,6 @@ def write_figure(df: pd.DataFrame):
     ax2.plot(df.epsilon, df.epsilon, ":", color="gray", label=r"budget $\varepsilon$")
     ax2.set_xlabel(r"perceptual budget $\varepsilon$ (VMAF pts)")
     ax2.set_ylabel("realized per-chunk cost (pts)")
-    ax2.set_title("Perceptual cost (true per-chunk VMAF)")
     ax2.legend(frameon=False, fontsize=8)
 
     for d in FIGURES:

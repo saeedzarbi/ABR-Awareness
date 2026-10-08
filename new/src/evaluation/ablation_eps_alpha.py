@@ -234,7 +234,6 @@ def write_figure(eps_rows, alpha_rows):
     ax1.plot(eps, bw, "o-", color="#4C72B0")
     ax1.set_xlabel(r"perceptual budget $\varepsilon$ (VMAF pts)")
     ax1.set_ylabel("bitrate saved (%)")
-    ax1.set_title(r"Budget $\varepsilon$ sensitivity ($\alpha{=}0.10$)")
     ax1.grid(axis="y", alpha=0.3)
 
     al = [r["alpha"] for r in alpha_rows]
@@ -250,7 +249,6 @@ def write_figure(eps_rows, alpha_rows):
     ax2.set_ylabel("conformal coverage")
     ax2.set_ylim(0.70, 1.02)
     ax2.legend(frameon=False, fontsize=8, loc="upper right")
-    ax2.set_title("Coverage vs target")
     ax2.grid(axis="y", alpha=0.3)
 
     for d in FIGURES:
