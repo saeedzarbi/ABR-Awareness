@@ -201,7 +201,6 @@ def make_figure(ladder: pd.DataFrame, pooled: pd.DataFrame, path: Path) -> None:
     ax.set_xticklabels([str(b) for b in BITRATES], rotation=30)
     ax.set_xlabel("Representation bitrate (kb/s)")
     ax.set_ylabel("VMAF")
-    ax.set_title("(a) Per-video ladder vs. per-chunk range")
 
     ax = axes[1]
     gaps, labels, positions = [], [], []
@@ -220,7 +219,6 @@ def make_figure(ladder: pd.DataFrame, pooled: pd.DataFrame, path: Path) -> None:
     ax.set_xticklabels(labels, rotation=30)
     ax.set_xlabel("Adjacent representation pair (kb/s)")
     ax.set_ylabel("Per-chunk VMAF gap")
-    ax.set_title("(b) Spacing varies across chunks")
 
     fig.legend(
         *axes[0].get_legend_handles_labels(),
