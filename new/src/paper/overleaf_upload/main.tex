@@ -449,7 +449,7 @@ Section~\ref{sec:eval} reports the evaluation, and Section~\ref{sec:conclusion} 
 Three areas bear on client-side representation selection: model-based ABR, learned ABR, and constrained control with runtime shielding.
 Our focus is the control policy and its runtime action projection; throughput prediction lies outside this scope.
 Predictors such as CS2P~\cite{sun2016cs2p} play a complementary role: they feed inputs to model-based or learned controllers~\cite{yin2015control,mao2017neural}.
-Beyond prediction, ABR surveys~\cite{bentaleb2018survey,seufert2015survey,peroni2025survey} and \mbox{5G/mmWave} measurements~\cite{narayanan2021variegated,fezeu2024midband} agree on one empirical lesson: control must remain robust when throughput fluctuates sharply.
+Beyond prediction, ABR surveys~\cite{bentaleb2018survey,seufert2015survey,peroni2025survey,timmerer2025has} and \mbox{5G/mmWave} measurements~\cite{narayanan2021variegated,fezeu2024midband} agree on one empirical lesson: control must remain robust when throughput fluctuates sharply.
 
 \subsection{Heuristic and model-based ABR}
 
@@ -496,6 +496,17 @@ Surveys split the family into \emph{pre-shielding}, which prunes the action set,
 By that taxonomy, CPS is a post-shield.
 Its safety set is drawn by a conformal feasibility test rather than a temporal-logic model.
 
+Recent work has broadened both the learned and the uncertainty-aware branches of ABR.
+NetLLM~\cite{wu2024netllm} adapted a pre-trained large language model to bitrate selection.
+LingXi~\cite{jia2025lingxi} tuned ABR objectives online from user-level engagement in a large production deployment.
+AAR~\cite{chen2025aar} maximized worst-case QoE under bandwidth uncertainty with an MPC controller for low-latency live streaming.
+These designs improve expected or worst-case QoE, but none of them attaches a per-chunk feasibility certificate to the selected representation.
+On the statistical side, conformal risk control~\cite{angelopoulos2024crc} extended split-conformal guarantees from coverage to monotone losses.
+Online conformal updates~\cite{angelopoulos2024online} retained long-run coverage on non-exchangeable sequences.
+Conformal prediction has also become a standard tool for runtime verification and safe control of learning-enabled systems~\cite{lindemann2025cpsurvey}.
+Recent shielded RL even filters actions with conformal safety margins~\cite{kwon2026adaptiveshielding}.
+CPS transfers this runtime-assurance pattern to ABR and couples it with VMAF-knee banking.
+
 By that separation, CPS pairs an optional learned performance layer with a deterministic runtime post-shield.
 Learned policies such as Lagrangian PPO can pursue expected stall and smoothness budgets across training rollouts~\cite{paternain2019dual,hu2023corel}, but they cannot certify per-chunk feasibility under conformal throughput bounds.
 Unlike Comyco, where VMAF enters only the learned objective~\cite{huang2019comyco}, CPS reads the ladder at decision time to bank bandwidth proactively, rather than only repairing the representation index in an emergency.
@@ -525,6 +536,8 @@ Unlike Comyco, where VMAF enters only the learned objective~\cite{huang2019comyc
     Conformal-ABR~\cite{zhong2026conformalabr} & 2026 & Risk-controlled ABR & N & Y & Y & N \\
     SafeSABR~\cite{liu2025safesabr} & 2026 & Risk-cal.\ RL + auditor & Y & Y & \(\approx\) & N \\
     Kairos~\cite{zhong2025kairos} & 2025 & MPC + uncertainty & N & N & N & N \\
+    NetLLM~\cite{wu2024netllm} & 2024 & LLM-adapted ABR & N & N & N & N \\
+    AAR~\cite{chen2025aar} & 2025 & Robust max--min MPC & N & N & N & N \\
     \textbf{Ours (CPS)} & --- & Shield (\(\pm\)RL) & \(\approx\) & \textbf{Y} & \textbf{Y} & \textbf{Y} \\
     \bottomrule
     \end{tabularx}%
@@ -1183,7 +1196,7 @@ CPS attaches to an existing ABR controller as a lightweight wrapper and needs no
 Coverage holds at the \(1{-}\alpha\) level when calibration residuals are exchangeable (Section~\ref{sec:method:conformal}). The chunk-level emulator omitted transport-stack dynamics and CDN caching~\cite{narayanan2021variegated}. The \mbox{5G} suite was synthetic, and the broadband suite replayed FCC and Norway/Nornet traces~\cite{fcc2015mba,kvalbein2014}. Twelve public titles still capped catalogue diversity~\cite{kvalbein2014}. QoE is a VMAF surrogate~\cite{seufert2015survey}. Empirical coverage sat below the nominal target on the 27 broadband traces (\(\CPSbbCov\) at \(\alpha{=}\CPSalpha\)). On the primary \mbox{5G} suite the margin was tight (\(0.945\) vs.\ \(0.95\) at \(\alpha{=}0.05\), \(n{=}\CPSepisodes\); \tabref{tab:abl:alpha}). Co-design used one training seed per policy, so the intervals in \tabref{tab:cps:codesign} reflected evaluation variance only. The TOST margin equaled \(\varepsilon\) (Section~\ref{sec:eval:setup}), set to \(\CPSepsilon\) from ladder spacing and perceptual encoding practice~\cite{menon2022perceptual,lakens2017equivalence}. Savings scaled with ladder saturation and host aggressiveness (\tabref{tab:ladder:spacing}; Section~\ref{sec:eval:main}).
 
 Open directions include packet-level or field \mbox{5G} evaluation, RobustMPC and Comyco hosts, CVaR objectives~\cite{rockafellar2000}, and telemetry-driven \(\varepsilon\) and \(\alpha\).
-The highest-priority step is deployment in a production player such as \texttt{dash.js}~\cite{spiteri2018dashjs}. Throughput samples from HTTP/TCP or QUIC can break residual exchangeability, so calibration needs a weighted-conformal update under drift~\cite{barber2023beyond}. The feasibility check must also use the player's delayed buffer signal, inside a soft real-time budget beside the ABR loop. The chunk-level micro-benchmark is \(\sim\!100\,\mu\mathrm{s}\).
+The highest-priority step is deployment in a production player such as \texttt{dash.js}~\cite{spiteri2018dashjs}. Throughput samples from HTTP/TCP or QUIC can break residual exchangeability, so calibration needs a weighted-conformal update under drift~\cite{barber2023beyond,angelopoulos2024online}. The feasibility check must also use the player's delayed buffer signal, inside a soft real-time budget beside the ABR loop. The chunk-level micro-benchmark is \(\sim\!100\,\mu\mathrm{s}\).
 
 % --- Back matter (Computer Networks / Elsevier: acknowledgements and declarations immediately before the reference list) ---
 \section*{Data availability}
