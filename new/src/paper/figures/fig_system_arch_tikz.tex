@@ -17,7 +17,7 @@
     shieldbox/.style={archbox, fill=archShield!14, draw=archShield!80!black, text width=2.7cm, minimum height=1.55cm},
     clientbox/.style={archbox, fill=archEnv!5, draw=archEnv, text width=2.0cm},
     criticbox/.style={archbox, thin, fill=archPolicy!4, draw=archPolicy!70, dash pattern=on 3pt off 2pt, text width=2.3cm},
-    ppogroup/.style={draw=archPolicy!45, dash pattern=on 3pt off 2pt, rounded corners=5pt, inner xsep=10pt, inner ysep=10pt},
+    ppogroup/.style={draw=archPolicy!45, dash pattern=on 3pt off 2pt, rounded corners=5pt, inner xsep=12pt, inner ysep=16pt},
     infer/.style={->, line width=1.5pt, black!85},
     train/.style={->, line width=1.0pt, dash pattern=on 3pt off 2pt, archPolicy!70!black},
     feedback/.style={->, line width=1.05pt, archEnv},
@@ -50,30 +50,31 @@
     \draw[infer] (shield.east) -- (client.west)
         node[edgelabel, midway, above=1pt] {\(a^{\mathrm{exec}}_k\)};
 
-    % --- Training-only branch (Critic), clearly set apart below the Actor ---
-    \node[criticbox] (critic) at (6.9, -2.9)
+    % --- Training-only branch (Critic) ---
+    \node[criticbox] (critic) at (6.9, -2.55)
         {\textbf{Critic} \(V_\phi(s)\)\\[2pt]{\footnotesize training only}\\[2pt]{\footnotesize reward \(r_k\), \(\lambda\)-update}};
-    % Short drop keeps the horizontal run above the Critic box instead of
-    % cutting across its text.
-    \draw[train] (state.south) -- ++(0,-0.45) -| (critic.north);
+    % Into critic from below-left so the upward return path stays free.
+    \draw[train] (state.south) -- ++(0,-2.55) -| (critic.south)
+        node[edgelabel, font=\footnotesize, pos=0.22, left=1pt] {\(s_k\)};
+    % Out of critic into the base policy (training update).
+    \draw[train] (critic.north) -- (actor.south)
+        node[edgelabel, font=\footnotesize, midway, right=2pt] {value / dual};
 
     \begin{pgfonlayer}{background}
         \node[ppogroup, fit=(actor)(critic)] (ppogrp) {};
     \end{pgfonlayer}
 
-    % Group caption sits in the free band above the Shield box; centered above
-    % the group it would run into the State box on the left.
-    \node[anchor=south west, font=\normalsize\bfseries, text=archPolicy]
-        at (ppogrp.north east) {Optional RL host (PPO)};
+    % Label stays INSIDE the dashed PPO group.
+    \node[font=\footnotesize\bfseries, text=archPolicy, anchor=south]
+        at ([yshift=-3pt]ppogrp.north) {Optional RL host (PPO)};
 
-    % --- Download feedback: a single low-key arc over the top, clear of the
-    % training branch below, back into the environment ---
+    % --- Download feedback arc ---
     \draw[feedback]
-        (client.north) -- ++(0,1.75) -| (env.north)
+        (client.north) -- ++(0,1.55) -| (env.north)
         node[edgelabel, font=\footnotesize, pos=0.5, above] {buffer update after chunk download};
 
-    % --- Legend (compact, single line, below the PPO group box) ---
-    \node[font=\footnotesize, anchor=north] at (6.9, -4.55) {
+    % --- Legend ---
+    \node[font=\footnotesize, anchor=north] at (6.9, -4.35) {
         \tikz[baseline=-0.5ex]\draw[infer] (0,0) -- (0.6,0);~Inference \hspace{1.2em}
         \tikz[baseline=-0.5ex]\draw[train] (0,0) -- (0.6,0);~Training only \hspace{1.2em}
         \tikz[baseline=-0.5ex]\draw[feedback] (0,0) -- (0.6,0);~Download feedback
