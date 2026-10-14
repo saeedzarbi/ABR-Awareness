@@ -1,5 +1,24 @@
 *.pyc
 __pycache__/
+new/**/__pycache__/
+
+# Local virtualenvs (never commit)
+/.venv313
+/new/.venv313
+venv/
+**/venv/
+
+# Nested accidental project copy
+/ABR-Awareness/
+
+# Local professor notes / review PDFs
+/CSP-4-7.pdf
+/new_res.txt
+
+# Overleaf submit zips (keep only the current submit zip tracked)
+/overleaf_cps_v*_submit.zip
+!/overleaf_cps_v52_submit.zip
+/new/src/paper/overleaf_cps_v*_submit.zip
 
 # Generated V18 datasets (rebuild: python data/prepare_traces_v18.py)
 new/data/standardized/train_traces_v18/
@@ -11,6 +30,3 @@ new/data/standardized/test_traces_5g_v18/
 new/raw_videos/
 new/data/encoded_multires/
 new/data/vmaf_scores/_multires_logs/
-new/**/__pycache__/
-/.venv313
-/new/.venv313
