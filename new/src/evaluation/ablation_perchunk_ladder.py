@@ -48,6 +48,7 @@ L = len(BITRATES)
 TOP = L - 1                                       # greedy proposal = top rung
 EPS_SWEEP = [0.5, 1.0, 2.0, 4.0]
 EPS_HEADLINE = 1.0
+EXCLUDE_VIDEOS = {"crowd_run"}
 
 VIDEO_LABEL = {
     "bigbuckbunny": "BigBuckBunny",
@@ -69,6 +70,8 @@ def knee(vmaf_ladder: np.ndarray, proposal: int, eps: float) -> int:
 def load_ladders():
     """Return per-chunk ladders and the pooled (session-mean) ladder per video."""
     pc = pd.read_csv(VMAF_DIR / "vmaf_perchunk.csv")
+    # CrowdRun is not one of the twelve evaluation titles; exclude it (110 chunks).
+    pc = pc[~pc["video"].isin(EXCLUDE_VIDEOS)]
     pooled = pd.read_csv(VMAF_DIR / "vmaf_summary.csv")
 
     per_chunk = {}   # video -> list of np.array(L) indexed by rung
