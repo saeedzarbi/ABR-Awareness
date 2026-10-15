@@ -54,10 +54,16 @@
 \usepackage{float} % provides [H] to pin tables/figures in place (Overleaf-friendly)
 % Do NOT load subcaption with elsarticle (caption compatibility mode → fatal on Overleaf).
 % Multi-panel figures use minipage + (a)/(b) labels instead.
-% Float placement: [H] keeps review PDFs predictable. For the final
-% two-column layout (\documentclass[final,5p,times,twocolumn]{elsarticle}),
-% \renewenvironment{cps@table}{\begin{table}[!t]}{\end{table}} and restore figure*/table*.
-\newenvironment{cps@table}{\begin{table}[!t]}{\end{table}}
+% Float placement: in twocolumn final layout, wide tables must use table* (full
+% text width). Single-column table + tabularx{\linewidth} fits only one column
+% and causes overfull boxes and body text intruding between float parts.
+\makeatletter
+\@ifclasswith{elsarticle}{twocolumn}{%
+  \newenvironment{cps@table}{\begin{table*}[!t]}{\end{table*}}%
+}{%
+  \newenvironment{cps@table}{\begin{table}[!t]}{\end{table}}%
+}
+\makeatother
 
 % Allow LaTeX to mix text and floats on the same page (avoid one-figure float pages)
 \renewcommand{\topfraction}{0.85}
@@ -562,7 +568,7 @@ The subsections below define the architecture, the state--action--reward tuple, 
     \label{tab:notation}
     \centering
     \evaltable{%
-    \begin{tabular}{@{}ll@{}}
+    \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}X@{}}
     \toprule
     \textbf{Symbol} & \textbf{Meaning} \\
     \midrule
@@ -572,7 +578,7 @@ The subsections below define the architecture, the state--action--reward tuple, 
     \(B_k\), \(m\), \(B_{\mathrm{crit}}\) & buffer level, safety margin, critical buffer \\
     \(V_k(j)\), \(\sigma_k(j)\) & VMAF and size (kb) of rung \(j\) at chunk \(k\) \\
     \(\varepsilon\), \(\varepsilon_{\mathrm{eff}}\), \(\varepsilon_{\mathrm{risk}}\) & perceptual budget, effective/risk-mode budget \\
-    \(C^{\mathrm{tr}}_k\), \(\hat{C}_k\), \(C^{\mathrm{act}}_k\), \(\underline{C}_k\) & simulator trace rate; conformal predictor; realized; lower bound (all in kb/s) \\
+    \(C^{\mathrm{tr}}_k\), \(\hat{C}_k\), \(C^{\mathrm{act}}_k\), \(\underline{C}_k\) & trace rate \(C^{\mathrm{tr}}_k\); predictor \(\hat{C}_k\); realized \(C^{\mathrm{act}}_k\); conformal lower bound \(\underline{C}_k\) (kb/s) \\
     \(W_{\mathrm{calib}}\), \(\rho_{\mathrm{fb}}\) & residual warm-up length, fallback scale before calibration \\
     \(\alpha\), \(1{-}\alpha\) & conformal miscoverage, target coverage \\
     \(r{=}C^{\mathrm{act}}/\hat{C}\), \(W\), \(\kappa\) & residual ratio, residual window, predictor horizon \\
@@ -580,7 +586,7 @@ The subsections below define the architecture, the state--action--reward tuple, 
     \(\mu\), \(\beta\) & logged-QoE smoothness and stall weights (\eqref{eq:qoe-rep}) \\
     \(w\), \(w^{\star}\) & QoE stall weight (sweep), mean-QoE crossover weight \\
     \bottomrule
-    \end{tabular}%
+    \end{tabularx}%
     }
 \end{cps@table}
 
@@ -1163,13 +1169,12 @@ Third, pooling is not free. Judged against the true per-chunk VMAF, the pooled-l
 Taken together, the pooled-ladder headline numbers are, if anything, conservative with respect to banking savings.
 Per-chunk operation is sound: it eliminates residual budget violations at the cost of a per-chunk VMAF feed, and it aligns the content-diversity motivation with the pooled evaluation.
 
-\begin{table}[t]
-  \centering
+\begin{cps@table}
   \caption{Banking-stage ablation on real per-chunk VMAF ladders (greedy proposal, \(\PCnChunks\) chunks). A per-chunk shield banks slightly more bytes than the pooled shield while keeping realized per-chunk cost \(\le\varepsilon\) by construction; the pooled shield incurs a small per-chunk budget-violation rate. Feasibility is VMAF-independent and unchanged.}
   \label{tab:perchunk}
-  \small
+  \centering
   \evaltable{\input{tables/table_perchunk_ablation.tex}}
-\end{table}
+\end{cps@table}
 
 \begin{figure}[t]
   \centering
